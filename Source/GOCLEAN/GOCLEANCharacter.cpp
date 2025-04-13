@@ -10,6 +10,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -18,6 +19,7 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 AGOCLEANCharacter::AGOCLEANCharacter()
 {
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 		
@@ -33,14 +35,14 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
+
 	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
-
 }
 
 void AGOCLEANCharacter::BeginPlay()
 {
-	// Call the base class  
+	// Call the base class
 	Super::BeginPlay();
 }
 
@@ -60,6 +62,13 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGOCLEANCharacter::Look);
+
+		// Crouching
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::Crouch);
+
+		// Sprint & SprintRelease
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::Sprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AGOCLEANCharacter::SprintRelease);
 	}
 	else
 	{
@@ -92,4 +101,65 @@ void AGOCLEANCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AGOCLEANCharacter::Crouch()
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Crouch() 호출. bIsCrouching 값: %s"), bIsCrouching ? TEXT("true") : TEXT("false"));
+	if (GetCharacterMovement()->IsFalling()) return;
+
+	float StandingCapsuleHalfHeight = 96.0f; // 캡슐 높이 : Stand 상태
+	float CrouchingCapsuleHalfHeight = 48.0f; // 캡슐 높이 : Crouch 상태
+	
+	if (bIsCrouching) 
+	{
+		// Standing
+		GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHalfHeight); // 컴포넌트 캡슐 높이 조정
+		FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f)); // 카메라 위치 조정
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
+		bIsCrouching = false;
+	}
+	else
+	{
+		// Crouching
+		GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchingCapsuleHalfHeight); // 컴포넌트 캡슐 높이 조정
+		FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f)); // 카메라 위치 조정
+		GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+
+		bIsCrouching = true;
+	}
+}
+
+// Sprint
+void AGOCLEANCharacter::Sprint()
+{
+	//if(bIsCrouching) UE_LOG(LogTemp, Warning, TEXT("Crouch() 호출. bIsCrouching 값: %s"), bIsCrouching ? TEXT("true") : TEXT("false"));
+
+	if (bIsCrouching) return;
+	if (GetCharacterMovement()->IsFalling()) return;
+
+	if (CurrentStamina >= 0.0f) {
+		CurrentStamina -= StaminaCost;
+		UE_LOG(LogTemp, Warning, TEXT("CurrentStamina 값: %f"), CurrentStamina);
+	}
+
+	bIsSprinting = true;
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+}
+
+void AGOCLEANCharacter::SprintRelease()
+{
+	if (bIsCrouching) return;
+
+	bIsSprinting = false;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+}
+
+// ACharacter Jump() 오버라이딩
+void AGOCLEANCharacter::Jump()
+{
+	if (bIsCrouching) return;
+
+	Super::Jump();
 }
