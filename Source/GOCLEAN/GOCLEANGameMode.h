@@ -14,6 +14,3 @@ class AGOCLEANGameMode : public AGameModeBase
 public:
 	AGOCLEANGameMode();
 };
-
-
-
