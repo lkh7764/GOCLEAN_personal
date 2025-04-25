@@ -53,17 +53,27 @@ protected:
 	virtual void BeginPlay();
 
 	//캐릭터 기본 스탯 선언 & 정의
-	float MaxStamina = 1000.0f;
+	
+	// Stamina
+	float MaxStamina = 10.0f;
 	float CurrentStamina = MaxStamina;
-	float StaminaCost;
-	float StaminaRecoveryRate;
+	float StaminaDrainRate = 1.0f;
+	float StaminaRecoveryRate = 1.0f;
+	float RecoveryDelay = 1.0f;
+	bool bIsRecoveringStamina = false;
 
+	FTimerHandle StaminaRecoveryHandle;
+
+	// Speed
 	float WalkSpeed = 600.0f;
 	float CrouchSpeed = 300.0f;
 	float SprintSpeed = 900.0f;
 
+	// State
 	bool bIsCrouching = false;
 	bool bIsSprinting = false;
+
+	
 private:
 
 public:
@@ -79,7 +89,7 @@ protected:
 	void Look(const FInputActionValue& Value);
 
 	// Called for crouching input
-	void Crouch();
+	virtual void Crouch();
 
 	// Called for sprinting input 
 	void Sprint();
@@ -87,8 +97,13 @@ protected:
 	// Sprint() 기능 종료 시 호출
 	void SprintRelease();
 
+	// Stamina 관련
+	void StartStaminaRecovery();
+	void RecoverStamina();
+
 	// ACharacter 함수 오버라이드
 	virtual void Jump() override;
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 	// APawn interface
