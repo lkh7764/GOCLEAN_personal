@@ -158,7 +158,7 @@ void AGOCLEANCharacter::SprintRelease()
 	// Stamina 회복 시작
 	if (bIsRecoveringStamina == false) {
 		bIsRecoveringStamina = true;
-		UE_LOG(LogTemp, Log, TEXT("Stamina 회복 시작"));
+		//UE_LOG(LogTemp, Log, TEXT("Stamina Recover Start"));
 		GetWorldTimerManager().SetTimer(StaminaRecoveryHandle, this, &AGOCLEANCharacter::StartStaminaRecovery, RecoveryDelay, false);
 	}
 }
@@ -177,7 +177,7 @@ void AGOCLEANCharacter::Tick(float DeltaTime)
 
 	if (bIsSprinting) {
 		CurrentStamina -= StaminaDrainRate * DeltaTime;
-		UE_LOG(LogTemp, Log, TEXT("bIsSprinting : CurrentStamina 값 : %f"), CurrentStamina);
+		UE_LOG(LogTemp, Log, TEXT("bIsSprinting : CurrentStamina : %f"), CurrentStamina);
 
 		if (CurrentStamina <= 0.0f) {
 			CurrentStamina = 0.0f;
@@ -188,18 +188,18 @@ void AGOCLEANCharacter::Tick(float DeltaTime)
 
 void AGOCLEANCharacter::StartStaminaRecovery()
 {
-	// UE_LOG(LogTemp, Log, TEXT("Stamina 회복 시작")); 이거 왜 체크가 안되지
+	// UE_LOG(LogTemp, Log, TEXT("Stamina Recover Start")); 이거 왜 체크가 안되지 - 한글 안되네
 	GetWorldTimerManager().SetTimer(StaminaRecoveryHandle, this, &AGOCLEANCharacter::RecoverStamina, 0.1f, true);
 }
 
 void AGOCLEANCharacter::RecoverStamina() 
 {
 	CurrentStamina += StaminaRecoveryRate * 0.1f;
-	UE_LOG(LogTemp, Log, TEXT("bIsRecoveringStamina : CurrentStamina 값 : %f"), CurrentStamina);
+	//UE_LOG(LogTemp, Log, TEXT("bIsRecoveringStamina : CurrentStamina : %f"), CurrentStamina);
 	if (CurrentStamina >= MaxStamina) {
 		CurrentStamina = MaxStamina;
 		bIsRecoveringStamina = false;
-		UE_LOG(LogTemp, Log, TEXT("Stamina 회복 종료"));
+		//UE_LOG(LogTemp, Log, TEXT("Stamina Recover End"));
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryHandle);
 	}
 }
