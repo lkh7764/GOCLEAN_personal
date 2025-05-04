@@ -136,16 +136,16 @@ void AGOCLEANCharacter::Sprint()
 {
 	//if(bIsCrouching) UE_LOG(LogTemp, Warning, TEXT("Crouch() 호출. bIsCrouching 값: %s"), bIsCrouching ? TEXT("true") : TEXT("false"));
 
-	if (bIsCrouching) return;
-	if (GetCharacterMovement()->IsFalling()) return;
+	if (bIsCrouching || GetCharacterMovement()->IsFalling()) return;
 
-	if (CurrentStamina >= 0.0f) {
-		CurrentStamina -= StaminaCost;
-		UE_LOG(LogTemp, Warning, TEXT("CurrentStamina 값: %f"), CurrentStamina);
-	}
-
+	if (CurrentStamina <= 0.0f) return;
+	
 	bIsSprinting = true;
 	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+
+	// Stamina 회복 중지
+	bIsRecoveringStamina = false;
+	GetWorldTimerManager().ClearTimer(StaminaRecoveryHandle);
 }
 
 void AGOCLEANCharacter::SprintRelease()
@@ -154,6 +154,13 @@ void AGOCLEANCharacter::SprintRelease()
 
 	bIsSprinting = false;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
+	// Stamina 회복 시작
+	if (bIsRecoveringStamina == false) {
+		bIsRecoveringStamina = true;
+		//UE_LOG(LogTemp, Log, TEXT("Stamina Recover Start"));
+		GetWorldTimerManager().SetTimer(StaminaRecoveryHandle, this, &AGOCLEANCharacter::StartStaminaRecovery, RecoveryDelay, false);
+	}
 }
 
 // ACharacter Jump() 오버라이딩
@@ -162,4 +169,37 @@ void AGOCLEANCharacter::Jump()
 	if (bIsCrouching) return;
 
 	Super::Jump();
+}
+
+void AGOCLEANCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (bIsSprinting) {
+		CurrentStamina -= StaminaDrainRate * DeltaTime;
+		UE_LOG(LogTemp, Log, TEXT("bIsSprinting : CurrentStamina : %f"), CurrentStamina);
+
+		if (CurrentStamina <= 0.0f) {
+			CurrentStamina = 0.0f;
+			SprintRelease();
+		}
+	}
+}
+
+void AGOCLEANCharacter::StartStaminaRecovery()
+{
+	// UE_LOG(LogTemp, Log, TEXT("Stamina Recover Start")); 이거 왜 체크가 안되지 - 한글 안되네
+	GetWorldTimerManager().SetTimer(StaminaRecoveryHandle, this, &AGOCLEANCharacter::RecoverStamina, 0.1f, true);
+}
+
+void AGOCLEANCharacter::RecoverStamina() 
+{
+	CurrentStamina += StaminaRecoveryRate * 0.1f;
+	//UE_LOG(LogTemp, Log, TEXT("bIsRecoveringStamina : CurrentStamina : %f"), CurrentStamina);
+	if (CurrentStamina >= MaxStamina) {
+		CurrentStamina = MaxStamina;
+		bIsRecoveringStamina = false;
+		//UE_LOG(LogTemp, Log, TEXT("Stamina Recover End"));
+		GetWorldTimerManager().ClearTimer(StaminaRecoveryHandle);
+	}
 }
