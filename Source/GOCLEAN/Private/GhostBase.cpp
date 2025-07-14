@@ -1,35 +1,71 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "GhostBase.h"
 
 // Sets default values
 AGhostBase::AGhostBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	// Tick(float DeltaTime) 사용 가능
 
+	// Stats Component
+	Stats = CreateDefaultSubobject<UGhostStatsComponent>(TEXT("GhostStats"));
 }
 
-// Called when the game starts or when spawned
 void AGhostBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	Mesh = GetMesh();
-	//Mesh->SetVisibility(false); 시작할 때 안 보이게
+	//나중에 자식 객체에다 옮기면 될 듯
+	GetCharacterMovement()->MaxWalkSpeed = Stats->GetMoveSpeed();
 }
 
-// Called every frame
 void AGhostBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	EventPerform();
 }
 
-// Called to bind functionality to input
-void AGhostBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AGhostBase::StartEnragedChase(AActor* Target)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	bIsEnraged = true;
+	TargetActor = Target;
 }
 
+
+void AGhostBase::EventPerform()
+{
+	int32 RandEventNum;
+	RandEventNum = FMath::RandRange(0, 8);
+
+	if (0 <= RandEventNum && RandEventNum <= 3)
+	{
+		if (UEvidenceBehaviors.Num() <= 0) return;
+		int32 RandEvidenceBehaviorNum;
+		RandEvidenceBehaviorNum = FMath::RandRange(0, UEvidenceBehaviors.Num() - 1);
+		UEvidenceBehaviors[RandEvidenceBehaviorNum]->ExecuteBehavior(this);
+	}
+}
+
+
+/*
+void AGhostBase::PlayCommonSound() {
+	if (CommonSound == nullptr) return;
+
+	UGameplayStatics::PlaySoundAtLocation(this, CommonSound, GetActorLocation());
+}
+void AGhostBase::Manifest()
+{
+	GetMesh()->SetVisibility(true);
+}
+
+void AGhostBase::Patrol()
+{
+	// Patrol
+}
+void AGhostBase::CloseDoor()
+{
+	// function
+}
+void AGhostBase::PlayFootstepSound()
+{
+	// function
+}
+*/

@@ -17,7 +17,7 @@ public:
 
 	EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory);
 
-protected:
-	UPROPERTY(EditAnywhere, Category = "Ghost|Blackboard")
+private:
+	UPROPERTY(EditAnywhere, Category = "TargetActorKey")
 	struct FBlackboardKeySelector TargetActorKey;
 };

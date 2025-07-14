@@ -54,6 +54,10 @@ protected:
 
 	//캐릭터 기본 스탯 선언 & 정의
 	
+	// Sanity
+	float MaxSanity = 100.0f;
+	float CurrentSanity = MaxSanity;
+
 	// Stamina
 	float MaxStamina = 10.0f;
 	float CurrentStamina = MaxStamina;

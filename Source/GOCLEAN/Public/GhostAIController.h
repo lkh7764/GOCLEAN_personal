@@ -11,14 +11,14 @@ class GOCLEAN_API AGhostAIController : public AAIController
 {
 	GENERATED_BODY()
 	
-public:
+private:
 	AGhostAIController();
 
 	virtual void BeginPlay() override;
 
 	void RunGhostBT();
 
-protected:
+private:
 	UPROPERTY(EditDefaultsOnly, Category = "Ghost|AI")
 	UBehaviorTree* BT;
 

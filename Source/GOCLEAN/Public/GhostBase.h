@@ -4,42 +4,63 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GhostStatsComponent.h"
+#include "UEvidenceBehavior.h"
+#include "CommonBehavior.h"
+#include "AIController.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GhostBase.generated.h"
+
 
 UCLASS(Abstract)
 class GOCLEAN_API AGhostBase : public ACharacter
 {
 	GENERATED_BODY()
 
-public:
+protected:
 	AGhostBase();
 
-	virtual void StartEnragedChase(AActor* Target) PURE_VIRTUAL(AGhostBase::StartEnragedChase, );
-
-	virtual void PlayCommonSound() PURE_VIRTUAL(AGhostBase::PlayCommonSound, );
-
-	virtual void Manifest() PURE_VIRTUAL(AGhostBase::Manifest, );
-
-	virtual void Patrol() {};
-
-protected:
-	virtual void BeginPlay() override;
-
+	// Stats component#include "GhostStatsComponent.h"
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	UGhostStatsComponent* Stats;
 	USkeletalMeshComponent* Mesh;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Ghost|Audio");
-	USoundBase* CommonSound;
-
-	UPROPERTY(VisibleAnywhere, Category = "Ghost|State");
-	bool bIsEnraged;
-
-	UPROPERTY(VisibleAnywhere, Category = "Ghost|State");
-	AActor* TargetActor;
-
-public:
-	// 없애도 되지 않나?
+	TArray<UEvidenceBehavior*> UEvidenceBehaviors;
+	TArray<UCommonBehavior*> UCommonBehaviors;
+	
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	
+	virtual void EventPerform();
+	virtual void StartEnragedChase(AActor* Target);
+	//virtual void Patrol();
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	/*
+	void PlayCommonSound();
+	void Manifest();
+	void Patrol();
+	void CloseDoor();
+	void PlayFootstepSound();
+	*/
 
+
+	/*
+	void LeaveBloodFootstep();
+	void LeaveSoot();
+	void LeaveFrost();
+	void SpillWaterBucket();
+	void RemovePlayerShadow();
+	void RestoreWaste();
+	void ThrowObject();
+	void TurnOffLights();
+	void AffectToObject();
+	*/
+
+	UPROPERTY(EditDefaultsOnly, Category = "CommonSound")
+	USoundBase* CommonSound;
+	UPROPERTY(VisibleAnywhere, Category = "IsEnraged")
+	bool bIsEnraged;
+	UPROPERTY(VisibleAnywhere, Category = "Target")
+	AActor* TargetActor;
 };
