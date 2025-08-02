@@ -17,6 +17,4 @@ public:
 	ADrownedGhost();
 
 	virtual void BeginPlay() override;
-
-	virtual void Patrol() {};
 };

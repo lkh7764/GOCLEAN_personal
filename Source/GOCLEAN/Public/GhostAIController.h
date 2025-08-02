@@ -12,15 +12,18 @@ class GOCLEAN_API AGhostAIController : public AAIController
 	GENERATED_BODY()
 	
 private:
-	AGhostAIController();
+	FTimerHandle CheckArrivalHandle;
 
 	virtual void BeginPlay() override;
 
+	void MoveToPatrolPoint();
+	void CheckArrival();
+
+
+	// 지금와서 보면, 굳이 BB와 BT를 써야할까?
 	void RunGhostBT();
-
-private:
 	UPROPERTY(EditDefaultsOnly, Category = "Ghost|AI")
-	UBehaviorTree* BT;
 
+	UBehaviorTree* BT;
 	UBlackboardComponent* BB;
 };

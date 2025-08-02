@@ -32,8 +32,27 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	
-	virtual void EventPerform();
-	virtual void StartEnragedChase(AActor* Target);
+	// association variables with PlayerCharacter
+	float SanityCorruptionRate;
+
+	// Behavior Event Declaration
+
+	FTimerHandle GhostBehaviorCycleHandle;
+	float BehaviorEventCycleDelay;
+	bool bCanSetTimer;
+	bool bIsPatrolling;
+	bool bIsChasing;
+
+	void CheckBehaviorEventCondition();
+	void PerformBehaviorEvent();
+	void StartPatrolEvent();
+	virtual void StartEnrageEvent(AActor* Target);
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Patrol Points");
+	TArray<AActor*> PatrolPoints;
+	int32 CurrentPatrolIndex;
+
 	//virtual void Patrol();
 
 	/*
@@ -57,8 +76,6 @@ protected:
 	void AffectToObject();
 	*/
 
-	UPROPERTY(EditDefaultsOnly, Category = "CommonSound")
-	USoundBase* CommonSound;
 	UPROPERTY(VisibleAnywhere, Category = "IsEnraged")
 	bool bIsEnraged;
 	UPROPERTY(VisibleAnywhere, Category = "Target")
