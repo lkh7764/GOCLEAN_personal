@@ -12,18 +12,24 @@ class GOCLEAN_API UGhostStatsComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:
-	UGhostStatsComponent();
-	int GetMoveSpeed();
+	friend class AGhostBase;
 
-protected:
-	UPROPERTY(EditAnywhere, Category="Stats")
+private:
+	//JSH Temp
+	UPROPERTY(EditAnywhere, Category = "Stats")
 	float MoveSpeed;
 	UPROPERTY(EditAnywhere, Category = "Stats")
 	float PlayerDetectionRadius;
 	UPROPERTY(EditAnywhere, Category = "Stats")
 	float SoundDetectionRadius;
-	//각 게임마다 랜덤하게 할당되는 값 (상수 a~b사이의 값)
 	UPROPERTY(EditAnywhere, Category = "Stats")
-	int BehaviorFrequency;
+	float BehaviorFrequency;
+
+private:
+	float GetMoveSpeed() const;
+	float GetPlayerDetectionRadius() const;
+	float GetSoundDetectionRadius() const;
+	float GetBehaviorFrequency() const;
+public:
+	UGhostStatsComponent();
 };

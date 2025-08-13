@@ -4,35 +4,40 @@
 #include "CloseDoor.h"
 #include "FlashlightBreakdown.h"
 #include "PlayFootstepSound.h"
+#include "GhostAIController.h"
 
 // Sets default values
 AGhostBase::AGhostBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	// Tick(float DeltaTime) 사용 가능
 
 	// Stats Component
 	Stats = CreateDefaultSubobject<UGhostStatsComponent>(TEXT("GhostStats"));
-
-	// JSH TODO: Player Sanity <-> SanityCorruptionRate
-	SanityCorruptionRate = 10;
-	BehaviorEventCycleDelay = 1.0f;
-	bCanSetTimer = true;
-	bIsPatrolling = false;
-	bIsChasing = false;
-	CurrentPatrolIndex = 0;
 }
 
 void AGhostBase::BeginPlay()
 {
 	Super::BeginPlay();
-	GetCharacterMovement()->MaxWalkSpeed = Stats->GetMoveSpeed();
+
+	InitGhostStats();
 
 	UCommonBehaviors.Add(NewObject<UPlayCommonSound>(this));
 	UCommonBehaviors.Add(NewObject<UManifest>(this));
 	UCommonBehaviors.Add(NewObject<UCloseDoor>(this));
 	UCommonBehaviors.Add(NewObject<UFlashlightBreakdown>(this));
 	UCommonBehaviors.Add(NewObject<UPlayFootstepSound>(this));
+}
+
+void AGhostBase::InitGhostStats()
+{
+	GetCharacterMovement()->MaxWalkSpeed = Stats->GetMoveSpeed();
+	PlayerDetectionRadius = Stats->GetPlayerDetectionRadius();
+	SoundDetectionRadius = Stats->GetSoundDetectionRadius();
+	BehaviorFrequency = Stats->GetBehaviorFrequency();
+
+	BehaviorEventCycleDelay = 1.0f;
+	bCanSetTimer = true;
+	CurrentPatrolIndex = 0;
 }
 
 // JSH TODO: Exception Handling+
@@ -76,33 +81,25 @@ void AGhostBase::PerformBehaviorEvent()
 
 void AGhostBase::CheckBehaviorEventCondition()
 {
-	if (SanityCorruptionRate <= 10 && bCanSetTimer) {
+	AGhostAIController* GhostAIController = Cast<AGhostAIController>(GetController());
+	if (GhostAIController == nullptr) return;
+
+	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 10 && bCanSetTimer) {
 		GetWorldTimerManager().SetTimer(GhostBehaviorCycleHandle, this, &AGhostBase::PerformBehaviorEvent, BehaviorEventCycleDelay, true);
 		bCanSetTimer = false;
 	}
-	else if (SanityCorruptionRate > 10 && !bCanSetTimer) {
+	else if (GhostAIController->GetPlayerSanityCorruptionRate() < 10 && !bCanSetTimer) {
 		GetWorldTimerManager().ClearTimer(GhostBehaviorCycleHandle);
 		bCanSetTimer = true;
 	}
 	else return;
 }
 
-// Enrage Event Declaration
+// Override function
 
 void AGhostBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
 	CheckBehaviorEventCondition();
-}
-
-void AGhostBase::StartPatrolEvent()
-{
-	;
-}
-
-void AGhostBase::StartEnrageEvent(AActor* Target)
-{
-	bIsEnraged = true;
-	TargetActor = Target;
 }

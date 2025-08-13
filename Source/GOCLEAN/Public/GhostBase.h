@@ -21,7 +21,7 @@ class GOCLEAN_API AGhostBase : public ACharacter
 protected:
 	AGhostBase();
 
-	// Stats component#include "GhostStatsComponent.h"
+	// Stats component
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	UGhostStatsComponent* Stats;
 	USkeletalMeshComponent* Mesh;
@@ -31,53 +31,27 @@ protected:
 	
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-	
+
+	// Stats
+	float PlayerDetectionRadius;
+	float SoundDetectionRadius;
+	float BehaviorFrequency;
+
 	// association variables with PlayerCharacter
 	float SanityCorruptionRate;
 
 	// Behavior Event Declaration
-
 	FTimerHandle GhostBehaviorCycleHandle;
 	float BehaviorEventCycleDelay;
 	bool bCanSetTimer;
-	bool bIsPatrolling;
-	bool bIsChasing;
 
 	void CheckBehaviorEventCondition();
 	void PerformBehaviorEvent();
-	void StartPatrolEvent();
-	virtual void StartEnrageEvent(AActor* Target);
+
+	void InitGhostStats();
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Patrol Points");
 	TArray<AActor*> PatrolPoints;
 	int32 CurrentPatrolIndex;
-
-	//virtual void Patrol();
-
-	/*
-	void PlayCommonSound();
-	void Manifest();
-	void Patrol();
-	void CloseDoor();
-	void PlayFootstepSound();
-	*/
-
-
-	/*
-	void LeaveBloodFootstep();
-	void LeaveSoot();
-	void LeaveFrost();
-	void SpillWaterBucket();
-	void RemovePlayerShadow();
-	void RestoreWaste();
-	void ThrowObject();
-	void TurnOffLights();
-	void AffectToObject();
-	*/
-
-	UPROPERTY(VisibleAnywhere, Category = "IsEnraged")
-	bool bIsEnraged;
-	UPROPERTY(VisibleAnywhere, Category = "Target")
-	AActor* TargetActor;
 };

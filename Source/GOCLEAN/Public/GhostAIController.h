@@ -1,9 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "GhostBase.h"
 #include "GhostAIController.generated.h"
 
 UCLASS()
@@ -12,18 +11,33 @@ class GOCLEAN_API AGhostAIController : public AAIController
 	GENERATED_BODY()
 	
 private:
-	FTimerHandle CheckArrivalHandle;
+	void BeginPlay() override;
+	void Tick(float DeltaTime) override;
+	void OnPossess(APawn* InPawn) override;
 
-	virtual void BeginPlay() override;
+	// Patrol event
+	bool bIsPatrolling;
+	FTimerHandle CheckArrivalHandle;
 
 	void MoveToPatrolPoint();
 	void CheckArrival();
 
+	// Enrage event
+	bool bIsChasing;
+	bool bIsEnrageEvent;
 
-	// 지금와서 보면, 굳이 BB와 BT를 써야할까?
-	void RunGhostBT();
-	UPROPERTY(EditDefaultsOnly, Category = "Ghost|AI")
+	void CheckEnrageEventCondition();
+	void StartChase();
+	void ChasePlayer();
+	void PlayerHunt();
 
-	UBehaviorTree* BT;
-	UBlackboardComponent* BB;
+	FTimerHandle ChasingPlayerHandle;
+
+	// Sanity check
+	float _PlayerSanityCorruptionRate;
+	FTimerHandle CheckPlayerSanityCorruptionHandle;
+
+	void CheckPlayerSanityCorruptionRate();
+public:
+	float GetPlayerSanityCorruptionRate() const;
 };

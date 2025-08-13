@@ -13,5 +13,7 @@ UCLASS()
 class GOCLEAN_API ALittleGhost : public AGhostBase
 {
 	GENERATED_BODY()
-	
+
+public:
+	ALittleGhost();
 };

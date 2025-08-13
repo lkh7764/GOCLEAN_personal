@@ -3,3 +3,7 @@
 
 #include "LittleGhost.h"
 
+ALittleGhost::ALittleGhost()
+{
+	;
+}

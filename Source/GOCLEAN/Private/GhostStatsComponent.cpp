@@ -6,14 +6,14 @@
 // Sets default values for this component's properties
 UGhostStatsComponent::UGhostStatsComponent()
 {
-	// 나중에 Date table 파씽 예정
+	//JSH Temp
 	MoveSpeed = 100.0f;
-	PlayerDetectionRadius = 20.0f;
-	SoundDetectionRadius = 20.0f;
-	BehaviorFrequency = 3;
+	PlayerDetectionRadius = 500.0f;
+	SoundDetectionRadius = 500.0f;
+	BehaviorFrequency = 3.0f;
 }
 
-int UGhostStatsComponent::GetMoveSpeed()
-{
-	return MoveSpeed;
-}
+float UGhostStatsComponent::GetMoveSpeed() const { return MoveSpeed; }
+float UGhostStatsComponent::GetPlayerDetectionRadius() const { return PlayerDetectionRadius; }
+float UGhostStatsComponent::GetSoundDetectionRadius() const { return SoundDetectionRadius; }
+float UGhostStatsComponent::GetBehaviorFrequency() const { return BehaviorFrequency; }

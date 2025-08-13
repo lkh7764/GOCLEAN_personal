@@ -8,11 +8,7 @@
 
 ADrownedGhost::ADrownedGhost()
 {
-	
-	
-
-	//if (Stats == nullptr) return;
-	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	;
 }
 
 void ADrownedGhost::BeginPlay()

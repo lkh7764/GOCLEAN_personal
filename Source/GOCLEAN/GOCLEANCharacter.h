@@ -10,6 +10,7 @@
 class UInputComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
+class USpotLightComponent;
 class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
@@ -17,24 +18,28 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class AGOCLEANCharacter : public ACharacter
+class GOCLEAN_API AGOCLEANCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Mesh, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* Mesh1P;
 
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
 
+	// Flashlight
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Flashlight, meta = (AllowPrivateAccess = "true"))
+	USpotLightComponent* FlashlightComponent;
+
 	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* JumpAction;
 
 	/** Move Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
 
 	// Crouch Input Action
@@ -45,6 +50,9 @@ class AGOCLEANCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* SprintAction;
 
+	// Flashlight Input Action
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* FlashlightAction;
 	
 public:
 	AGOCLEANCharacter();
@@ -52,33 +60,34 @@ public:
 protected:
 	virtual void BeginPlay();
 
-	//캐릭터 기본 스탯 선언 & 정의
+	//능력치 선언
 	
+	// Life
+	int Life;
+
 	// Sanity
-	float MaxSanity = 100.0f;
-	float CurrentSanity = MaxSanity;
+	float MaxSanity;
+	float CurrentSanity;
 
 	// Stamina
-	float MaxStamina = 10.0f;
-	float CurrentStamina = MaxStamina;
-	float StaminaDrainRate = 1.0f;
-	float StaminaRecoveryRate = 1.0f;
-	float RecoveryDelay = 1.0f;
-	bool bIsRecoveringStamina = false;
+	float MaxStamina;
+	float CurrentStamina;
+	float StaminaDrainRate;
+	float StaminaRecoveryRate;
+	float RecoveryDelay;
+	bool bIsRecoveringStamina;
 
 	FTimerHandle StaminaRecoveryHandle;
 
 	// Speed
-	float WalkSpeed = 600.0f;
-	float CrouchSpeed = 300.0f;
-	float SprintSpeed = 900.0f;
+	float WalkSpeed;
+	float CrouchSpeed;
+	float SprintSpeed;
+	float SpeedModifier;
 
 	// State
-	bool bIsCrouching = false;
-	bool bIsSprinting = false;
-
-	
-private:
+	bool bIsCrouching;
+	bool bIsSprinting;
 
 public:
 	/** Look Input Action */
@@ -92,24 +101,24 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-	// Called for crouching input
+	// Crouch
 	virtual void Crouch();
 
-	// Called for sprinting input 
+	// Sprint
 	void Sprint();
-
-	// Sprint() 기능 종료 시 호출
 	void SprintRelease();
 
-	// Stamina 관련
+	// Stamina
 	void StartStaminaRecovery();
 	void RecoverStamina();
+
+	// Flashlight
+	void ToggleFlashlight();
 
 	// ACharacter 함수 오버라이드
 	virtual void Jump() override;
 	virtual void Tick(float DeltaTime) override;
 
-protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End of APawn interface
@@ -120,5 +129,10 @@ public:
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
+	float GetCurrentSanity() const;
+	void DecreaseLife(int Amount);
+	void IncreaseSanity(float Amount);
+	void DecreaseSanity(float Amount);
+	void IncreaseSpeedModifier(float Amount);
+	void DecreaseSpeedModifier(float Amount);
 };
-
