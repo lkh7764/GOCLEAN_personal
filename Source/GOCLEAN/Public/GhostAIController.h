@@ -10,34 +10,62 @@ class GOCLEAN_API AGhostAIController : public AAIController
 {
 	GENERATED_BODY()
 	
+public:
+
+	// Getter //
+	float GetPlayerSanityCorruptionRate() const;
+
 private:
-	void BeginPlay() override;
+
+
+	// Overrieded //
+	void BeginPlay() override; // JSH TMP
 	void Tick(float DeltaTime) override;
 	void OnPossess(APawn* InPawn) override;
 
-	// Patrol event
-	bool bIsPatrolling;
-	FTimerHandle CheckArrivalHandle;
 
+	// Player sanity check //
+	void CheckPlayerSanityCorruptionRate();
+
+
+	// State //
+
+	// Patrol
 	void MoveToPatrolPoint();
-	void CheckArrival();
+	void CheckArrivalCurrentPatrolPoint();
 
-	// Enrage event
-	bool bIsChasing;
-	bool bIsEnrageEvent;
-
+	// Chase
 	void CheckEnrageEventCondition();
 	void StartChase();
 	void ChasePlayer();
+
+	// Hunt
 	void PlayerHunt();
 
-	FTimerHandle ChasingPlayerHandle;
 
-	// Sanity check
-	float _PlayerSanityCorruptionRate;
+
+
+
+	// Check player sanity //
+	float PlayerSanityCorruptionRate;
 	FTimerHandle CheckPlayerSanityCorruptionHandle;
 
-	void CheckPlayerSanityCorruptionRate();
-public:
-	float GetPlayerSanityCorruptionRate() const;
+
+	// State //
+
+	// Patrol
+	bool bIsPatrolling;
+	FTimerHandle CheckArrivalCurrentPointHandle;
+
+	// Chase
+	bool bIsChasing;
+	bool bIsEnrageEvent;
+	FTimerHandle ChasingPlayerHandle;
+
+	// Hunt
+	float ManifestRadius;
+	float HuntRadius;
+
+
+
 };

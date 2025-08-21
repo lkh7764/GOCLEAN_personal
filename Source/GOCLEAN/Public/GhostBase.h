@@ -18,40 +18,66 @@ class GOCLEAN_API AGhostBase : public ACharacter
 {
 	GENERATED_BODY()
 
-protected:
+public:
+
 	AGhostBase();
 
-	// Stats component
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	UGhostStatsComponent* Stats;
-	USkeletalMeshComponent* Mesh;
+	// Using in GhostAIController.h/.cpp
+	UPROPERTY(EditAnywhere, Category = "Patrol Points");
+	TArray<TObjectPtr<AActor>> PatrolPoints;
 
-	TArray<UEvidenceBehavior*> UEvidenceBehaviors;
-	TArray<UCommonBehavior*> UCommonBehaviors;
-	
-	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaTime) override;
+	int32 CurrentPatrolIndex;
 
-	// Stats
+protected:
+
+	// Behaviors //
+	UPROPERTY(VisibleAnywhere, Category = "CommonBehaviors");
+	TArray<TObjectPtr<UCommonBehavior>> UCommonBehaviors;
+
+	UPROPERTY(VisibleAnywhere, Category = "EvidenceBehaviors");
+	TArray<TObjectPtr<UEvidenceBehavior>> UEvidenceBehaviors;
+
+
+	// Overrided //
+	void BeginPlay() override;
+	void Tick(float DeltaTime) override;
+
+
+	// Ghost stats //
+	void InitGhostStats();
+
+
+	// Behavior event //
+	void CheckBehaviorEventCondition();
+	void PerformBehaviorEvent();
+
+
+
+
+
+	// Ghost stats //
 	float PlayerDetectionRadius;
 	float SoundDetectionRadius;
 	float BehaviorFrequency;
 
-	// association variables with PlayerCharacter
+
+	// Player sanity //
 	float SanityCorruptionRate;
 
-	// Behavior Event Declaration
-	FTimerHandle GhostBehaviorCycleHandle;
+
+	// Behavior event //
 	float BehaviorEventCycleDelay;
-	bool bCanSetTimer;
+	bool bCanSetBehaviorEventCycleTimer;
+	FTimerHandle GhostBehaviorCycleHandle;
 
-	void CheckBehaviorEventCondition();
-	void PerformBehaviorEvent();
+private:
 
-	void InitGhostStats();
+	UPROPERTY(VisibleAnywhere, Category = "Stats")
+	TObjectPtr<UGhostStatsComponent> Stats;
 
-public:
-	UPROPERTY(EditAnywhere, Category = "Patrol Points");
-	TArray<AActor*> PatrolPoints;
-	int32 CurrentPatrolIndex;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USkeletalMeshComponent> MeshComp;
+
+
+
 };

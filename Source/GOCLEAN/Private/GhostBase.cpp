@@ -6,21 +6,24 @@
 #include "PlayFootstepSound.h"
 #include "GhostAIController.h"
 
-// Sets default values
 AGhostBase::AGhostBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Stats Component
 	Stats = CreateDefaultSubobject<UGhostStatsComponent>(TEXT("GhostStats"));
 }
 
+
+// Overrided //
 void AGhostBase::BeginPlay()
 {
 	Super::BeginPlay();
 
 	InitGhostStats();
 
+	GetMesh()->SetHiddenInGame(false);
+
+	// Add Common behaviors
 	UCommonBehaviors.Add(NewObject<UPlayCommonSound>(this));
 	UCommonBehaviors.Add(NewObject<UManifest>(this));
 	UCommonBehaviors.Add(NewObject<UCloseDoor>(this));
@@ -28,6 +31,15 @@ void AGhostBase::BeginPlay()
 	UCommonBehaviors.Add(NewObject<UPlayFootstepSound>(this));
 }
 
+void AGhostBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	CheckBehaviorEventCondition();
+}
+
+
+// Ghost stats //
 void AGhostBase::InitGhostStats()
 {
 	GetCharacterMovement()->MaxWalkSpeed = Stats->GetMoveSpeed();
@@ -35,13 +47,28 @@ void AGhostBase::InitGhostStats()
 	SoundDetectionRadius = Stats->GetSoundDetectionRadius();
 	BehaviorFrequency = Stats->GetBehaviorFrequency();
 
-	BehaviorEventCycleDelay = 1.0f;
-	bCanSetTimer = true;
+	BehaviorEventCycleDelay = 3.0f;
+	bCanSetBehaviorEventCycleTimer = true;
 	CurrentPatrolIndex = 0;
 }
 
-// JSH TODO: Exception Handling+
-// Behavior Event Defination
+// Behavior event //
+void AGhostBase::CheckBehaviorEventCondition()
+{
+	AGhostAIController* GhostAIController = Cast<AGhostAIController>(GetController());
+	if (GhostAIController == nullptr) return;
+
+	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 10 && bCanSetBehaviorEventCycleTimer) {
+		GetWorldTimerManager().SetTimer(GhostBehaviorCycleHandle, this, &AGhostBase::PerformBehaviorEvent, BehaviorEventCycleDelay, true);
+		bCanSetBehaviorEventCycleTimer = false;
+	}
+	else if (GhostAIController->GetPlayerSanityCorruptionRate() < 10 && !bCanSetBehaviorEventCycleTimer) {
+		GetWorldTimerManager().ClearTimer(GhostBehaviorCycleHandle);
+		bCanSetBehaviorEventCycleTimer = true;
+	}
+	else return;
+}
+
 void AGhostBase::PerformBehaviorEvent()
 {
 	int32 RandEventNum;
@@ -77,29 +104,4 @@ void AGhostBase::PerformBehaviorEvent()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Stop]"));
 	}
-}
-
-void AGhostBase::CheckBehaviorEventCondition()
-{
-	AGhostAIController* GhostAIController = Cast<AGhostAIController>(GetController());
-	if (GhostAIController == nullptr) return;
-
-	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 10 && bCanSetTimer) {
-		GetWorldTimerManager().SetTimer(GhostBehaviorCycleHandle, this, &AGhostBase::PerformBehaviorEvent, BehaviorEventCycleDelay, true);
-		bCanSetTimer = false;
-	}
-	else if (GhostAIController->GetPlayerSanityCorruptionRate() < 10 && !bCanSetTimer) {
-		GetWorldTimerManager().ClearTimer(GhostBehaviorCycleHandle);
-		bCanSetTimer = true;
-	}
-	else return;
-}
-
-// Override function
-
-void AGhostBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	
-	CheckBehaviorEventCondition();
 }
