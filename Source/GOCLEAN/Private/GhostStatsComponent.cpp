@@ -3,7 +3,7 @@
 
 #include "GhostStatsComponent.h"
 
-// Sets default values for this component's properties
+
 UGhostStatsComponent::UGhostStatsComponent()
 {
 	//JSH Temp
@@ -12,6 +12,7 @@ UGhostStatsComponent::UGhostStatsComponent()
 	SoundDetectionRadius = 500.0f;
 	BehaviorFrequency = 3.0f;
 }
+
 
 float UGhostStatsComponent::GetMoveSpeed() const { return MoveSpeed; }
 float UGhostStatsComponent::GetPlayerDetectionRadius() const { return PlayerDetectionRadius; }

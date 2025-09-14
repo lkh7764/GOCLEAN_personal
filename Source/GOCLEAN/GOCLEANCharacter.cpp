@@ -13,7 +13,9 @@
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+
 
 AGOCLEANCharacter::AGOCLEANCharacter()
 {	
@@ -43,7 +45,7 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 	FlashlightComp->SetLightColor(FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("FFF2D6FF"))));
 
 
-	// Sets character default stats //
+	// Sets character base stats //
 	Life = 2;
 
 	MaxSanity = 100.0f;
@@ -68,7 +70,7 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 
 // Getter, Setter //
 float AGOCLEANCharacter::GetCurrentSanity() const { return CurrentSanity; }
-void AGOCLEANCharacter::DecreaseLife(int Amount) { Life -= Amount; }
+void AGOCLEANCharacter::DecreaseLife(int32 Amount) { Life -= Amount; }
 void AGOCLEANCharacter::SetCurrentSanity(float Amount) { CurrentSanity = Amount; }
 void AGOCLEANCharacter::IncreaseCurrentSanity(float Amount) { CurrentSanity += Amount; }
 void AGOCLEANCharacter::DecreaseCurrentSanity(float Amount) { CurrentSanity -= Amount; }

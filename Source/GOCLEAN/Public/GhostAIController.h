@@ -15,8 +15,8 @@ public:
 	// Getter //
 	float GetPlayerSanityCorruptionRate() const;
 
-private:
 
+private:
 
 	// Overrieded //
 	void BeginPlay() override; // JSH TMP
@@ -45,8 +45,8 @@ private:
 
 
 
-
 	// Check player sanity //
+	TObjectPtr<AGOCLEANCharacter> Player;
 	float PlayerSanityCorruptionRate;
 	FTimerHandle CheckPlayerSanityCorruptionHandle;
 
@@ -55,7 +55,7 @@ private:
 
 	// Patrol
 	bool bIsPatrolling;
-	FTimerHandle CheckArrivalCurrentPointHandle;
+	FTimerHandle CheckArrivalToCurrentPointHandle;
 
 	// Chase
 	bool bIsChasing;
@@ -65,7 +65,5 @@ private:
 	// Hunt
 	float ManifestRadius;
 	float HuntRadius;
-
-
 
 };

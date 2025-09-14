@@ -18,24 +18,34 @@ class GOCLEAN_API AGhostBase : public ACharacter
 {
 	GENERATED_BODY()
 
+
 public:
 
 	AGhostBase();
 
-	// Using in GhostAIController.h/.cpp
+
+
+
+	// Using in GhostAIController.h/.cpp Patrol
 	UPROPERTY(EditAnywhere, Category = "Patrol Points");
 	TArray<TObjectPtr<AActor>> PatrolPoints;
 
+
+
+
 	int32 CurrentPatrolIndex;
+
 
 protected:
 
 	// Behaviors //
-	UPROPERTY(VisibleAnywhere, Category = "CommonBehaviors");
-	TArray<TObjectPtr<UCommonBehavior>> UCommonBehaviors;
+	UPROPERTY(VisibleAnywhere, Category = "Behaviors");
+	TArray<TObjectPtr<UCommonBehavior>> CommonBehaviors;
 
-	UPROPERTY(VisibleAnywhere, Category = "EvidenceBehaviors");
-	TArray<TObjectPtr<UEvidenceBehavior>> UEvidenceBehaviors;
+	UPROPERTY(VisibleAnywhere, Category = "Behaviors");
+	TArray<TObjectPtr<UEvidenceBehavior>> EvidenceBehaviors;
+
+
 
 
 	// Overrided //
@@ -50,7 +60,6 @@ protected:
 	// Behavior event //
 	void CheckBehaviorEventCondition();
 	void PerformBehaviorEvent();
-
 
 
 
@@ -70,14 +79,16 @@ protected:
 	bool bCanSetBehaviorEventCycleTimer;
 	FTimerHandle GhostBehaviorCycleHandle;
 
+
 private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Stats")
-	TObjectPtr<UGhostStatsComponent> Stats;
+	TObjectPtr<UGhostStatsComponent> StatsComp;
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> MeshComp;
 
-
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<AGhostAIController> GhostAIController;
 
 };

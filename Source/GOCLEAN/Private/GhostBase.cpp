@@ -6,11 +6,12 @@
 #include "PlayFootstepSound.h"
 #include "GhostAIController.h"
 
+
 AGhostBase::AGhostBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	Stats = CreateDefaultSubobject<UGhostStatsComponent>(TEXT("GhostStats"));
+	StatsComp = CreateDefaultSubobject<UGhostStatsComponent>(TEXT("GhostStats"));
 }
 
 
@@ -23,12 +24,15 @@ void AGhostBase::BeginPlay()
 
 	GetMesh()->SetHiddenInGame(false);
 
+	// AI Controller
+	GhostAIController = Cast<AGhostAIController>(GetController());
+
 	// Add Common behaviors
-	UCommonBehaviors.Add(NewObject<UPlayCommonSound>(this));
-	UCommonBehaviors.Add(NewObject<UManifest>(this));
-	UCommonBehaviors.Add(NewObject<UCloseDoor>(this));
-	UCommonBehaviors.Add(NewObject<UFlashlightBreakdown>(this));
-	UCommonBehaviors.Add(NewObject<UPlayFootstepSound>(this));
+	CommonBehaviors.Add(NewObject<UPlayCommonSound>(this));
+	CommonBehaviors.Add(NewObject<UManifest>(this));
+	CommonBehaviors.Add(NewObject<UCloseDoor>(this));
+	CommonBehaviors.Add(NewObject<UFlashlightBreakdown>(this));
+	CommonBehaviors.Add(NewObject<UPlayFootstepSound>(this));
 }
 
 void AGhostBase::Tick(float DeltaTime)
@@ -42,10 +46,10 @@ void AGhostBase::Tick(float DeltaTime)
 // Ghost stats //
 void AGhostBase::InitGhostStats()
 {
-	GetCharacterMovement()->MaxWalkSpeed = Stats->GetMoveSpeed();
-	PlayerDetectionRadius = Stats->GetPlayerDetectionRadius();
-	SoundDetectionRadius = Stats->GetSoundDetectionRadius();
-	BehaviorFrequency = Stats->GetBehaviorFrequency();
+	GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetMoveSpeed();
+	PlayerDetectionRadius = StatsComp->GetPlayerDetectionRadius();
+	SoundDetectionRadius = StatsComp->GetSoundDetectionRadius();
+	BehaviorFrequency = StatsComp->GetBehaviorFrequency();
 
 	BehaviorEventCycleDelay = 3.0f;
 	bCanSetBehaviorEventCycleTimer = true;
@@ -55,7 +59,6 @@ void AGhostBase::InitGhostStats()
 // Behavior event //
 void AGhostBase::CheckBehaviorEventCondition()
 {
-	AGhostAIController* GhostAIController = Cast<AGhostAIController>(GetController());
 	if (GhostAIController == nullptr) return;
 
 	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 10 && bCanSetBehaviorEventCycleTimer) {
@@ -84,17 +87,17 @@ void AGhostBase::PerformBehaviorEvent()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Perform Evidence Behavior]"));
 		
-		RandEvidenceBehaviorNum = FMath::RandRange(0, UEvidenceBehaviors.Num() - 1);
-		if (UEvidenceBehaviors[RandEvidenceBehaviorNum] == nullptr) return;
-		UEvidenceBehaviors[RandEvidenceBehaviorNum]->ExecuteBehavior(this);
+		RandEvidenceBehaviorNum = FMath::RandRange(0, EvidenceBehaviors.Num() - 1);
+		if (EvidenceBehaviors[RandEvidenceBehaviorNum] == nullptr) return;
+		EvidenceBehaviors[RandEvidenceBehaviorNum]->ExecuteBehavior(this);
 	}
 	else if (4 <= RandEventNum && RandEventNum <= 5)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Perform Common Behavior]"));
 		
-		RandCommonBehaviorNum = FMath::RandRange(0, UCommonBehaviors.Num() - 1);
-		if (UCommonBehaviors[RandCommonBehaviorNum] == nullptr) return;
-		UCommonBehaviors[RandCommonBehaviorNum]->ExecuteBehavior(this);
+		RandCommonBehaviorNum = FMath::RandRange(0, CommonBehaviors.Num() - 1);
+		if (CommonBehaviors[RandCommonBehaviorNum] == nullptr) return;
+		CommonBehaviors[RandCommonBehaviorNum]->ExecuteBehavior(this);
 	}
 	else if (6 <= RandEventNum && RandEventNum <= 7)
 	{

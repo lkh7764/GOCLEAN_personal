@@ -11,6 +11,7 @@ float AGhostAIController::GetPlayerSanityCorruptionRate() const { return PlayerS
 void AGhostAIController::BeginPlay() // JSH TMP
 {
 	Super::BeginPlay();
+	Player = Cast<AGOCLEANCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	MoveToPatrolPoint();
 }
 
@@ -42,7 +43,6 @@ void AGhostAIController::OnPossess(APawn* InPawn)
 void AGhostAIController::CheckPlayerSanityCorruptionRate()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Ghost Get player sanity"));
-	AGOCLEANCharacter* Player = Cast<AGOCLEANCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (Player == nullptr) return;
 
 	// JSH Flag: Sanity
@@ -66,7 +66,7 @@ void AGhostAIController::MoveToPatrolPoint()
 		MoveToActor(TargetPoint);
 	}
 
-	GetWorld()->GetTimerManager().SetTimer(CheckArrivalCurrentPointHandle, this, &AGhostAIController::CheckArrivalCurrentPatrolPoint, 1.0f, true);
+	GetWorld()->GetTimerManager().SetTimer(CheckArrivalToCurrentPointHandle, this, &AGhostAIController::CheckArrivalCurrentPatrolPoint, 1.0f, true);
 }
 
 void AGhostAIController::CheckArrivalCurrentPatrolPoint()
@@ -80,7 +80,7 @@ void AGhostAIController::CheckArrivalCurrentPatrolPoint()
 	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPoint->GetActorLocation());
 	if (Distance < 50.f)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(CheckArrivalCurrentPointHandle);
+		GetWorld()->GetTimerManager().ClearTimer(CheckArrivalToCurrentPointHandle);
 
 		GhostCharacter->CurrentPatrolIndex = (GhostCharacter->CurrentPatrolIndex + 1) % (GhostCharacter->PatrolPoints.Num());
 		MoveToPatrolPoint();

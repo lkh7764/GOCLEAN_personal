@@ -23,15 +23,18 @@ class GOCLEAN_API AGOCLEANCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
+
 public:
 
 	AGOCLEANCharacter();
 
 
+
+
 	// Getter, Setter //
 	float GetCurrentSanity() const;
 
-	void DecreaseLife(int Amount);
+	void DecreaseLife(int32 Amount);
 
 	void SetCurrentSanity(float Amount);
 	void IncreaseCurrentSanity(float Amount);
@@ -39,6 +42,7 @@ public:
 
 	void IncreaseBaseSpeed(float Amount);
 	void DecreaseBaseSpeed(float Amount);
+
 
 private:
 
@@ -71,6 +75,8 @@ private:
 	TObjectPtr<UInputAction> FlashlightAction;
 
 
+
+
 	// Overrided //
 	void Tick(float DeltaTime) override;
 	void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
@@ -95,11 +101,10 @@ private:
 
 
 
-
 	// Character default stats //
 
 	// 1. Life
-	int Life;
+	int32 Life;
 
 	// 2. Sanity
 	float MaxSanity;
@@ -125,5 +130,8 @@ private:
 	bool bIsSprinting;
 
 
+	// Character base stats
 
+
+	// Character runtime stats
 };
