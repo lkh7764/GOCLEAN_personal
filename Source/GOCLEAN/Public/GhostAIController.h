@@ -5,6 +5,8 @@
 #include "GhostBase.h"
 #include "GhostAIController.generated.h"
 
+class AGOCLEANCharacter;
+
 UCLASS()
 class GOCLEAN_API AGhostAIController : public AAIController
 {

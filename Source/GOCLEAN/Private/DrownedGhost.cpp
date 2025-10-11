@@ -15,7 +15,7 @@ void ADrownedGhost::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UEvidenceBehaviors.Add(NewObject<ULeaveBloodFootstep>(this));
-	UEvidenceBehaviors.Add(NewObject<ULeaveSoot>(this));
-	UEvidenceBehaviors.Add(NewObject<ULeaveFrost>(this));
+	EvidenceBehaviors.Add(NewObject<ULeaveBloodFootstep>(this));
+	EvidenceBehaviors.Add(NewObject<ULeaveSoot>(this));
+	EvidenceBehaviors.Add(NewObject<ULeaveFrost>(this));
 }

@@ -12,6 +12,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GhostBase.generated.h"
 
+//JSH FLAH AGHOSTAIController -> Revision: AGhostAIController
+class AGhostAIController;
+class UCommonBehavior;
+class UEvidenceBehavior;
 
 UCLASS(Abstract)
 class GOCLEAN_API AGhostBase : public ACharacter

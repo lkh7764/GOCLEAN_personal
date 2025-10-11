@@ -8,9 +8,11 @@ float AGhostAIController::GetPlayerSanityCorruptionRate() const { return PlayerS
 
 
 // Overrided //
-void AGhostAIController::BeginPlay() // JSH TMP
+void AGhostAIController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// JSH TMP
 	Player = Cast<AGOCLEANCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	MoveToPatrolPoint();
 }
@@ -19,7 +21,8 @@ void AGhostAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	if(!bIsEnrageEvent) CheckEnrageEventCondition();
+	if(!bIsEnrageEvent) 
+		CheckEnrageEventCondition();
 }
 
 void AGhostAIController::OnPossess(APawn* InPawn)
@@ -46,9 +49,9 @@ void AGhostAIController::CheckPlayerSanityCorruptionRate()
 	if (Player == nullptr) return;
 
 	// JSH Flag: Sanity
-	UE_LOG(LogTemp, Warning, TEXT("Player's current sanity corruption rate: %f"), (100.0f - Player->GetCurrentSanity()));
+	UE_LOG(LogTemp, Warning, TEXT("Player's current sanity corruption rate: %f"), (100.0f - Player->GetPlayerCurrentSanity()));
 
-	PlayerSanityCorruptionRate = (100.0f - Player->GetCurrentSanity());
+	PlayerSanityCorruptionRate = (100.0f - Player->GetPlayerCurrentSanity());
 }
 
 
@@ -145,9 +148,10 @@ void AGhostAIController::PlayerHunt()
 		PlayerSanityCorruptionRate = 0;
 
 		// JSH Temp: Player sanity reset
-		AGOCLEANCharacter* Player = Cast<AGOCLEANCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		//AGOCLEANCharacter* Player = Cast<AGOCLEANCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 		if (Player == nullptr) return;
-		Player->SetCurrentSanity(100.0f);
+		Player->SetPlayerCurrentSanity(100.0f);
+
 		MoveToPatrolPoint();
 	}
 }

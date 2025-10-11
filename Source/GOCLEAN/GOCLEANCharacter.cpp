@@ -19,7 +19,6 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 AGOCLEANCharacter::AGOCLEANCharacter()
 {	
-	// Components //
 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMeshComp"));
 	MeshComp->SetOnlyOwnerSee(true);
 	MeshComp->SetupAttachment(CameraComp);
@@ -27,6 +26,7 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 	MeshComp->CastShadow = false;
 	MeshComp->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
+	// Components //
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(GetCapsuleComponent());
 	CameraComp->SetRelativeLocation(FVector(-10.f, 0.f, 60.f));
@@ -44,58 +44,46 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 	FlashlightComp->SoftSourceRadius = 500.f;
 	FlashlightComp->SetLightColor(FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("FFF2D6FF"))));
 
+	StatsComp = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("StasComp"));
 
-	// Sets character base stats //
-	Life = 2;
 
-	MaxSanity = 100.0f;
-	CurrentSanity = MaxSanity;
-
-	MaxStamina = 10.0f;
-	CurrentStamina = MaxStamina;
-	StaminaDrainRate = 1.0f;
-	StaminaRecoveryRate = 1.0f;
-	RecoveryDelay = 1.0f;
+	// States //
 	bIsRecoveringStamina = false;
-
-	BaseSpeed = 600.0f;
-	WalkSpeed = BaseSpeed;
-	CrouchSpeed = BaseSpeed - 300.0f;
-	SprintSpeed = BaseSpeed + 300.0f;
-
 	bIsCrouching = false;
 	bIsSprinting = false;
 }
 
 
 // Getter, Setter //
-float AGOCLEANCharacter::GetCurrentSanity() const { return CurrentSanity; }
-void AGOCLEANCharacter::DecreaseLife(int32 Amount) { Life -= Amount; }
-void AGOCLEANCharacter::SetCurrentSanity(float Amount) { CurrentSanity = Amount; }
-void AGOCLEANCharacter::IncreaseCurrentSanity(float Amount) { CurrentSanity += Amount; }
-void AGOCLEANCharacter::DecreaseCurrentSanity(float Amount) { CurrentSanity -= Amount; }
-void AGOCLEANCharacter::IncreaseBaseSpeed(float Amount) { BaseSpeed += Amount; }
-void AGOCLEANCharacter::DecreaseBaseSpeed(float Amount) { BaseSpeed -= Amount; }
+float AGOCLEANCharacter::GetPlayerCurrentSanity() const { return StatsComp ? StatsComp->GetCurrentSanity() : 0.0f; }
+void AGOCLEANCharacter::SetPlayerCurrentSanity(float NewPlayerCurrentSanity) { 
+	if (StatsComp) return;
+	StatsComp->SetCurrentSanity(NewPlayerCurrentSanity);
+}
 
 
 // Overrided //
 void AGOCLEANCharacter::Tick(float DeltaTime)
 {
+	if (StatsComp) return;
+
 	Super::Tick(DeltaTime);
 
 	if (bIsSprinting) {
-		CurrentStamina -= StaminaDrainRate * DeltaTime;
-		UE_LOG(LogTemp, Log, TEXT("bIsSprinting : CurrentStamina : %f"), CurrentStamina);
+		//JSH TEMP: CurrentStamina -= StaminaDrainRate * DeltaTime;
+		StatsComp->DecreaseCurrentStamina(StatsComp->GetStaminaDrainRate() * DeltaTime);
+		UE_LOG(LogTemp, Log, TEXT("bIsSprinting : CurrentStamina : %f"), StatsComp->GetCurrentStamina());
 
-		if (CurrentStamina <= 0.0f) {
-			CurrentStamina = 0.0f;
+		if (StatsComp->GetCurrentStamina() <= 0.0f) {
+			StatsComp->SetCurrentStamina(0.0f);
 			SprintRelease();
 		}
 	}
 
 	// JSH Flag: Sanity
 	//UE_LOG(LogTemp, Warning, TEXT("Current Player Sanity: %f"), CurrentSanity);
-	DecreaseCurrentSanity(0.0167f);
+	StatsComp->DecreaseCurrentSanity(0.0167f);
+	//StatsComp->SetCurrentSanity(StatsComp->GetCurrentSanity());
 }
 
 void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -161,6 +149,8 @@ void AGOCLEANCharacter::Look(const FInputActionValue& Value)
 
 void AGOCLEANCharacter::Crouch()
 {
+	if (StatsComp) return;
+
 	if (GetCharacterMovement()->IsFalling()) return;
 
 	float StandingCapsuleHalfHeight = 96.0f;
@@ -171,7 +161,7 @@ void AGOCLEANCharacter::Crouch()
 		// Standing
 		GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHalfHeight);
 		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f));
-		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
 
 		bIsCrouching = false;
 	}
@@ -180,7 +170,7 @@ void AGOCLEANCharacter::Crouch()
 		// Crouching
 		GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchingCapsuleHalfHeight);
 		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f));
-		GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetCrouchSpeed();
 
 		bIsCrouching = true;
 	}
@@ -188,12 +178,14 @@ void AGOCLEANCharacter::Crouch()
 
 void AGOCLEANCharacter::Sprint()
 {
+	if (StatsComp) return;
+
 	if (bIsCrouching || GetCharacterMovement()->IsFalling()) return;
 
-	if (CurrentStamina <= 0.0f) return;
+	if (StatsComp->GetCurrentStamina() <= 0.0f) return;
 	
 	bIsSprinting = true;
-	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetSprintSpeed();
 
 	bIsRecoveringStamina = false;
 	GetWorldTimerManager().ClearTimer(StaminaRecoveryHandle);
@@ -201,15 +193,17 @@ void AGOCLEANCharacter::Sprint()
 
 void AGOCLEANCharacter::SprintRelease()
 {
+	if (StatsComp) return;
+
 	if (bIsCrouching) return;
 
 	bIsSprinting = false;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
 
 	if (bIsRecoveringStamina == false) {
 		bIsRecoveringStamina = true;
 		//UE_LOG(LogTemp, Log, TEXT("Stamina Recover Start"));
-		GetWorldTimerManager().SetTimer(StaminaRecoveryHandle, this, &AGOCLEANCharacter::StartStaminaRecovery, RecoveryDelay, false);
+		GetWorldTimerManager().SetTimer(StaminaRecoveryHandle, this, &AGOCLEANCharacter::StartStaminaRecovery, StatsComp->GetStaminaRecoveryDelay(), false);
 	}
 }
 
@@ -221,10 +215,14 @@ void AGOCLEANCharacter::StartStaminaRecovery()
 
 void AGOCLEANCharacter::RecoverStamina() 
 {
-	CurrentStamina += StaminaRecoveryRate * 0.1f;
+	if (StatsComp) return;
+
+	// JSH TEMP: CurrentStamina += StaminaRecoveryRate * 0.1f;
+	StatsComp->IncreaseCurrentStamina(StatsComp->GetStaminaRecoveryRate() * 0.1f);
+
 	//UE_LOG(LogTemp, Log, TEXT("bIsRecoveringStamina : CurrentStamina : %f"), CurrentStamina);
-	if (CurrentStamina >= MaxStamina) {
-		CurrentStamina = MaxStamina;
+	if (StatsComp->GetCurrentStamina() >= StatsComp->GetMaxStamina()) {
+		StatsComp->SetCurrentStamina(StatsComp->GetMaxStamina());
 		bIsRecoveringStamina = false;
 		//UE_LOG(LogTemp, Log, TEXT("Stamina Recover End"));
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryHandle);

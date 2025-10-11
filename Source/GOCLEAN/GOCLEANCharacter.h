@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "InputAction.h"
+
+#include "CharacterStatsComponent.h"
+
 #include "GOCLEANCharacter.generated.h"
 
 class UInputComponent;
@@ -23,29 +26,16 @@ class GOCLEAN_API AGOCLEANCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-
 public:
-
 	AGOCLEANCharacter();
 
 
-
-
 	// Getter, Setter //
-	float GetCurrentSanity() const;
-
-	void DecreaseLife(int32 Amount);
-
-	void SetCurrentSanity(float Amount);
-	void IncreaseCurrentSanity(float Amount);
-	void DecreaseCurrentSanity(float Amount);
-
-	void IncreaseBaseSpeed(float Amount);
-	void DecreaseBaseSpeed(float Amount);
+	float GetPlayerCurrentSanity() const;
+	void SetPlayerCurrentSanity(float NewPlayerCurrentSanity);
 
 
 private:
-
 	// Components //
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> MeshComp;
@@ -53,7 +43,8 @@ private:
 	TObjectPtr<UCameraComponent> CameraComp;
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpotLightComponent> FlashlightComp;
-
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCharacterStatsComponent> StatsComp;
 
 	// Input Actions //
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
@@ -101,37 +92,13 @@ private:
 
 
 
-	// Character default stats //
-
-	// 1. Life
-	int32 Life;
-
-	// 2. Sanity
-	float MaxSanity;
-	float CurrentSanity;
-
-	// 3. Stamina
-	float MaxStamina;
-	float CurrentStamina;
-	float StaminaDrainRate;
-	float StaminaRecoveryRate;
-	float RecoveryDelay;
-	bool bIsRecoveringStamina;
+	// Handles //
 	FTimerHandle StaminaRecoveryHandle;
 
-	// 4. Speed
-	float BaseSpeed;
-	float WalkSpeed;
-	float CrouchSpeed;
-	float SprintSpeed;
 
-	// 5. State
+	// States //
+	bool bIsRecoveringStamina;
 	bool bIsCrouching;
 	bool bIsSprinting;
 
-
-	// Character base stats
-
-
-	// Character runtime stats
 };

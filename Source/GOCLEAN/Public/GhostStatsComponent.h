@@ -14,7 +14,14 @@ class GOCLEAN_API UGhostStatsComponent : public UActorComponent
 
 	friend class AGhostBase;
 
+
+public:
+
+	UGhostStatsComponent();
+
+
 private:
+
 	//JSH Temp
 	UPROPERTY(EditAnywhere, Category = "Stats")
 	float MoveSpeed;
@@ -25,11 +32,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Stats")
 	float BehaviorFrequency;
 
-private:
+
+
+	
 	float GetMoveSpeed() const;
 	float GetPlayerDetectionRadius() const;
 	float GetSoundDetectionRadius() const;
 	float GetBehaviorFrequency() const;
-public:
-	UGhostStatsComponent();
+
 };
