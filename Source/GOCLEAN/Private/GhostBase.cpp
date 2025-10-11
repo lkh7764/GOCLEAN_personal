@@ -12,6 +12,11 @@ AGhostBase::AGhostBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	StatsComp = CreateDefaultSubobject<UGhostStatsComponent>(TEXT("GhostStats"));
+
+	// Default variables
+	BehaviorEventCycleDelay = 3.0f;
+	bCanSetBehaviourEventCycleTimer = true;
+	CurrentPatrolIndex = 0;
 }
 
 
@@ -19,8 +24,6 @@ AGhostBase::AGhostBase()
 void AGhostBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	InitGhostStats();
 
 	GetMesh()->SetHiddenInGame(false);
 
@@ -33,6 +36,9 @@ void AGhostBase::BeginPlay()
 	CommonBehaviors.Add(NewObject<UCloseDoor>(this));
 	CommonBehaviors.Add(NewObject<UFlashlightBreakdown>(this));
 	CommonBehaviors.Add(NewObject<UPlayFootstepSound>(this));
+
+	// Init default value
+	GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetMoveSpeed();
 }
 
 void AGhostBase::Tick(float DeltaTime)
@@ -43,31 +49,18 @@ void AGhostBase::Tick(float DeltaTime)
 }
 
 
-// Ghost stats //
-void AGhostBase::InitGhostStats()
-{
-	GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetMoveSpeed();
-	PlayerDetectionRadius = StatsComp->GetPlayerDetectionRadius();
-	SoundDetectionRadius = StatsComp->GetSoundDetectionRadius();
-	BehaviorFrequency = StatsComp->GetBehaviorFrequency();
-
-	BehaviorEventCycleDelay = 3.0f;
-	bCanSetBehaviorEventCycleTimer = true;
-	CurrentPatrolIndex = 0;
-}
-
 // Behavior event //
 void AGhostBase::CheckBehaviorEventCondition()
 {
 	if (GhostAIController == nullptr) return;
 
-	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 10 && bCanSetBehaviorEventCycleTimer) {
+	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 10 && bCanSetBehaviourEventCycleTimer) {
 		GetWorldTimerManager().SetTimer(GhostBehaviorCycleHandle, this, &AGhostBase::PerformBehaviorEvent, BehaviorEventCycleDelay, true);
-		bCanSetBehaviorEventCycleTimer = false;
+		bCanSetBehaviourEventCycleTimer = false;
 	}
-	else if (GhostAIController->GetPlayerSanityCorruptionRate() < 10 && !bCanSetBehaviorEventCycleTimer) {
+	else if (GhostAIController->GetPlayerSanityCorruptionRate() < 10 && !bCanSetBehaviourEventCycleTimer) {
 		GetWorldTimerManager().ClearTimer(GhostBehaviorCycleHandle);
-		bCanSetBehaviorEventCycleTimer = true;
+		bCanSetBehaviourEventCycleTimer = true;
 	}
 	else return;
 }

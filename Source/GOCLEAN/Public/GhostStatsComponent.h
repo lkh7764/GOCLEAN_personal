@@ -20,6 +20,20 @@ public:
 	UGhostStatsComponent();
 
 
+
+	// Init
+	void InitializeGhostStats(
+		float BaseMoveSpeed,
+		float BasePlayerDetectionRadius,
+		float BaseSoundDetectionRadius,
+		float BaseBehaviourFrequency)
+	{
+		MoveSpeed = BaseMoveSpeed;
+		PlayerDetectionRadius = BasePlayerDetectionRadius;
+		SoundDetectionRadius = BaseSoundDetectionRadius;
+		BehaviourFrequency = BaseBehaviourFrequency;
+	}
+
 private:
 
 	//JSH Temp
@@ -30,7 +44,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Stats")
 	float SoundDetectionRadius;
 	UPROPERTY(EditAnywhere, Category = "Stats")
-	float BehaviorFrequency;
+	float BehaviourFrequency;
 
 
 

@@ -8,7 +8,8 @@
 
 ADrownedGhost::ADrownedGhost()
 {
-	;
+	// MoveSpeed, PlayerDetectionRadius, SoundDetectionRadius, BehaviourFrequency
+	StatsComp->InitializeGhostStats(100.0f, 500.0f, 500.0f, 3.0f);
 }
 
 void ADrownedGhost::BeginPlay()

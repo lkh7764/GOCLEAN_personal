@@ -6,15 +6,13 @@
 
 UGhostStatsComponent::UGhostStatsComponent()
 {
-	//JSH Temp
-	MoveSpeed = 100.0f;
-	PlayerDetectionRadius = 500.0f;
-	SoundDetectionRadius = 500.0f;
-	BehaviorFrequency = 3.0f;
+	;
 }
 
 
+
+// Getter, Setter //
 float UGhostStatsComponent::GetMoveSpeed() const { return MoveSpeed; }
 float UGhostStatsComponent::GetPlayerDetectionRadius() const { return PlayerDetectionRadius; }
 float UGhostStatsComponent::GetSoundDetectionRadius() const { return SoundDetectionRadius; }
-float UGhostStatsComponent::GetBehaviorFrequency() const { return BehaviorFrequency; }
+float UGhostStatsComponent::GetBehaviorFrequency() const { return BehaviourFrequency; }
