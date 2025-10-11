@@ -57,7 +57,7 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 // Getter, Setter //
 float AGOCLEANCharacter::GetPlayerCurrentSanity() const { return StatsComp ? StatsComp->GetCurrentSanity() : 0.0f; }
 void AGOCLEANCharacter::SetPlayerCurrentSanity(float NewPlayerCurrentSanity) { 
-	if (StatsComp) return;
+	if (StatsComp == nullptr) return;
 	StatsComp->SetCurrentSanity(NewPlayerCurrentSanity);
 }
 
@@ -65,7 +65,7 @@ void AGOCLEANCharacter::SetPlayerCurrentSanity(float NewPlayerCurrentSanity) {
 // Overrided //
 void AGOCLEANCharacter::Tick(float DeltaTime)
 {
-	if (StatsComp) return;
+	if (StatsComp == nullptr) return;
 
 	Super::Tick(DeltaTime);
 
@@ -149,7 +149,7 @@ void AGOCLEANCharacter::Look(const FInputActionValue& Value)
 
 void AGOCLEANCharacter::Crouch()
 {
-	if (StatsComp) return;
+	if (StatsComp == nullptr) return;
 
 	if (GetCharacterMovement()->IsFalling()) return;
 
@@ -178,7 +178,7 @@ void AGOCLEANCharacter::Crouch()
 
 void AGOCLEANCharacter::Sprint()
 {
-	if (StatsComp) return;
+	if (StatsComp == nullptr) return;
 
 	if (bIsCrouching || GetCharacterMovement()->IsFalling()) return;
 
@@ -193,7 +193,7 @@ void AGOCLEANCharacter::Sprint()
 
 void AGOCLEANCharacter::SprintRelease()
 {
-	if (StatsComp) return;
+	if (StatsComp == nullptr) return;
 
 	if (bIsCrouching) return;
 
@@ -215,7 +215,7 @@ void AGOCLEANCharacter::StartStaminaRecovery()
 
 void AGOCLEANCharacter::RecoverStamina() 
 {
-	if (StatsComp) return;
+	if (StatsComp == nullptr) return;
 
 	// JSH TEMP: CurrentStamina += StaminaRecoveryRate * 0.1f;
 	StatsComp->IncreaseCurrentStamina(StatsComp->GetStaminaRecoveryRate() * 0.1f);
