@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GObjectSystem/Server/GNonfixedObjectState.h"
+#include "GObjectSystem/Server/GNonfixedObjectData.h"
 
 // Sets default values for this component's properties
-UGNonfixedObjectState::UGNonfixedObjectState()
+UGNonfixedObjectData::UGNonfixedObjectData()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -15,7 +15,7 @@ UGNonfixedObjectState::UGNonfixedObjectState()
 
 
 // Called when the game starts
-void UGNonfixedObjectState::BeginPlay()
+void UGNonfixedObjectData::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -25,7 +25,7 @@ void UGNonfixedObjectState::BeginPlay()
 
 
 // Called every frame
-void UGNonfixedObjectState::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UGNonfixedObjectData::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
