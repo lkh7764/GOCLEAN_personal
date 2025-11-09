@@ -26,6 +26,8 @@ protected:
 	// 게임 플레이 중 위치이동이 발생할 수 있는 오브젝트의 정보를 저장
 	UPROPERTY()
 	TArray<TObjectPtr<UGNonfixedObjectData>> nonfixedObjPool;
+	UPROPERTY(EditDefaultsOnly, Category = "Object Pool");
+	int32 poolSize = 500;
 	TArray<int32> freeObjectIndicesStack;	// pool로 반환된 가장 최신 index를 push, spawn 시 pop 하여 해당 index의 data를 재사용
 
 	UPROPERTY()
@@ -62,10 +64,15 @@ protected:
 protected:
 	virtual void BeginPlay() override;
 
+	void InitNonfixedObjects();
+	void InitFixedObjects();
+
+
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-
-	void InitNonfixedObjectPool();
-	void SpawnObject();
+	// 비고정오브젝트 풀과 고정오브젝트에 UGObjectData를 할당 
+	void InitiateObjects(UObject*);
+	// 스폰이 완료된 오브젝트 데이터를 
+	void SetObjectDatas();
 };

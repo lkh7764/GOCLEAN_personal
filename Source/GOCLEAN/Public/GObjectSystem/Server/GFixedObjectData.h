@@ -13,7 +13,7 @@ enum class EFixedObjStatus : uint8 {
 	E_Used				UMETA(DisplayName = "Used - »ç¿ëÁß"),
 	E_Destroyed			UMETA(DisplayName = "Destroyed - ÆÄ±«µÊ"),
 
-	E_MAX			UMETA(Hidden)
+	E_MAX				UMETA(Hidden)
 };
 
 

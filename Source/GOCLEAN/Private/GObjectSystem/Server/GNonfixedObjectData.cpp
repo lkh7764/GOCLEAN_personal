@@ -10,7 +10,12 @@ UGNonfixedObjectData::UGNonfixedObjectData()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
+
+	// 1. allocate non-use state's data
+	_objectID = -1;
+	_objectType = -1;
+	_currStatus = ENonfixedObjStatus::E_None;
+	_location = FVector::ZeroVector;
 }
 
 

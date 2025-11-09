@@ -41,16 +41,16 @@ public:
 	// variables
 protected:
 	UPROPERTY(VisibleAnywhere)
-	int32 objectID;
+	int32 _objectID;
 
 	UPROPERTY(VisibleAnywhere)
-	int32 objectType;
+	int32 _objectType;
 
 	UPROPERTY(VisibleAnywhere)
-	ENonfixedObjStatus currStatus;
+	ENonfixedObjStatus _currStatus;
 
 	UPROPERTY(VisibleAnywhere)
-	FVector location;
+	FVector _location;
 
 
 
