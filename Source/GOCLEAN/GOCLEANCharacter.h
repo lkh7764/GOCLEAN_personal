@@ -5,11 +5,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "InputAction.h"
+
+#include "CharacterStatsComponent.h"
+
 #include "GOCLEANCharacter.generated.h"
 
 class UInputComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
+class USpotLightComponent;
 class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
@@ -17,104 +22,83 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class AGOCLEANCharacter : public ACharacter
+class GOCLEAN_API AGOCLEANCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Mesh, meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* Mesh1P;
-
-	/** First person camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* FirstPersonCameraComponent;
-
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* JumpAction;
-
-	/** Move Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* MoveAction;
-
-	// Crouch Input Action
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* CrouchAction;
-
-	// Sprint Input Action
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* SprintAction;
-
-	
 public:
 	AGOCLEANCharacter();
 
-protected:
-	virtual void BeginPlay();
 
-	//캐릭터 기본 스탯 선언 & 정의
-	
-	// Stamina
-	float MaxStamina = 10.0f;
-	float CurrentStamina = MaxStamina;
-	float StaminaDrainRate = 1.0f;
-	float StaminaRecoveryRate = 1.0f;
-	float RecoveryDelay = 1.0f;
-	bool bIsRecoveringStamina = false;
+	// Getter, Setter //
+	float GetPlayerCurrentSanity() const;
+	void SetPlayerCurrentSanity(float NewPlayerCurrentSanity);
 
-	FTimerHandle StaminaRecoveryHandle;
 
-	// Speed
-	float WalkSpeed = 600.0f;
-	float CrouchSpeed = 300.0f;
-	float SprintSpeed = 900.0f;
-
-	// State
-	bool bIsCrouching = false;
-	bool bIsSprinting = false;
-
-	
 private:
+	// Components //
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USkeletalMeshComponent> MeshComp;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCameraComponent> CameraComp;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USpotLightComponent> FlashlightComp;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCharacterStatsComponent> StatsComp;
 
-public:
-	/** Look Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LookAction;
+	// Input Actions //
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> MoveAction;
 
-protected:
-	/** Called for movement input */
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> LookAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> JumpAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> CrouchAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> SprintAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> FlashlightAction;
+
+
+
+
+	// Overrided //
+	void Tick(float DeltaTime) override;
+	void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
+	void Jump() override;
+
+
+	// Actions //
 	void Move(const FInputActionValue& Value);
 
-	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-	// Called for crouching input
-	virtual void Crouch();
+	void Crouch();
 
-	// Called for sprinting input 
 	void Sprint();
-
-	// Sprint() 기능 종료 시 호출
 	void SprintRelease();
 
-	// Stamina 관련
 	void StartStaminaRecovery();
 	void RecoverStamina();
 
-	// ACharacter 함수 오버라이드
-	virtual void Jump() override;
-	virtual void Tick(float DeltaTime) override;
+	void ToggleFlashlight();
 
-protected:
-	// APawn interface
-	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-	// End of APawn interface
 
-public:
-	/** Returns Mesh1P subobject **/
-	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
-	/** Returns FirstPersonCameraComponent subobject **/
-	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+
+
+	// Handles //
+	FTimerHandle StaminaRecoveryHandle;
+
+
+	// States //
+	bool bIsRecoveringStamina;
+	bool bIsCrouching;
+	bool bIsSprinting;
 
 };
-

@@ -6,164 +6,116 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
-//////////////////////////////////////////////////////////////////////////
-// AGOCLEANCharacter
 
 AGOCLEANCharacter::AGOCLEANCharacter()
-{
+{	
+	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMeshComp"));
+	MeshComp->SetOnlyOwnerSee(true);
+	MeshComp->SetupAttachment(CameraComp);
+	MeshComp->bCastDynamicShadow = false;
+	MeshComp->CastShadow = false;
+	MeshComp->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
-	// Set size for collision capsule
+	// Components //
+	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	CameraComp->SetupAttachment(GetCapsuleComponent());
+	CameraComp->SetRelativeLocation(FVector(-10.f, 0.f, 60.f));
+	CameraComp->bUsePawnControlRotation = true;
+
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
-		
-	// Create a CameraComponent	
-	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // Position the camera
-	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
-	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
-	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
-	Mesh1P->SetOnlyOwnerSee(true);
-	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
-	Mesh1P->bCastDynamicShadow = false;
-	Mesh1P->CastShadow = false;
+	FlashlightComp = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashlightComp"));
+	FlashlightComp->SetupAttachment(CameraComp);
+	FlashlightComp->Intensity = 50.f;
+	FlashlightComp->IntensityUnits = ELightUnits::Lumens;
+	FlashlightComp->AttenuationRadius = 800.f;
+	FlashlightComp->InnerConeAngle = 1.f;
+	FlashlightComp->OuterConeAngle = 30.f;
+	FlashlightComp->SoftSourceRadius = 500.f;
+	FlashlightComp->SetLightColor(FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("FFF2D6FF"))));
 
-	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
-	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
+	StatsComp = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("StasComp"));
+
+
+	// States //
+	bIsRecoveringStamina = false;
+	bIsCrouching = false;
+	bIsSprinting = false;
 }
 
-void AGOCLEANCharacter::BeginPlay()
+
+// Getter, Setter //
+float AGOCLEANCharacter::GetPlayerCurrentSanity() const { return StatsComp ? StatsComp->GetCurrentSanity() : 0.0f; }
+void AGOCLEANCharacter::SetPlayerCurrentSanity(float NewPlayerCurrentSanity) { 
+	if (StatsComp == nullptr) return;
+	StatsComp->SetCurrentSanity(NewPlayerCurrentSanity);
+}
+
+
+// Overrided //
+void AGOCLEANCharacter::Tick(float DeltaTime)
 {
-	// Call the base class
-	Super::BeginPlay();
-}
+	if (StatsComp == nullptr) return;
 
-//////////////////////////////////////////////////////////////////////////// Input
+	Super::Tick(DeltaTime);
+
+	if (bIsSprinting) {
+		//JSH TEMP: CurrentStamina -= StaminaDrainRate * DeltaTime;
+		StatsComp->DecreaseCurrentStamina(StatsComp->GetStaminaDrainRate() * DeltaTime);
+		UE_LOG(LogTemp, Log, TEXT("bIsSprinting : CurrentStamina : %f"), StatsComp->GetCurrentStamina());
+
+		if (StatsComp->GetCurrentStamina() <= 0.0f) {
+			StatsComp->SetCurrentStamina(0.0f);
+			SprintRelease();
+		}
+	}
+
+	// JSH Flag: Sanity
+	//UE_LOG(LogTemp, Warning, TEXT("Current Player Sanity: %f"), CurrentSanity);
+	StatsComp->DecreaseCurrentSanity(0.0167f);
+	//StatsComp->SetCurrentSanity(StatsComp->GetCurrentSanity());
+}
 
 void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {	
-	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// Jumping
+		// Jump
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		// Moving
+		// Move
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AGOCLEANCharacter::Move);
 
-		// Looking
+		// Look
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGOCLEANCharacter::Look);
 
-		// Crouching
+		// Crouch
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::Crouch);
 
 		// Sprint & SprintRelease
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::Sprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AGOCLEANCharacter::SprintRelease);
+
+		// Flashlight toggle
+		EnhancedInputComponent->BindAction(FlashlightAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::ToggleFlashlight);
 	}
 	else
 	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component."), *GetNameSafe(this));
 	}
 }
 
-
-void AGOCLEANCharacter::Move(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
-	{
-		// add movement 
-		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
-		AddMovementInput(GetActorRightVector(), MovementVector.X);
-	}
-}
-
-void AGOCLEANCharacter::Look(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
-	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
-	}
-}
-
-void AGOCLEANCharacter::Crouch()
-{
-	//UE_LOG(LogTemp, Warning, TEXT("Crouch() 호출. bIsCrouching 값: %s"), bIsCrouching ? TEXT("true") : TEXT("false"));
-	if (GetCharacterMovement()->IsFalling()) return;
-
-	float StandingCapsuleHalfHeight = 96.0f; // 캡슐 높이 : Stand 상태
-	float CrouchingCapsuleHalfHeight = 48.0f; // 캡슐 높이 : Crouch 상태
-	
-	if (bIsCrouching) 
-	{
-		// Standing
-		GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHalfHeight); // 컴포넌트 캡슐 높이 조정
-		FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f)); // 카메라 위치 조정
-		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-
-		bIsCrouching = false;
-	}
-	else
-	{
-		// Crouching
-		GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchingCapsuleHalfHeight); // 컴포넌트 캡슐 높이 조정
-		FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f)); // 카메라 위치 조정
-		GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
-
-		bIsCrouching = true;
-	}
-}
-
-// Sprint
-void AGOCLEANCharacter::Sprint()
-{
-	//if(bIsCrouching) UE_LOG(LogTemp, Warning, TEXT("Crouch() 호출. bIsCrouching 값: %s"), bIsCrouching ? TEXT("true") : TEXT("false"));
-
-	if (bIsCrouching || GetCharacterMovement()->IsFalling()) return;
-
-	if (CurrentStamina <= 0.0f) return;
-	
-	bIsSprinting = true;
-	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-
-	// Stamina 회복 중지
-	bIsRecoveringStamina = false;
-	GetWorldTimerManager().ClearTimer(StaminaRecoveryHandle);
-}
-
-void AGOCLEANCharacter::SprintRelease()
-{
-	if (bIsCrouching) return;
-
-	bIsSprinting = false;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-
-	// Stamina 회복 시작
-	if (bIsRecoveringStamina == false) {
-		bIsRecoveringStamina = true;
-		//UE_LOG(LogTemp, Log, TEXT("Stamina Recover Start"));
-		GetWorldTimerManager().SetTimer(StaminaRecoveryHandle, this, &AGOCLEANCharacter::StartStaminaRecovery, RecoveryDelay, false);
-	}
-}
-
-// ACharacter Jump() 오버라이딩
 void AGOCLEANCharacter::Jump()
 {
 	if (bIsCrouching) return;
@@ -171,35 +123,113 @@ void AGOCLEANCharacter::Jump()
 	Super::Jump();
 }
 
-void AGOCLEANCharacter::Tick(float DeltaTime)
+
+// Actions //
+void AGOCLEANCharacter::Move(const FInputActionValue& Value)
 {
-	Super::Tick(DeltaTime);
+	FVector2D MovementVector = Value.Get<FVector2D>();
 
-	if (bIsSprinting) {
-		CurrentStamina -= StaminaDrainRate * DeltaTime;
-		UE_LOG(LogTemp, Log, TEXT("bIsSprinting : CurrentStamina : %f"), CurrentStamina);
+	if (Controller != nullptr)
+	{
+		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+		AddMovementInput(GetActorRightVector(), MovementVector.X);
+	}
+}
 
-		if (CurrentStamina <= 0.0f) {
-			CurrentStamina = 0.0f;
-			SprintRelease();
-		}
+void AGOCLEANCharacter::Look(const FInputActionValue& Value)
+{
+	FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+void AGOCLEANCharacter::Crouch()
+{
+	if (StatsComp == nullptr) return;
+
+	if (GetCharacterMovement()->IsFalling()) return;
+
+	float StandingCapsuleHalfHeight = 96.0f;
+	float CrouchingCapsuleHalfHeight = 48.0f;
+
+	if (bIsCrouching)
+	{
+		// Standing
+		GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHalfHeight);
+		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f));
+		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
+
+		bIsCrouching = false;
+	}
+	else
+	{
+		// Crouching
+		GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchingCapsuleHalfHeight);
+		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f));
+		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetCrouchSpeed();
+
+		bIsCrouching = true;
+	}
+}
+
+void AGOCLEANCharacter::Sprint()
+{
+	if (StatsComp == nullptr) return;
+
+	if (bIsCrouching || GetCharacterMovement()->IsFalling()) return;
+
+	if (StatsComp->GetCurrentStamina() <= 0.0f) return;
+	
+	bIsSprinting = true;
+	GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetSprintSpeed();
+
+	bIsRecoveringStamina = false;
+	GetWorldTimerManager().ClearTimer(StaminaRecoveryHandle);
+}
+
+void AGOCLEANCharacter::SprintRelease()
+{
+	if (StatsComp == nullptr) return;
+
+	if (bIsCrouching) return;
+
+	bIsSprinting = false;
+	GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
+
+	if (bIsRecoveringStamina == false) {
+		bIsRecoveringStamina = true;
+		//UE_LOG(LogTemp, Log, TEXT("Stamina Recover Start"));
+		GetWorldTimerManager().SetTimer(StaminaRecoveryHandle, this, &AGOCLEANCharacter::StartStaminaRecovery, StatsComp->GetStaminaRecoveryDelay(), false);
 	}
 }
 
 void AGOCLEANCharacter::StartStaminaRecovery()
 {
-	// UE_LOG(LogTemp, Log, TEXT("Stamina Recover Start")); 이거 왜 체크가 안되지 - 한글 안되네
+	// UE_LOG(LogTemp, Log, TEXT("Stamina Recover Start"));
 	GetWorldTimerManager().SetTimer(StaminaRecoveryHandle, this, &AGOCLEANCharacter::RecoverStamina, 0.1f, true);
 }
 
 void AGOCLEANCharacter::RecoverStamina() 
 {
-	CurrentStamina += StaminaRecoveryRate * 0.1f;
+	if (StatsComp == nullptr) return;
+
+	// JSH TEMP: CurrentStamina += StaminaRecoveryRate * 0.1f;
+	StatsComp->IncreaseCurrentStamina(StatsComp->GetStaminaRecoveryRate() * 0.1f);
+
 	//UE_LOG(LogTemp, Log, TEXT("bIsRecoveringStamina : CurrentStamina : %f"), CurrentStamina);
-	if (CurrentStamina >= MaxStamina) {
-		CurrentStamina = MaxStamina;
+	if (StatsComp->GetCurrentStamina() >= StatsComp->GetMaxStamina()) {
+		StatsComp->SetCurrentStamina(StatsComp->GetMaxStamina());
 		bIsRecoveringStamina = false;
 		//UE_LOG(LogTemp, Log, TEXT("Stamina Recover End"));
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryHandle);
 	}
+}
+
+void AGOCLEANCharacter::ToggleFlashlight()
+{
+	FlashlightComp->ToggleVisibility();
 }

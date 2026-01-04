@@ -9,5 +9,9 @@ public class GOCLEAN : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "GameplayTasks", "NavigationSystem" });
-	}
+
+        // Personal Folder
+        PublicIncludePaths.AddRange(new string[] {  "Public/GObjectSystem/Server",
+                                                    "Public/GObjectSystem/Client"});
+    }
 }

@@ -4,42 +4,75 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GhostStatsComponent.h"
+#include "UEvidenceBehavior.h"
+#include "CommonBehavior.h"
+#include "AIController.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GhostBase.generated.h"
+
+//JSH FLAH AGHOSTAIController -> Revision: AGhostAIController
+class AGhostAIController;
+class UCommonBehavior;
+class UEvidenceBehavior;
 
 UCLASS(Abstract)
 class GOCLEAN_API AGhostBase : public ACharacter
 {
 	GENERATED_BODY()
 
+
 public:
 	AGhostBase();
 
-	virtual void StartEnragedChase(AActor* Target) PURE_VIRTUAL(AGhostBase::StartEnragedChase, );
 
-	virtual void PlayCommonSound() PURE_VIRTUAL(AGhostBase::PlayCommonSound, );
 
-	virtual void Manifest() PURE_VIRTUAL(AGhostBase::Manifest, );
+	// Using in GhostAIController.h/.cpp Patrol
+	UPROPERTY(EditAnywhere, Category = "Patrol Points");
+	TArray<TObjectPtr<AActor>> PatrolPoints;
 
-	virtual void Patrol() {};
+	int32 CurrentPatrolIndex;
+
 
 protected:
-	virtual void BeginPlay() override;
+	// Behaviors array //
+	UPROPERTY(VisibleAnywhere, Category = "Behaviors");
+	TArray<TObjectPtr<UCommonBehavior>> CommonBehaviors;
 
-	USkeletalMeshComponent* Mesh;
+	UPROPERTY(VisibleAnywhere, Category = "Behaviors");
+	TArray<TObjectPtr<UEvidenceBehavior>> EvidenceBehaviors;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Ghost|Audio");
-	USoundBase* CommonSound;
+	// Stats Component //
+	UPROPERTY(VisibleAnywhere, Category = "Stats")
+	TObjectPtr<UGhostStatsComponent> StatsComp;
 
-	UPROPERTY(VisibleAnywhere, Category = "Ghost|State");
-	bool bIsEnraged;
 
-	UPROPERTY(VisibleAnywhere, Category = "Ghost|State");
-	AActor* TargetActor;
 
-public:
-	// 없애도 되지 않나?
-	virtual void Tick(float DeltaTime) override;
+	// Overrided //
+	void BeginPlay() override;
+	void Tick(float DeltaTime) override;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	// Behavior event //
+	void CheckBehaviorEventCondition();
+	void PerformBehaviorEvent();
 
+
+
+	// Player sanity //
+	float SanityCorruptionRate;
+
+	// Behavior event //
+	float BehaviorEventCycleDelay;
+	bool bCanSetBehaviourEventCycleTimer;
+	FTimerHandle GhostBehaviorCycleHandle;
+
+
+private:
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USkeletalMeshComponent> MeshComp;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<AGhostAIController> GhostAIController;
 };

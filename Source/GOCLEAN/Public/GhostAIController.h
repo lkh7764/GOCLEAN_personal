@@ -1,10 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "GhostBase.h"
 #include "GhostAIController.generated.h"
+
+class AGOCLEANCharacter;
 
 UCLASS()
 class GOCLEAN_API AGhostAIController : public AAIController
@@ -12,15 +13,59 @@ class GOCLEAN_API AGhostAIController : public AAIController
 	GENERATED_BODY()
 	
 public:
-	AGhostAIController();
 
-	virtual void BeginPlay() override;
+	// Getter //
+	float GetPlayerSanityCorruptionRate() const;
 
-	void RunGhostBT();
 
-protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Ghost|AI")
-	UBehaviorTree* BT;
+private:
 
-	UBlackboardComponent* BB;
+	// Overrieded //
+	void BeginPlay() override; // JSH TMP
+	void Tick(float DeltaTime) override;
+	void OnPossess(APawn* InPawn) override;
+
+
+	// Player sanity check //
+	void CheckPlayerSanityCorruptionRate();
+
+
+	// State //
+
+	// Patrol
+	void MoveToPatrolPoint();
+	void CheckArrivalCurrentPatrolPoint();
+
+	// Chase
+	void CheckEnrageEventCondition();
+	void StartChase();
+	void ChasePlayer();
+
+	// Hunt
+	void PlayerHunt();
+
+
+
+
+	// Check player sanity //
+	TObjectPtr<AGOCLEANCharacter> Player;
+	float PlayerSanityCorruptionRate;
+	FTimerHandle CheckPlayerSanityCorruptionHandle;
+
+
+	// State //
+
+	// Patrol
+	bool bIsPatrolling;
+	FTimerHandle CheckArrivalToCurrentPointHandle;
+
+	// Chase
+	bool bIsChasing;
+	bool bIsEnrageEvent;
+	FTimerHandle ChasingPlayerHandle;
+
+	// Hunt
+	float ManifestRadius;
+	float HuntRadius;
+
 };
