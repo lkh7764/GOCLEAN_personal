@@ -1,15 +1,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
+#include "Subsystems/WorldSubsystem.h"
 
 #include "GOCLEAN/Public/GObjectSystem/Server/GFixedObjectData.h"
 #include "GOCLEAN/Public/GObjectSystem/Server/GNonfixedObjectData.h"
 #include "GObjectDataManager.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class GOCLEAN_API UGObjectDataManager : public UActorComponent
+UCLASS()
+class GOCLEAN_API UGObjectDataManager : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -18,6 +18,9 @@ class GOCLEAN_API UGObjectDataManager : public UActorComponent
 	// constructor
 public:	
 	UGObjectDataManager();
+
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
 
 
 
@@ -62,15 +65,11 @@ protected:
 
 	// functions
 protected:
-	virtual void BeginPlay() override;
-
 	void InitNonfixedObjects();
 	void InitFixedObjects();
 
 
 public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 	// 비고정오브젝트 풀과 고정오브젝트에 UGObjectData를 할당 
 	void InitiateObjects(UObject*);
 	// 스폰이 완료된 오브젝트 데이터를 

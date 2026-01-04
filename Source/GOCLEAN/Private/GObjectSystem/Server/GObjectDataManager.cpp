@@ -11,30 +11,25 @@
 // Sets default values for this component's properties
 UGObjectDataManager::UGObjectDataManager()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+	// 
 }
 
 
 // Called when the game starts
-void UGObjectDataManager::BeginPlay()
+void UGObjectDataManager::Initialize(FSubsystemCollectionBase& Collection)
 {
-	Super::BeginPlay();
+	Super::Initialize(Collection);
 
 	// ...
 	
 }
-
-
-// Called every frame
-void UGObjectDataManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+// Called when the game starts
+void UGObjectDataManager::Deinitialize()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Super::Deinitialize();
 
 	// ...
+	
 }
 
 
