@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 
+#include "GNonfixedObjectData.generated.h"
+
 
 
 UENUM(BlueprintType)
@@ -20,9 +22,6 @@ enum class ENonfixedObjStatus : uint8 {
 	E_MAX			UMETA(Hidden)
 };
 
-
-
-#include "GNonfixedObjectData.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

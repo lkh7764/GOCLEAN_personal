@@ -24,13 +24,14 @@
 		- 병합이 완료되면 작업 브랜치에서 Sync fork하여 병합된 파일을 받아옵니다.
 
 
------ Git LFS 설치 -----
-1. https://git-lfs.com/ (Windows 기준) 설치
-2. 파일 탐색기에서 프로젝트 폴더 오픈
-3. 폴더 내 우클릭하여 Open git bash here 클릭
-4. 열린 CMD 창에 git lfs install 입력
-5. 	Updated Git hooks.
-	Git LFS initialized.
-	두 메시지가 출력되면 설치 성공
-6. 작업 및 추가한 .uasset, .umap 등의 파일을 github desktop의 change 창에서 확인했을 때, version https://git-lfs.github.com/spec/v1 이런 게 뜨면 성공
+----- 사전 설치 필요 -----
+- Github Desktop:
+- Git:
+- Git LFS: https://git-lfs.com/ (Windows 기준) 설치
+	- 작업 및 추가한 .uasset, .umap 등의 파일을 github desktop의 change 창에서 확인했을 때, version https://git-lfs.github.com/spec/v1 이런 게 뜨면 성공
 	- 만약 특정 파일에 대해 해당 메시지가 안뜨면 소프트 쪽에 바로 연락주세요 
+
+참고 사이트
+- https://gbleem.tistory.com/84
+- https://raindrovvv.tistory.com/29
+- https://raindrovvv.tistory.com/30
