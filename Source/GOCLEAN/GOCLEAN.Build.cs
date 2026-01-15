@@ -11,7 +11,10 @@ public class GOCLEAN : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "GameplayTasks", "NavigationSystem" });
 
         // Personal Folder
-        PublicIncludePaths.AddRange(new string[] {  "Public/GObjectSystem/Server",
-                                                    "Public/GObjectSystem/Client"});
+        PublicIncludePaths.AddRange(new string[] {  "GOCLEAN/Public"
+                                                    //"Public/GTypes",
+                                                    //"Public/GObjectSystem/Server",  "Public/GObjectSystem/Client",
+                                                    //"Public/GMapSystem/Server",     "Public/GMapSystem/Client"
+                                                });
     }
 }

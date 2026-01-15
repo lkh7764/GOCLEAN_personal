@@ -2,43 +2,20 @@
 
 #pragma once
 
+#include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "GTypes/GObjectTypes.h"
-
-#include "GNonfixedObjectData.generated.h"
-
+#include "EquipmentComponent.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class GOCLEAN_API UGNonfixedObjectData : public UActorComponent
+class GOCLEAN_API UEquipmentComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-
-
-	// constructor
 public:	
-	UGNonfixedObjectData();
+	// Sets default values for this component's properties
+	UEquipmentComponent();
 
-
-
-	// variables
-protected:
-	UPROPERTY(VisibleAnywhere)
-	int32 _objectID;
-
-	UPROPERTY(VisibleAnywhere)
-	int32 _objectType;
-
-	UPROPERTY(VisibleAnywhere)
-	ENonfixedObjStatus _currStatus;
-
-	UPROPERTY(VisibleAnywhere)
-	FVector _location;
-
-
-
-	// functions
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -46,4 +23,6 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+		
 };
