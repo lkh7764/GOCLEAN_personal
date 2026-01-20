@@ -19,6 +19,7 @@ public:
 	// Getter, Setter //
 	float GetCurrentSanity() const;
 
+	int GetCurrentLife() const;
 	void DecreaseLife(int32 Amount);
 
 	void SetCurrentSanity(float Amount);

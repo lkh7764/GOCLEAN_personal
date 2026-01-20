@@ -118,6 +118,14 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	}
 }
 
+void AGOCLEANCharacter::OnHunted()
+{
+	StatsComp->DecreaseLife(1);
+	if (StatsComp->GetCurrentLife() <= 0) return;
+
+	// Respawn() + 자리에 더미 캐릭터 남음
+}
+
 void AGOCLEANCharacter::Jump()
 {
 	if (bIsCrouching) return;

@@ -35,6 +35,11 @@ public:
 	void SetPlayerCurrentSanity(float NewPlayerCurrentSanity);
 
 
+
+	// OnHunted
+	void OnHunted();
+
+
 private:
 	// Components //
 	UPROPERTY(VisibleAnywhere)
