@@ -11,6 +11,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/GameInstance.h"
+#include "GUIManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
@@ -121,6 +123,9 @@ void AGOCLEANCharacter::Jump()
 	if (bIsCrouching) return;
 
 	Super::Jump();
+
+	// Tmp
+	GetGameInstance()->GetSubsystem<UGUIManager>()->ShowUI(TEXT("HUD"));
 }
 
 
