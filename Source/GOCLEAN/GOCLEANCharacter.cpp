@@ -40,7 +40,7 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 	FlashlightComp->SetupAttachment(CameraComp);
 	FlashlightComp->Intensity = 35.0f;
 	FlashlightComp->IntensityUnits = ELightUnits::Lumens;
-	FlashlightComp->AttenuationRadius = 800.0f;
+	FlashlightComp->AttenuationRadius = 1000.0f;
 	FlashlightComp->InnerConeAngle = 15.0f;
 	FlashlightComp->OuterConeAngle = 45.0f;
 	FlashlightComp->SoftSourceRadius = 500.0f;
@@ -131,9 +131,6 @@ void AGOCLEANCharacter::Jump()
 	if (bIsCrouching) return;
 
 	Super::Jump();
-
-	// Tmp
-	GetGameInstance()->GetSubsystem<UGUIManager>()->ShowUI(TEXT("HUD"));
 }
 
 
