@@ -11,6 +11,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/GameInstance.h"
+#include "GUIManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
@@ -36,13 +38,13 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 
 	FlashlightComp = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashlightComp"));
 	FlashlightComp->SetupAttachment(CameraComp);
-	FlashlightComp->Intensity = 50.f;
+	FlashlightComp->Intensity = 35.0f;
 	FlashlightComp->IntensityUnits = ELightUnits::Lumens;
-	FlashlightComp->AttenuationRadius = 800.f;
-	FlashlightComp->InnerConeAngle = 1.f;
-	FlashlightComp->OuterConeAngle = 30.f;
-	FlashlightComp->SoftSourceRadius = 500.f;
-	FlashlightComp->SetLightColor(FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("FFF2D6FF"))));
+	FlashlightComp->AttenuationRadius = 800.0f;
+	FlashlightComp->InnerConeAngle = 15.0f;
+	FlashlightComp->OuterConeAngle = 45.0f;
+	FlashlightComp->SoftSourceRadius = 500.0f;
+	FlashlightComp->SetLightColor(FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("F2E0B8FF"))));
 
 	StatsComp = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("StasComp"));
 
@@ -116,11 +118,22 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	}
 }
 
+void AGOCLEANCharacter::OnHunted()
+{
+	StatsComp->DecreaseLife(1);
+	if (StatsComp->GetCurrentLife() <= 0) return;
+
+	// Respawn() + 자리에 더미 캐릭터 남음
+}
+
 void AGOCLEANCharacter::Jump()
 {
 	if (bIsCrouching) return;
 
 	Super::Jump();
+
+	// Tmp
+	GetGameInstance()->GetSubsystem<UGUIManager>()->ShowUI(TEXT("HUD"));
 }
 
 
