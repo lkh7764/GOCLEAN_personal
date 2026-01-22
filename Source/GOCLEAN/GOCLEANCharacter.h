@@ -105,5 +105,5 @@ private:
 	bool bIsRecoveringStamina;
 	bool bIsCrouching;
 	bool bIsSprinting;
-
+	
 };

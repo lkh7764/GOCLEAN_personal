@@ -38,13 +38,13 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 
 	FlashlightComp = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashlightComp"));
 	FlashlightComp->SetupAttachment(CameraComp);
-	FlashlightComp->Intensity = 50.f;
+	FlashlightComp->Intensity = 35.0f;
 	FlashlightComp->IntensityUnits = ELightUnits::Lumens;
-	FlashlightComp->AttenuationRadius = 800.f;
-	FlashlightComp->InnerConeAngle = 1.f;
-	FlashlightComp->OuterConeAngle = 30.f;
-	FlashlightComp->SoftSourceRadius = 500.f;
-	FlashlightComp->SetLightColor(FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("FFF2D6FF"))));
+	FlashlightComp->AttenuationRadius = 800.0f;
+	FlashlightComp->InnerConeAngle = 15.0f;
+	FlashlightComp->OuterConeAngle = 45.0f;
+	FlashlightComp->SoftSourceRadius = 500.0f;
+	FlashlightComp->SetLightColor(FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("F2E0B8FF"))));
 
 	StatsComp = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("StasComp"));
 
