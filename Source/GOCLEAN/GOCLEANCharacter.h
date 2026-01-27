@@ -31,9 +31,13 @@ public:
 
 
 	// Getter, Setter //
+	UFUNCTION(BlueprintPure)
+	bool IsCrouching() const { return bIsCrouched; }
+	UFUNCTION(BlueprintPure)
+	bool IsSprinting() const { return bIsSprinting; }
+
 	float GetPlayerCurrentSanity() const;
 	void SetPlayerCurrentSanity(float NewPlayerCurrentSanity);
-
 
 
 	// OnHunted
@@ -43,7 +47,9 @@ public:
 private:
 	// Components //
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USkeletalMeshComponent> MeshComp;
+	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComp;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USkeletalMeshComponent> ThirdPersonMeshComp;
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> CameraComp;
 	UPROPERTY(VisibleAnywhere)
