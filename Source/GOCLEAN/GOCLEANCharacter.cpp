@@ -21,20 +21,27 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 AGOCLEANCharacter::AGOCLEANCharacter()
 {	
-	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMeshComp"));
-	MeshComp->SetOnlyOwnerSee(true);
-	MeshComp->SetupAttachment(CameraComp);
-	MeshComp->bCastDynamicShadow = false;
-	MeshComp->CastShadow = false;
-	MeshComp->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
-
 	// Components //
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(GetCapsuleComponent());
 	CameraComp->SetRelativeLocation(FVector(-10.f, 0.f, 60.f));
 	CameraComp->bUsePawnControlRotation = true;
 
-	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
+	FirstPersonMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterFirstPersonMeshComp"));
+	FirstPersonMeshComp->SetOnlyOwnerSee(true);
+	FirstPersonMeshComp->SetupAttachment(CameraComp);
+	FirstPersonMeshComp->bCastDynamicShadow = false;
+	FirstPersonMeshComp->CastShadow = false;
+	FirstPersonMeshComp->SetRelativeLocation(FVector(10.f, 0.f, -160.f));
+
+	ThirdPersonMeshComp = GetMesh();
+	ThirdPersonMeshComp->SetupAttachment(GetCapsuleComponent());
+	ThirdPersonMeshComp->SetOwnerNoSee(true);
+	ThirdPersonMeshComp->CastShadow = true;
+	ThirdPersonMeshComp->bCastDynamicShadow = true;
+	ThirdPersonMeshComp->SetRelativeLocation(FVector(0.f, 0.f, -90.f));
+
+	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.f);
 
 	FlashlightComp = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashlightComp"));
 	FlashlightComp->SetupAttachment(CameraComp);
