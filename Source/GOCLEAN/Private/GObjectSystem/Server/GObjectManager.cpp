@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GObjectSystem/Server/GObjectDataManager.h"
+#include "GObjectSystem/Server/GObjectManager.h"
 
 
 ////////////////////////////////////////////
@@ -9,14 +9,14 @@
 ////////////////////////////////////////////
 
 // Sets default values for this component's properties
-UGObjectDataManager::UGObjectDataManager()
+UGObjectManager::UGObjectManager()
 {
 	// 
 }
 
 
 // Called when the game starts
-void UGObjectDataManager::Initialize(FSubsystemCollectionBase& Collection)
+void UGObjectManager::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
@@ -24,7 +24,7 @@ void UGObjectDataManager::Initialize(FSubsystemCollectionBase& Collection)
 	
 }
 // Called when the game starts
-void UGObjectDataManager::Deinitialize()
+void UGObjectManager::Deinitialize()
 {
 	Super::Deinitialize();
 
@@ -39,23 +39,23 @@ void UGObjectDataManager::Deinitialize()
 ////////////////////////////////////////////
 
 // 비고정오브젝트 풀과 고정오브젝트에 UGObjectData를 할당 
-void UGObjectDataManager::InitNonfixedObjects()
+void UGObjectManager::InitNonfixedObjects()
 {
-	nonfixedObjPool.Empty(poolSize);
+	// nonfixedObjPool.Empty(poolSize);
 	freeObjectIndicesStack.Empty();
-	nonfixedObjData.Empty();
+	// nonfixedObjData.Empty();
 
 	for (int32 i = 0; i < poolSize; ++i)
 	{
-		UGNonfixedObjectData* newData = NewObject<UGNonfixedObjectData>(this);
-		if (newData)
-		{
-			nonfixedObjPool.Add(newData);
-			freeObjectIndicesStack.Add(i);
-		}
+		//UGNonfixedObjectData* newData = NewObject<UGNonfixedObjectData>(this);
+		//if (newData)
+		//{
+		//	nonfixedObjPool.Add(newData);
+		//	freeObjectIndicesStack.Add(i);
+		//}
 	}
 }
-void UGObjectDataManager::InitiateObjects(UObject* WorldContextObject)
+void UGObjectManager::InitiateObjects(UObject* WorldContextObject)
 {
 	// 1. 오브젝트풀 생성
 	InitNonfixedObjects();

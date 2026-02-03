@@ -8,6 +8,7 @@
 #include "InputAction.h"
 
 #include "CharacterStatsComponent.h"
+#include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
 
 #include "GOCLEANCharacter.generated.h"
 
@@ -100,5 +101,13 @@ private:
 	bool bIsRecoveringStamina;
 	bool bIsCrouching;
 	bool bIsSprinting;
+
+
+
+
+	// Equipment //
+	// TObjectPtr<UGEquipmentComponent> EqiupComp;
+private :
+	bool InitiateEquipMeshPool();
 
 };

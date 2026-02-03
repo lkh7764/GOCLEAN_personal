@@ -8,13 +8,11 @@ public class GOCLEAN : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "GameplayTasks", "NavigationSystem" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "GameplayTasks", "NavigationSystem", "DeveloperSettings" });
+
 
         // Personal Folder
-        PublicIncludePaths.AddRange(new string[] {  "GOCLEAN/Public"
-                                                    //"Public/GTypes",
-                                                    //"Public/GObjectSystem/Server",  "Public/GObjectSystem/Client",
-                                                    //"Public/GMapSystem/Server",     "Public/GMapSystem/Client"
-                                                });
+        PublicIncludePaths.Add(ModuleDirectory);
+        PublicIncludePaths.Add("GOCLEAN/Public");
     }
 }
