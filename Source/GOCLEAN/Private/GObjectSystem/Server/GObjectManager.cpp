@@ -3,6 +3,9 @@
 
 #include "GObjectSystem/Server/GObjectManager.h"
 
+#include "GObjectSystem/GNonfixedObject.h"
+#include "GObjectSystem/GFixedObject.h"
+
 
 ////////////////////////////////////////////
 // DEFAULT
@@ -41,18 +44,17 @@ void UGObjectManager::Deinitialize()
 // 비고정오브젝트 풀과 고정오브젝트에 UGObjectData를 할당 
 void UGObjectManager::InitNonfixedObjects()
 {
-	// nonfixedObjPool.Empty(poolSize);
-	freeObjectIndicesStack.Empty();
-	// nonfixedObjData.Empty();
+	NfixedObjPool.Empty(PoolSize);
+	FreeObjsStack.Empty();
+	NfixedObjects.Empty();
 
-	for (int32 i = 0; i < poolSize; ++i)
+	for (int32 i = 0; i < PoolSize; ++i)
 	{
-		//UGNonfixedObjectData* newData = NewObject<UGNonfixedObjectData>(this);
-		//if (newData)
-		//{
-		//	nonfixedObjPool.Add(newData);
-		//	freeObjectIndicesStack.Add(i);
-		//}
+		auto NewActor = GetWorld()->SpawnActor(AGNonfixedObject::StaticClass(), &PoolLocation);
+		if (NewActor)
+		{
+			// 부모 설정 -> view port 관리에 용이하도록
+		}
 	}
 }
 void UGObjectManager::InitiateObjects(UObject* WorldContextObject)

@@ -39,6 +39,7 @@ struct FGNonfixedObjData
 {
 	GENERATED_BODY()
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 IID;
 
@@ -55,5 +56,5 @@ struct FGNonfixedObjData
 	ENonfixedObjState SpawnState = ENonfixedObjState::E_Static;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool UseGravity = true;
+	bool bUseGravity = true;
 };
