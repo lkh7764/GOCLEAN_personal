@@ -33,6 +33,7 @@ protected:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 
+public:
     // Setters (server-only, protected) 
     // GameMode에서만 호출하게
     void SetSeatIndex(int32 NewSeatIndex);
@@ -40,7 +41,7 @@ protected:
     void SetReady(bool bNewReady);
     void SetEliminated(bool bNewEliminated);
 
-
+protected:
     // OnRep 
     UFUNCTION()
     void OnRep_SeatIndex();

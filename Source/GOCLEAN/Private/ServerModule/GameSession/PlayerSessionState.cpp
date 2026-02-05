@@ -2,6 +2,7 @@
 
 
 #include "ServerModule/GameSession/PlayerSessionState.h"
+#include "ServerModule/GameSession/GameSessionMode.h"
 #include <Net/UnrealNetwork.h>
 
 APlayerSessionState::APlayerSessionState()
@@ -25,6 +26,21 @@ void APlayerSessionState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void APlayerSessionState::Server_SetReady_Implementation(bool bNewReady)
 {
 	SetReady(bNewReady);
+
+
+	if (HasAuthority())
+	{
+		if (UWorld* World = GetWorld())
+		{
+			if (AGameModeBase* GMBase = World->GetAuthGameMode())
+			{
+				if (auto* GM = Cast<AGameSessionMode>(GMBase))
+				{
+					GM->OnPlayerReadyChanged();
+				}
+			}
+		}
+	}
 }
 
 
