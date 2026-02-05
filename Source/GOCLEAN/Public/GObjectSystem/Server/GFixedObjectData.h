@@ -2,11 +2,23 @@
 
 #pragma once
 
+#include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "GTypes/GObjectTypes.h"
+
+
+
+UENUM(BlueprintType)
+enum class EFixedObjStatus : uint8 {
+	E_Static			UMETA(DisplayName = "Static - Á¤Àû"),
+	E_Used				UMETA(DisplayName = "Used - »ç¿ëÁß"),
+	E_Destroyed			UMETA(DisplayName = "Destroyed - ÆÄ±«µÊ"),
+
+	E_MAX				UMETA(Hidden)
+};
+
+
 
 #include "GFixedObjectData.generated.h"
-
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -26,7 +38,7 @@ public:
 	int32 objectType;
 
 	UPROPERTY(VisibleAnywhere)
-	EGFixedObjStatus currStatus;
+	EFixedObjStatus currStatus;
 
 	UPROPERTY(VisibleAnywhere)
 	FVector location;

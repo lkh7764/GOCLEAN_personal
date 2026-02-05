@@ -4,18 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-
-#include "GNonfixedObjectAgent.generated.h"
+#include "GNonfixedObjectController.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class GOCLEAN_API UGNonfixedObjectAgent : public UActorComponent
+class GOCLEAN_API UGNonfixedObjectController : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UGNonfixedObjectAgent();
+	UGNonfixedObjectController();
 
 protected:
 	// Called when the game starts

@@ -3,9 +3,8 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 
-#include "GObjectSystem/Server/GFixedObjectData.h"
-#include "GObjectSystem/Server/GNonfixedObjectData.h"
-
+#include "GOCLEAN/Public/GObjectSystem/Server/GFixedObjectData.h"
+#include "GOCLEAN/Public/GObjectSystem/Server/GNonfixedObjectData.h"
 #include "GObjectDataManager.generated.h"
 
 
