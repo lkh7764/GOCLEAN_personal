@@ -54,6 +54,7 @@ enum class EGZoneType : uint8 {
 
 
 
+class ATargetPoint;
 USTRUCT(BlueprintType)
 struct FGZoneData 
 {
@@ -72,6 +73,16 @@ struct FGZoneData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsActiveCandleEffect = false;
 
+
+	// player
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int32> InnerPlayerList;
+
+
+	// ghost
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsGhostIn = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TObjectPtr<ATargetPoint>> GhostPatrolPoints;
 };
