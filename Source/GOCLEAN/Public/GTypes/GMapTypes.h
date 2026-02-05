@@ -51,3 +51,38 @@ enum class EGZoneType : uint8 {
 
 	E_MAX				UMETA(Hidden)
 };
+
+
+
+class ATargetPoint;
+USTRUCT(BlueprintType)
+struct FGZoneData 
+{
+	GENERATED_BODY()
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName ZID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EGZoneType Type;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EGZoneAttribute Attribute = EGZoneAttribute::E_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsActiveCandleEffect = false;
+
+
+	// player
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<int32> InnerPlayerList;
+
+
+	// ghost
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsGhostIn = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TObjectPtr<ATargetPoint>> GhostPatrolPoints;
+};
