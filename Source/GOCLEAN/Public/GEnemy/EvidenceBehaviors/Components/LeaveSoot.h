@@ -1,6 +1,6 @@
 /**
  * @class ULeaveSoot
- * @brief 단서 행동
+ * @brief 단서 행동: 그을음
  *
  * **[Core functions]**
  * - ExecuteBehavior(AActor* GhostActor): 행동 실행

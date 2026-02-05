@@ -1,6 +1,6 @@
 /**
- * @class ULeaveBloodFootstep
- * @brief 단서 행동: 핏발자국
+ * @class URestoreWaste
+ * @brief 단서 행동: 폐기물 복구
  *
  * **[Core functions]**
  * - ExecuteBehavior(AActor* GhostActor): 행동 실행
@@ -10,10 +10,10 @@
 
 #include "CoreMinimal.h"
 #include "GEnemy/EvidenceBehaviors/Base/UEvidenceBehavior.h"
-#include "LeaveBloodFootstep.generated.h"
+#include "RestoreWaste.generated.h"
 
 UCLASS()
-class GOCLEAN_API ULeaveBloodFootstep : public UEvidenceBehavior
+class GOCLEAN_API URestoreWaste : public UEvidenceBehavior
 {
 	GENERATED_BODY()
 	

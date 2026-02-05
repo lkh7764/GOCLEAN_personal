@@ -1,6 +1,6 @@
 /**
- * @class ULeaveBloodFootstep
- * @brief 단서 행동: 핏발자국
+ * @class UAffectObject
+ * @brief 단서 행동: 오브젝트 영향
  *
  * **[Core functions]**
  * - ExecuteBehavior(AActor* GhostActor): 행동 실행
@@ -10,10 +10,10 @@
 
 #include "CoreMinimal.h"
 #include "GEnemy/EvidenceBehaviors/Base/UEvidenceBehavior.h"
-#include "LeaveBloodFootstep.generated.h"
+#include "AffectObject.generated.h"
 
 UCLASS()
-class GOCLEAN_API ULeaveBloodFootstep : public UEvidenceBehavior
+class GOCLEAN_API UAffectObject : public UEvidenceBehavior
 {
 	GENERATED_BODY()
 	

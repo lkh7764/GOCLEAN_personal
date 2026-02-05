@@ -1,6 +1,6 @@
 /**
  * @class ULeaveFrost
- * @brief 단서 행동
+ * @brief 단서 행동: 성에
  *
  * **[Core functions]**
  * - ExecuteBehavior(AActor* GhostActor): 행동 실행
