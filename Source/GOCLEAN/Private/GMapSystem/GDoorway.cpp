@@ -8,11 +8,13 @@
 #include "GameFramework/Character.h"
 
 #include "GMapSystem/Server/GMapManager.h"
-#include "GOCLEANCharacter.h"
-#include "GhostBase.h"
+#include "GCharacter/GOCLEANCharacter.h"
+#include "GEnemy/Base/GhostBase.h"
+#include "GOCLEANSettings.h"
 
 
-// Sets default values
+
+// constructor
 AGDoorway::AGDoorway()
 {
 	bReplicates = true;
@@ -24,7 +26,9 @@ AGDoorway::AGDoorway()
 	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
 }
 
-// Called when the game starts or when spawned
+
+
+// life cycle & engine event
 void AGDoorway::BeginPlay()
 {
 	Super::BeginPlay();
@@ -89,11 +93,11 @@ void AGDoorway::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		if (DotResult > 0.0f)
 		{
 			UE_LOG(LogTemp, Log, TEXT("[GDoorway::TriggerEvent] Player Entered to %s"), *ToZone.ToString());
-			EnterPlayer();
+			EnterPlayer(OtherActor);
 		}
 		{
 			UE_LOG(LogTemp, Log, TEXT("[GDoorway::TriggerEvent] Player Exit to %s"), *FromZone.ToString());
-			ExitPlayer();
+			ExitPlayer(OtherActor);
 		}
 	}
 	else
@@ -101,12 +105,79 @@ void AGDoorway::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		if (DotResult > 0.0f)
 		{
 			UE_LOG(LogTemp, Log, TEXT("[GDoorway::TriggerEvent] Ghost Entered to %s"), *ToZone.ToString());
-			EnterGhost();
+			EnterGhost(OtherActor);
 		}
 		{
 			UE_LOG(LogTemp, Log, TEXT("[GDoorway::TriggerEvent] Ghost Exit to %s"), *FromZone.ToString());
-			ExitGhost();
+			ExitGhost(OtherActor);
 		}
 	}
 }
 
+
+// game event
+void AGDoorway::EnterPlayer(AActor* PlayerActor)
+{
+	// 1. find player's session index and check effectiveness
+	int32 PlayerIndex = FindPlayerSessionIndex(PlayerActor);
+	if (PlayerIndex < 0 && PlayerIndex >= UGOCLEANSettings::Get()->MaxParticipant)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GDoorway::TriggerEvent] Cannot found matched player in session list"));
+		return;
+	}
+
+
+	// 2. remove player index at FromZone's included player list
+
+
+	// 3. add player index at ToZone's included player list
+}
+void AGDoorway::ExitPlayer(AActor* PlayerActor)
+{
+	// 1. find player's session index and check effectiveness
+	int32 PlayerIndex = FindPlayerSessionIndex(PlayerActor);
+	if (PlayerIndex < 0 && PlayerIndex >= UGOCLEANSettings::Get()->MaxParticipant)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GDoorway::TriggerEvent] Cannot found matched player in session list"));
+		return;
+	}
+
+
+	// 2. remove player index at ToZone's included player list
+
+
+	// 3. add player index at FromZone's included player list
+}
+
+void AGDoorway::EnterGhost(AActor* GhostActor)
+{
+	// if parameter does not use, remove parameter
+
+	// 1. set FromZone's bIncludeGhost to FALSE
+
+
+	// 2. set ToZone's bIncludeGhost to TRUE
+}
+void AGDoorway::ExitGhost(AActor* GhostActor)
+{
+	// if parameter does not use, remove parameter
+
+	// 1. set ToZone's bIncludeGhost to FALSE
+
+
+	// 2. set FromZone's bIncludeGhost to TRUE
+}
+
+int32 AGDoorway::FindPlayerSessionIndex(AActor* PlayerActor)
+{
+	int32 Index = -1;
+
+
+	// 1. find same player character in server's session manager
+
+
+	// 2. get the player's index
+
+
+	return Index;
+}

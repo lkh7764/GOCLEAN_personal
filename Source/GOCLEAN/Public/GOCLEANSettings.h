@@ -15,7 +15,10 @@ class GOCLEAN_API UGOCLEANSettings : public UDeveloperSettings
 public:
     // UGOCLEANSettings();
 
-    UPROPERTY(Config, EditAnywhere, Category="Euipment", meta=(ClampMin = "1", ClampMax = "10"))
+    UPROPERTY(Config, EditAnywhere, Category = "Participant", meta = (ClampMin = "1", ClampMax = "10"))
+    int32 MaxParticipant;
+
+    UPROPERTY(Config, EditAnywhere, Category="Equipment", meta=(ClampMin = "1", ClampMax = "10"))
     int32 MaxEquipmentSlots;
 
     static const UGOCLEANSettings* Get() { return GetDefault<UGOCLEANSettings>(); }

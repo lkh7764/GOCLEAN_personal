@@ -76,12 +76,12 @@ struct FGZoneData
 
 	// player
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<int32> InnerPlayerList;
+	TArray<int32> IncludedPlayerList;
 
 
 	// ghost
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsGhostIn = false;
+	bool bIncludeGhost = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TObjectPtr<ATargetPoint>> GhostPatrolPoints;
