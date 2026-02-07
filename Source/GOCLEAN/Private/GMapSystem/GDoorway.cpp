@@ -14,7 +14,7 @@
 
 
 
-// constructor
+// Constructor // 
 AGDoorway::AGDoorway()
 {
 	bReplicates = true;
@@ -28,7 +28,25 @@ AGDoorway::AGDoorway()
 
 
 
-// life cycle & engine event
+// Replication // 
+void AGDoorway::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGDoorway, FromZone);
+	DOREPLIFETIME(AGDoorway, ToZone);
+	DOREPLIFETIME(AGDoorway, bCanClose);
+	DOREPLIFETIME(AGDoorway, bIsClosed);
+}
+
+void AGDoorway::OnRep_IsClosed()
+{
+	// do rotation anim
+}
+
+
+
+// Life cycle & Engine event //
 void AGDoorway::BeginPlay()
 {
 	Super::BeginPlay();
@@ -115,12 +133,13 @@ void AGDoorway::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 }
 
 
-// game event
+
+// Game event // 
 void AGDoorway::EnterPlayer(AActor* PlayerActor)
 {
 	// 1. find player's session index and check effectiveness
 	int32 PlayerIndex = FindPlayerSessionIndex(PlayerActor);
-	if (PlayerIndex < 0 && PlayerIndex >= UGOCLEANSettings::Get()->MaxParticipant)
+	if (PlayerIndex < 0 && PlayerIndex >= UGOCLEANSettings::Get()->ParticipantMax)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[GDoorway::TriggerEvent] Cannot found matched player in session list"));
 		return;
@@ -136,7 +155,7 @@ void AGDoorway::ExitPlayer(AActor* PlayerActor)
 {
 	// 1. find player's session index and check effectiveness
 	int32 PlayerIndex = FindPlayerSessionIndex(PlayerActor);
-	if (PlayerIndex < 0 && PlayerIndex >= UGOCLEANSettings::Get()->MaxParticipant)
+	if (PlayerIndex < 0 && PlayerIndex >= UGOCLEANSettings::Get()->ParticipantMax)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[GDoorway::TriggerEvent] Cannot found matched player in session list"));
 		return;

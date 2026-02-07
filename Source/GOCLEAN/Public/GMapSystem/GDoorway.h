@@ -33,6 +33,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class UBoxComponent* TriggerBox;
 
+
 	// replicated
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Zone")
 	FName FromZone;
