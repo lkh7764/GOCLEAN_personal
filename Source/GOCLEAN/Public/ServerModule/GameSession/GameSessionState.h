@@ -19,7 +19,7 @@ public:
 
     // Getters (Client/Server)
     float GetSpiritualGauge() const { return SpiritualGauge; }
-    float GetReposeGauge() const { return ReposeGauge; }
+    float GetRestGauge() const { return RestGauge; }
     float GetExorcismProgress() const { return ExorcismProgress; }
     float GetPostExorcismTimeRemaining() const { return PostExorcismTimeRemaining; }
     int32 GetAliveSurvivorCount() const { return AliveSurvivorCount; }
@@ -30,7 +30,7 @@ public:
     // GameMode에서 호출 (Server-only mutators)
     // 게이지 증감 (클램프 포함)
     void AddSpiritualGauge(float Delta, float Min = 0.f, float Max = 100.f);
-    void AddReposeGauge(float Delta, float Min = 0.f, float Max = 100.f);
+    void AddRestGauge(float Delta, float Min = 0.f, float Max = 100.f);
 
     // 진행도 설정/증가
     void SetExorcismProgress(float NewProgress, float Min = 0.f, float Max = 100.f);
@@ -54,7 +54,7 @@ protected:
 
     // Setters (Server-only internal)
     void SetSpiritualGauge_Internal(float NewValue);
-    void SetReposeGauge_Internal(float NewValue);
+    void SetRestGauge_Internal(float NewValue);
     void SetExorcismProgress_Internal(float NewValue);
     void SetPostExorcismTimeRemaining_Internal(float NewValue);
     void SetAliveSurvivorCount_Internal(int32 NewValue);
@@ -67,7 +67,7 @@ protected:
     void OnRep_SpiritualGauge();
 
     UFUNCTION() 
-    void OnRep_ReposeGauge();
+    void OnRep_RestGauge();
 
     UFUNCTION() 
     void OnRep_ExorcismProgress();
@@ -88,8 +88,8 @@ private:
     float SpiritualGauge = 0.f;
 
     // 안식 게이지
-    UPROPERTY(ReplicatedUsing = OnRep_ReposeGauge)
-    float ReposeGauge = 0.f;
+    UPROPERTY(ReplicatedUsing = OnRep_RestGauge)
+    float RestGauge = 0.f;
 
     // 퇴마 진행도
     UPROPERTY(ReplicatedUsing = OnRep_ExorcismProgress)

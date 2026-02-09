@@ -14,7 +14,7 @@ void AGameSessionState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(AGameSessionState, SpiritualGauge);
-    DOREPLIFETIME(AGameSessionState, ReposeGauge);
+    DOREPLIFETIME(AGameSessionState, RestGauge);
     DOREPLIFETIME(AGameSessionState, ExorcismProgress);
     DOREPLIFETIME(AGameSessionState, PostExorcismTimeRemaining);
     DOREPLIFETIME(AGameSessionState, AliveSurvivorCount);
@@ -32,10 +32,10 @@ void AGameSessionState::AddSpiritualGauge(float Delta, float Min, float Max)
     SetSpiritualGauge_Internal(ClampFloat(SpiritualGauge + Delta, Min, Max));
 }
 
-void AGameSessionState::AddReposeGauge(float Delta, float Min, float Max)
+void AGameSessionState::AddRestGauge(float Delta, float Min, float Max)
 {
     if (!HasAuthority()) return;
-    SetReposeGauge_Internal(ClampFloat(ReposeGauge + Delta, Min, Max));
+    SetRestGauge_Internal(ClampFloat(RestGauge + Delta, Min, Max));
 }
 
 void AGameSessionState::SetExorcismProgress(float NewProgress, float Min, float Max)
@@ -96,11 +96,11 @@ void AGameSessionState::SetSpiritualGauge_Internal(float NewValue)
     OnRep_SpiritualGauge();
 }
 
-void AGameSessionState::SetReposeGauge_Internal(float NewValue)
+void AGameSessionState::SetRestGauge_Internal(float NewValue)
 {
-    ReposeGauge = NewValue;
+    RestGauge = NewValue;
 
-    OnRep_ReposeGauge();
+    OnRep_RestGauge();
 }
 
 void AGameSessionState::SetExorcismProgress_Internal(float NewValue)
@@ -139,7 +139,7 @@ void AGameSessionState::OnRep_SpiritualGauge()
 
 }
 
-void AGameSessionState::OnRep_ReposeGauge()
+void AGameSessionState::OnRep_RestGauge()
 {
 
 }

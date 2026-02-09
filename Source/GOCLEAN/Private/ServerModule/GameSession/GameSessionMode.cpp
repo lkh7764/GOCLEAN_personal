@@ -77,6 +77,8 @@ void AGameSessionMode::PostLogin(APlayerController* NewPlayer)
     if (!PSS)
         return;
 
+    
+
     const int32 Seat = FindNextAvailableSeatIndex();
     if (Seat == INDEX_NONE)
     {
@@ -95,15 +97,12 @@ void AGameSessionMode::PostLogin(APlayerController* NewPlayer)
 
     // Online Subsystem Steam에서 닉네임 가져오기 로직 추가
 
-
     // 호스트는 자동으로 Ready 상태
     if (NewPlayer && NewPlayer->IsLocalController())
     {
-        if (APlayerSessionState* PSS = Cast<APlayerSessionState>(NewPlayer->PlayerState))
-        {
-            PSS->SetReady(true);
-        }
+        PSS->SetReady(true);
     }
+   
 
     OnPlayerReadyChanged();
 
