@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include "GTypes/GMapTypes.h"
 
 #include "GMapDataRow.generated.h"
 
@@ -20,6 +21,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shared")
     FName ZoneID;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shared")
+    FText DisplayName;
+
 
     // Visual //
 
@@ -27,5 +31,8 @@ public:
     // Logic //
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logic")
     TArray<FName> SpawnableObjsID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logic")
+    EGZoneType Type;
 
 };

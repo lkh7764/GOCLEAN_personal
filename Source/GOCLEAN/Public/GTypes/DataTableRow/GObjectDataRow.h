@@ -26,7 +26,10 @@ public:
 
     // Visual //
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    TSoftObjectPtr<UStaticMesh> MeshAsset;
+    TArray<TSoftObjectPtr<UStaticMesh>> MeshAsset;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    bool bUseBothHands;
 
 
     // Logic //
@@ -51,5 +54,8 @@ public:
     //      spawn
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logic")
     int32 SpawnLayer;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logic")
+    FName DerivedObjID;
 
 };
