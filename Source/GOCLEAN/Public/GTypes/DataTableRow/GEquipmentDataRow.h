@@ -19,16 +19,31 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shared")
     FName EquipID;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shared")
+    FText DisplayName;
+
 
     // Visual //
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
     TSoftObjectPtr<UStaticMesh> MeshAsset;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    FVector RelativeLocation;
+    FVector RelativeLocation_ManThird;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    FRotator RelativeRotation;
+    FVector RelativeLocation_WomanThird;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    FVector RelativeLocation_FirstPerson;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    FRotator RelativeRotation_ManThird;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    FRotator RelativeRotation_WomanThird;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    FRotator RelativeRotation_FirstPerson;
 
 
     // Logic //
