@@ -1,0 +1,28 @@
+﻿---,TID,DisplayName,MeshAsset,bUseBothHands,Category,Pollution,MatchedEquipID,InteractionFinCnt,PickedEquipID,SpawnLayer,DerivedObjID
+NewRow0,Obj_Default,테스트,None,FALSE,E_None,0,"(""Eq_Hand"",""Eq_IVariable"")",1,None,0,None
+NewRow1,Obj_Incinerator,드럼통 소각로,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None
+NewRow2,Obj_WaterTank,물펌프,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None
+NewRow3,Obj_MagicFloor,퇴마진,None,FALSE,E_Fixed,0,"(""Eq_IVariable"")",1,None,0,None
+NewRow4,Obj_CBasket,청소용 바구니,None,TRUE,E_Equip,0,"(""Eq_Hand"")",1,Eq_OVariable,0,None
+NewRow5,Obj_CBucket,양동이,None,TRUE,E_Equip,0,"(""Eq_Hand"", ""Eq_Mop"", ""Eq_AutoMop"")",1,Eq_OVariable,0,None
+NewRow6,Obj_VendingMachine,벤딩 머신,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None
+NewRow7,Obj_TBox,제령 도구 박스,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None
+NewRow8,Obj_TPile,쇠말뚝,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_IVariable,0,None
+NewRow9,Obj_TBowl,닭피가 담긴 사발,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_IVariable,0,None
+NewRow10,Obj_TAmulet,부적,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_IVariable,0,None
+NewRow11,Obj_Cleaner,비단 빗자루,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Cleaner,0,None
+NewRow12,Obj_Axe,도끼,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Axe,0,None
+NewRow13,Obj_Spray,닭피 스프레이,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Spray,0,None
+NewRow14,Obj_Mop,물걸레,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Mop,0,None
+NewRow15,Obj_Pad,귀신 노트,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Pad,0,None
+NewRow16,Obj_Flashlight,기본 손전등,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Flashlight,0,None
+NewRow17,Obj_VBill,지전,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_IVariable,0,None
+NewRow18,Obj_VDoll,제웅,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_IVariable,0,None
+NewRow19,Obj_VAlcoholGlass,부적을 탄 술,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_IVariable,0,None
+NewRow20,Obj_VCoin,엽전 묶음,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_IVariable,0,Obj_VCoinUsed
+NewRow21,Obj_VCoinUsed,사용된 엽전 묶음,None,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None
+NewRow22,Obj_VPot,백자 달항아리,None,TRUE,E_Fetish_N,0,"(""Eq_Hand"")",1,Eq_OVariable,0,None
+NewRow23,Obj_WoodBox,나무 상자,None,TRUE,E_Trash_B,5,"(""Eq_Axe"")",5,None,0,Obj_WoodPiece
+NewRow24,Obj_KimchiJar,장독대,None,TRUE,E_Trash_B,5,"(""Eq_Axe"")",3,None,0,Obj_KJarPiece
+NewRow25,Obj_WoodPiece,부서진 나무 판자,None,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None
+NewRow26,Obj_KJarPiece,부서진 장독대 파편,None,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None

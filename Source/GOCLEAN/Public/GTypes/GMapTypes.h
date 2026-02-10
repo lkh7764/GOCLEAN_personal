@@ -43,11 +43,11 @@ enum class EGZoneType : uint8 {
 					- 혹시나 복도에 해당하는 영역은 귀신 patrol이 적용되지 않는 등 효과가 있을까봐
 					- 구분이 없다면 room으로 통일할 것
 	*/
-	E_Room				UMETA(DisplayName = "Room - 방"),
-	E_Corridor			UMETA(DisplayName = "Corridor - 복도"),
+	E_Room				UMETA(DisplayName = "Room"),
+	E_Corridor			UMETA(DisplayName = "Corridor"),
 
-	E_Outdoor			UMETA(DisplayName = "Outdoor - 야외"),
-	E_Basecamp			UMETA(DisplayName = "Basecamp - 베이스캠프"),
+	E_Outdoor			UMETA(DisplayName = "Outdoor"),
+	E_Basecamp			UMETA(DisplayName = "Basecamp"),
 
 	E_MAX				UMETA(Hidden)
 };
@@ -76,12 +76,12 @@ struct FGZoneData
 
 	// player
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<int32> InnerPlayerList;
+	TArray<int32> IncludedPlayerList;
 
 
 	// ghost
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsGhostIn = false;
+	bool bIncludeGhost = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TObjectPtr<ATargetPoint>> GhostPatrolPoints;

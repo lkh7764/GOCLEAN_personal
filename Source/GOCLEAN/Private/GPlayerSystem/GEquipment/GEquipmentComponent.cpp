@@ -4,7 +4,7 @@
 #include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GOCLEANSettings.h"
-#include "GOCLEANCharacter.h"
+#include "GCharacter/GOCLEANCharacter.h"
 
 
 // Sets default values for this component's properties
