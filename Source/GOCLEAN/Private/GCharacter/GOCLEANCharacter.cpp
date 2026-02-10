@@ -174,18 +174,20 @@ void AGOCLEANCharacter::Crouch()
 
 	if (bIsCrouching)
 	{
-		// Standing
-		GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHalfHeight);
-		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f));
+		ACharacter::Crouch();
+		// Legacy Standing
+		//GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHalfHeight);
+		//CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f));
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
 
 		bIsCrouching = false;
 	}
 	else
 	{
-		// Crouching
-		GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchingCapsuleHalfHeight);
-		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f));
+		ACharacter::UnCrouch();
+		// Legacy Crouching
+		//GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchingCapsuleHalfHeight);
+		//CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f));
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetCrouchSpeed();
 
 		bIsCrouching = true;
