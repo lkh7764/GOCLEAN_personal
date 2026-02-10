@@ -33,6 +33,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class UBoxComponent* TriggerBox;
 
+
 	// replicated
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Zone")
 	FName FromZone;
@@ -57,11 +58,14 @@ protected:
 	// Funcitons
 private:
 	// only server
-	void EnterPlayer();
-	void ExitPlayer();
+	void EnterPlayer(AActor* PlayerActor);
+	void ExitPlayer(AActor* PlayerActor);
 
-	void EnterGhost();
-	void ExitGhost();
+	void EnterGhost(AActor* GhostActor);
+	void ExitGhost(AActor* GhostActor);
+
+	// internal functions
+	int32 FindPlayerSessionIndex(AActor* PlayerActor);
 
 protected:
 	// Trigger

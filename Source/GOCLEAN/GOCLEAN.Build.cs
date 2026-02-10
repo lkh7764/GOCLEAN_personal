@@ -4,15 +4,24 @@ using UnrealBuildTool;
 
 public class GOCLEAN : ModuleRules
 {
-	public GOCLEAN(ReadOnlyTargetRules Target) : base(Target)
-	{
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+    public GOCLEAN(ReadOnlyTargetRules Target) : base(Target)
+    {
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "GameplayTasks", "NavigationSystem", "DeveloperSettings" });
-
+        PublicDependencyModuleNames.AddRange(new string[] { 
+            "Core", 
+            "CoreUObject", 
+            "Engine", 
+            "InputCore", 
+            "EnhancedInput", 
+            "AIModule", 
+            "GameplayTasks", 
+            "NavigationSystem", 
+            "DeveloperSettings" 
+        });
 
         // Personal Folder
-        PublicIncludePaths.Add(ModuleDirectory);
-        PublicIncludePaths.Add("GOCLEAN/Public");
+        PublicIncludePaths.AddRange(new string[] {  "GOCLEAN/Public"
+        });
     }
 }
