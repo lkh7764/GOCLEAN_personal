@@ -18,16 +18,30 @@ class GOCLEAN_API UGEquipmentComponent : public UActorComponent
 
 
 
-	// variables - custom
+	// Variables
 private:
-	UPROPERTY(Replicated)	// 현재 선택한 슬롯의 EquipmentSlots 상 index
+	// only host
+
+
+
+	// replicated
+	//		slot datas
+	UPROPERTY(Replicated)	
 	int32 CurrentSlotIndex;
 
-	UPROPERTY(Replicated)	// 장비 슬롯(size 4), element: equip ID
-	TArray<FName> EquipmentSlots;
+	UPROPERTY(Replicated)
+	TArray<FName> EquipmentSlots; // 장비 슬롯(size 4), element: equip ID
 
 
-	// in-owner character
+	//		pollution
+	UPROPERTY(Replicated)
+	float MopPollution;
+
+	UPROPERTY(Replicated)
+	float AutoMopPollution;
+	
+
+	//		owner character
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<AGOCLEANCharacter> Onwer;
 
@@ -61,16 +75,12 @@ private:
 
 	// functions - default
 public:	
-	// Sets default values for this component's properties
 	UGEquipmentComponent();
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 		
 };
