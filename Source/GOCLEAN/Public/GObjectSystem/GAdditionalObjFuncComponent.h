@@ -32,3 +32,6 @@ public:
 	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) {}
 		
 };
+
+
+

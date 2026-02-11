@@ -46,6 +46,13 @@ void UGEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 
 
+FName UGEquipmentComponent::GetCurrentEquipmentID()
+{
+	return "Eq_Hand";
+}
+
+
+
 //bool AGOCLEANCharacter::InitiateEquipMeshPool()
 //{
 //	// call in constructor
