@@ -52,7 +52,7 @@ public:
 
 	// Getter, Setter //
 	UFUNCTION(BlueprintPure)
-	bool IsCrouching() const { return bIsCrouched; }
+	bool IsCrouching() const { return bIsCrouching; }
 	UFUNCTION(BlueprintPure)
 	bool IsSprinting() const { return bIsSprinting; }
 
