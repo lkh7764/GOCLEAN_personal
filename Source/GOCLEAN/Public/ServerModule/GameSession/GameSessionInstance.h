@@ -16,8 +16,8 @@ class GOCLEAN_API UGameSessionInstance : public UGameInstance
 	
 
 public:
-	virtual void Init() override;
-	virtual void Shutdown() override;
+	/*virtual void Init() override;
+	virtual void Shutdown() override;*/
 
 private:
 	// 현재 음성 채널 접속 여부
