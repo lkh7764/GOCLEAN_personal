@@ -25,6 +25,18 @@ public:
 
     // Visual //
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    int32 IdleAnimID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    int32 ActivateAnimID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    int32 DisableAnimID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    int32 InteractionAnimID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
     TSoftObjectPtr<UStaticMesh> MeshAsset;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")

@@ -39,6 +39,10 @@ class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
 
+class UGEquipmentComponent;
+class UInteractionComponent;
+class UEnhancedInputComponent;
+
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
@@ -131,5 +135,33 @@ private:
 	bool bIsRecoveringStamina;
 	bool bIsCrouching;
 	bool bIsSprinting;
+
+
+
+
+	// Equipments & Interaction //
+	UPROPERTY(VisibleAnywhere, Replicated)
+	int32 AnimID;
+
+	UPROPERTY(VisibleAnywhere, Replicated)
+	TObjectPtr<UGEquipmentComponent> EquipComp;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> ChangeSlotAction;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UInteractionComponent> InteractionComp;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> InteractAction;
+
+
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	void DoInteraction();
+
+	// only Server
+	void Server_TryInteraction(FName EquipID);
 	
 };
