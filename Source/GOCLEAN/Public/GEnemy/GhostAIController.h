@@ -31,6 +31,12 @@ public:
 	// Getter //
 	float GetPlayerSanityCorruptionRate() const;
 
+	UFUNCTION(BlueprintPure)
+	bool IsPatrolling() const { return bIsPatrolling; }
+
+	UFUNCTION(BlueprintPure)
+	bool IsChasing() const { return bIsChasing; }
+
 
 private:
 
