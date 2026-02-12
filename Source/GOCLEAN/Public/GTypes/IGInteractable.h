@@ -1,5 +1,7 @@
 #pragma once
 
+#define ECC_GInteractable ECC_GameTraceChannel2
+
 #include "CoreMinimal.h"
 
 #include "IGInteractable.generated.h"
@@ -17,6 +19,6 @@ class IGInteractable {
 
 
 public:
-    virtual bool CanInteract() const = 0;
-    virtual void ExecuteInteraction() = 0;
+    virtual bool CanInteract(FName EquipID) const = 0;
+    virtual void ExecuteInteraction(FName EquipID) = 0;
 };
