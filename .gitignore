@@ -78,3 +78,7 @@ Platforms/HoloLens/Config/HoloLensEngine.ini
 
 # Debug symbols
 *.pdb
+
+# Allow Vivox third-party libs (tracked via LFS by .gitattributes)
+!Plugins/VivoxCore/**/ThirdParty/**/*.lib
+!Plugins/VivoxCore/**/ThirdParty/**/*.dll
