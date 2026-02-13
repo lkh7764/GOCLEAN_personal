@@ -37,7 +37,10 @@ public:
     int32 InteractionAnimID;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    TSoftObjectPtr<UStaticMesh> MeshAsset;
+    TSoftObjectPtr<UStaticMesh> SM_MeshAsset;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    TSoftObjectPtr<USkeletalMesh> SK_MeshAsset;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
     FVector RelativeLocation_ManThird;

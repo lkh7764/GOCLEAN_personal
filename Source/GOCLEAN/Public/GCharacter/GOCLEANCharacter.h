@@ -143,6 +143,13 @@ private:
 	UPROPERTY(VisibleAnywhere, Replicated)
 	int32 AnimID;
 
+	UFUNCTION(BlueprintCallabe)
+	void SetAnimID(int32 NewID) { AnimID = NewID; }
+
+	UFUNCTION(BlueprintPure)
+	int32 GetAnimID() { return AnimID; }
+
+
 	UPROPERTY(VisibleAnywhere, Replicated)
 	TObjectPtr<UGEquipmentComponent> EquipComp;
 
