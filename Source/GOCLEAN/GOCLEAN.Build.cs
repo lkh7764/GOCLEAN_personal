@@ -4,14 +4,26 @@ using UnrealBuildTool;
 
 public class GOCLEAN : ModuleRules
 {
-	public GOCLEAN(ReadOnlyTargetRules Target) : base(Target)
-	{
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+    public GOCLEAN(ReadOnlyTargetRules Target) : base(Target)
+    {
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "GameplayTasks", "NavigationSystem" });
+        PublicDependencyModuleNames.AddRange(new string[] { 
+            "Core", 
+            "CoreUObject", 
+            "Engine", 
+            "InputCore", 
+            "EnhancedInput", 
+            "AIModule", 
+            "GameplayTasks", 
+            "NavigationSystem", 
+            "DeveloperSettings" 
+        });
 
         // Personal Folder
-        PublicIncludePaths.AddRange(new string[] {  "Public/GObjectSystem/Server",
-                                                    "Public/GObjectSystem/Client"});
+        PublicIncludePaths.AddRange(new string[] {  "GOCLEAN/Public"
+        });
+
+        PrivateDependencyModuleNames.AddRange(new string[] { "VivoxCore" });
     }
 }
