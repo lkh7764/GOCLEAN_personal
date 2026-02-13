@@ -143,7 +143,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Replicated)
 	int32 AnimID;
 
-	UFUNCTION(BlueprintCallabe)
+	UFUNCTION(BlueprintCallable)
 	void SetAnimID(int32 NewID) { AnimID = NewID; }
 
 	UFUNCTION(BlueprintPure)
