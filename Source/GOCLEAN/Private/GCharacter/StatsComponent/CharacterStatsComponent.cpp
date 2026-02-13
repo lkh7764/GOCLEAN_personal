@@ -13,6 +13,12 @@ void UCharacterStatsComponent::BeginPlay()
 	InitializeStats(2, 100.0f, 10.0f, 1.0f, 1.0f, 1.0f, 600.0f);
 }
 
+void UCharacterStatsComponent::ResetStats()
+{
+	SetCurrentSanity(100.0f);
+	SetCurrentStamina(10.0f);
+}
+
 void UCharacterStatsComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

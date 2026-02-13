@@ -77,6 +77,11 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCharacterStatsComponent> StatsComp;
 
+
+	// Dummy
+	UPROPERTY(EditAnywhere, Category = "Dummy character")
+	TSubclassOf<AActor> DummyCharacter;
+
 	// Input Actions //
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
 	TObjectPtr<UInputAction> MoveAction;
@@ -95,7 +100,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
 	TObjectPtr<UInputAction> FlashlightAction;
-
 
 
 

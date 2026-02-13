@@ -44,6 +44,7 @@ public:
 	UCharacterStatsComponent();
 
 
+
 	// Getter, Setter //
 	float GetCurrentSanity() const;
 
@@ -71,6 +72,13 @@ public:
 	void DecreaseDefaultSpeed(float Amount);
 
 
+
+public:
+	// Respawn //
+	void ResetStats();
+
+
+
 private:
 	// Overidded //
 	virtual void BeginPlay() override;
@@ -90,6 +98,7 @@ private:
 		CurrentSanity = MaxSanity;
 
 		MaxStamina = BaseMaxStamina;
+		CurrentStamina = BaseMaxStamina;
 		StaminaDrainRate = BaseStaminaDrainRate;
 		StaminaRecoveryRate = BaseStaminaRecoveryRate;
 		StaminaRecoveryDelay = BaseStaminaRecoveryDelay;

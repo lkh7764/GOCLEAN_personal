@@ -13,6 +13,7 @@
 #include "Engine/GameInstance.h"
 #include "GUI/Manager/GUIManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameModeBase.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -90,7 +91,7 @@ void AGOCLEANCharacter::Tick(float DeltaTime)
 
 	// JSH Flag: Sanity
 	//UE_LOG(LogTemp, Warning, TEXT("Current Player Sanity: %f"), CurrentSanity);
-	StatsComp->DecreaseCurrentSanity(0.0167f);
+	StatsComp->DecreaseCurrentSanity(5.0f * DeltaTime);
 	//StatsComp->SetCurrentSanity(StatsComp->GetCurrentSanity());
 }
 
@@ -126,7 +127,16 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void AGOCLEANCharacter::OnHunted()
 {
+	UE_LOG(LogTemplateCharacter, Warning, TEXT("Hunted"));
+	UE_LOG(LogTemp, Warning, TEXT("Player Hunted"));
 	StatsComp->DecreaseLife(1);
+	StatsComp->ResetStats();
+	
+	GetWorld()->SpawnActor<AActor>(DummyCharacter, GetActorLocation(), GetActorRotation());
+	
+	GetWorld()->GetAuthGameMode()->RestartPlayer(GetController());
+	Destroy();
+
 	if (StatsComp->GetCurrentLife() <= 0) return;
 
 	// Respawn() + 자리에 더미 캐릭터 남음
@@ -233,7 +243,7 @@ void AGOCLEANCharacter::StartStaminaRecovery()
 
 void AGOCLEANCharacter::RecoverStamina() 
 {
-	if (StatsComp == nullptr) return;
+	if (StatsComp == nullptr) return; 
 
 	// JSH TEMP: CurrentStamina += StaminaRecoveryRate * 0.1f;
 	StatsComp->IncreaseCurrentStamina(StatsComp->GetStaminaRecoveryRate() * 0.1f);
