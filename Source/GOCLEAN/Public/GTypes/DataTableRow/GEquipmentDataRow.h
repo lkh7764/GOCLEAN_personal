@@ -24,37 +24,43 @@ public:
 
 
     // Visual //
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|AnimID")
     int32 IdleAnimID;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|AnimID")
+    int32 IdleToActivateAnimID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|AnimID")
+    int32 ActivateToIdleAnimID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|AnimID")
     int32 ActivateAnimID;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    int32 DisableAnimID;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|AnimID")
+    int32 SwapAnimID;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    int32 InteractionAnimID;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|Mesh")
+    TSoftObjectPtr<UStaticMesh> SM_MeshAsset;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    TSoftObjectPtr<UStaticMesh> MeshAsset;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|Mesh")
+    TSoftObjectPtr<USkeletalMesh> SK_MeshAsset;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|Socket")
     FVector RelativeLocation_ManThird;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|Socket")
     FVector RelativeLocation_WomanThird;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|Socket")
     FVector RelativeLocation_FirstPerson;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|Socket")
     FRotator RelativeRotation_ManThird;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|Socket")
     FRotator RelativeRotation_WomanThird;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|Socket")
     FRotator RelativeRotation_FirstPerson;
 
 
