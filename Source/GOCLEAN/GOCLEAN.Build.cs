@@ -23,5 +23,7 @@ public class GOCLEAN : ModuleRules
         // Personal Folder
         PublicIncludePaths.AddRange(new string[] {  "GOCLEAN/Public"
         });
+
+        PrivateDependencyModuleNames.AddRange(new string[] { "VivoxCore" });
     }
 }

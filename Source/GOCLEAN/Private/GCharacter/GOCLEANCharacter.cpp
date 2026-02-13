@@ -15,6 +15,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameModeBase.h"
 
+#include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
+#include "GPlayerSystem/InteractionComponent.h"
+#include "GTypes/IGInteractable.h"
+#include "Net/UnrealNetwork.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -60,6 +65,10 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 	bIsRecoveringStamina = false;
 	bIsCrouching = false;
 	bIsSprinting = false;
+
+
+	InteractionComp = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
+	EquipComp = CreateDefaultSubobject<UGEquipmentComponent>(TEXT("EquipmentComponent"));
 }
 
 
@@ -118,6 +127,10 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// Flashlight toggle
 		EnhancedInputComponent->BindAction(FlashlightAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::ToggleFlashlight);
+
+
+		// Interact
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::DoInteraction);
 	}
 	else
 	{
@@ -261,3 +274,43 @@ void AGOCLEANCharacter::ToggleFlashlight()
 {
 	FlashlightComp->ToggleVisibility();
 }
+
+
+
+// Equipments & Interaction //
+void AGOCLEANCharacter::DoInteraction()
+{
+	if (!InteractionComp || !EquipComp) return;
+
+	// change anim id to active-anim
+	//		empty
+
+	// require rpc function
+	//		empty
+}
+
+void AGOCLEANCharacter::Server_TryInteraction(FName EquipID)
+{
+	AActor* Target = InteractionComp->GetCurrentTarget();
+	if (Target)
+	{
+		IGInteractable* Interactable = Cast<IGInteractable>(Target);
+		if (Interactable)
+		{
+			if (Interactable->CanInteract(EquipID))
+			{
+				Interactable->ExecuteInteraction(EquipID);
+				UE_LOG(LogTemp, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetName());
+			}
+		}
+	}
+}
+
+void AGOCLEANCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGOCLEANCharacter, EquipComp);
+	DOREPLIFETIME(AGOCLEANCharacter, AnimID);
+}
+

@@ -26,7 +26,10 @@ public:
 
     // Visual //
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    TArray<TSoftObjectPtr<UStaticMesh>> MeshAsset;
+    TArray<TSoftObjectPtr<UStaticMesh>> MeshAssets;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    TArray<TSoftObjectPtr<UMaterialInstance>> DecalAssets;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
     bool bUseBothHands;
@@ -57,5 +60,8 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logic")
     FName DerivedObjID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logic")
+    int32 DerivedObjCnt;
 
 };

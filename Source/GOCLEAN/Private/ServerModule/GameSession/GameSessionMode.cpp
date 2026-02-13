@@ -90,21 +90,17 @@ void AGameSessionMode::PostLogin(APlayerController* NewPlayer)
         return;
     }
 
+    const bool bIsHost = NewPlayer->IsLocalController();
+
     PSS->SetSeatIndex(Seat);
-    PSS->SetReady(false);
     PSS->SetEliminated(false);
     PSS->SetNickname(TEXT("Player"));
+    PSS->SetReady(bIsHost); // 호스트면 true, 아니면 false
+
+    OnPlayerReadyChanged();
 
     // Online Subsystem Steam에서 닉네임 가져오기 로직 추가
 
-    // 호스트는 자동으로 Ready 상태
-    if (NewPlayer && NewPlayer->IsLocalController())
-    {
-        PSS->SetReady(true);
-    }
-   
-
-    OnPlayerReadyChanged();
 
 }
 

@@ -12,6 +12,8 @@
 
 
 class UStaticMeshComponent;
+class UGAdditionalObjFuncComponent;
+class UBoxComponent;
 
 
 DECLARE_MULTICAST_DELEGATE(FOnNonfixedObjIneracted);
@@ -26,11 +28,6 @@ class GOCLEAN_API AGNonfixedObject : public AActor, public IGInteractable
 
 	// variables
 private:
-	// Components //
-	// static mesh component - TID에 따른 오브젝트 static mesh 
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> MeshComp;
-
 
 	// Variables //
 	// instance ID - ObjectPool에서 재활용 시, 생성된 obj cnt가 instance id로 사용됨
@@ -41,15 +38,28 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	FName TID;
 
+	// static mesh component - TID에 따른 오브젝트 static mesh 
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UStaticMeshComponent> MeshComp;
+
+
 	// state - 현재 오브젝트의 상태
 	UPROPERTY(VisibleAnywhere)
 	ENonfixedObjState State;
 
 	
 	// Actions //
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UBoxComponent> InteractionVolume; // Collision Profile -> Interactable
+
+	UPROPERTY(VisibleAnywhere)
+	TArray<TObjectPtr<UGAdditionalObjFuncComponent>> FuncCompList;
+
+	UPROPERTY(VisibleAnywhere)
+	int32 InteractionCnt;
+
 	// 인터랙션 발생 시, 해당 오브젝트가 수행해야할 동작 묶음
 	FOnNonfixedObjIneracted OnNonfixedObjInteracted;
-
 
 
 	// custom func
@@ -62,8 +72,8 @@ public:
 	bool ChangeState(ENonfixedObjState ChangedState);
 
 	// interact
-	virtual bool CanInteract() const override;
-	virtual void ExecuteInteraction() override;
+	virtual bool CanInteract(FName EquipID) const override;
+	virtual void ExecuteInteraction(FName EquipID) override;
 
 	FOnNonfixedObjIneracted& GetOnInteractionDelegate() { return OnNonfixedObjInteracted; }
 
