@@ -5,6 +5,13 @@
 #include <ServerModule/GameSession/GameSessionState.h>
 #include <GObjectSystem/Server/GObjectManager.h>
 
+
+#include <GTypes/GObjectTypes.h>
+#include <GObjectSystem/GNonfixedObjCoreComponent.h>
+#include <Kismet/GameplayStatics.h>
+#include "GObjectSystem/GNonfixedObject.h"
+
+
 // Sets default values for this component's properties
 URPCRouterComponent::URPCRouterComponent()
 {
@@ -49,6 +56,8 @@ void URPCRouterComponent::Server_ObjectEvent_Implementation( EObjectEvent_C2S Ev
 
     UGObjectManager* OM = GS->GetObjectManager();
     if (!OM) return;
+
+
 
     switch (EventType)
     {
@@ -99,6 +108,7 @@ void URPCRouterComponent::Server_ObjectEvent_Implementation( EObjectEvent_C2S Ev
     case EObjectEvent_C2S::Object_ActorSpawnReady:
         OM->HandleObjectActorSpawnReady(PC, Payload.TargetInstanceId);
         break;
+
 
     default:
         break;
