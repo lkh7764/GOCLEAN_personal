@@ -54,6 +54,8 @@ public:
 	void SetCurrentSanity(float Amount);
 	void IncreaseCurrentSanity(float Amount);
 	void DecreaseCurrentSanity(float Amount);
+	void SetSanityDrainRate(float NewCurrentSanityDrainRate);
+	float GetSanityDrainRate();
 
 	float GetCurrentStamina() const;
 	float GetStaminaDrainRate() const;
@@ -96,6 +98,7 @@ private:
 
 		MaxSanity = BaseMaxSanity;
 		CurrentSanity = MaxSanity;
+		SanityDrainRate = 10.0f;
 
 		MaxStamina = BaseMaxStamina;
 		CurrentStamina = BaseMaxStamina;
@@ -105,7 +108,7 @@ private:
 
 		DefaultSpeed = BaseDefaultSpeed;
 		WalkSpeed = DefaultSpeed;
-		CrouchSpeed = DefaultSpeed - 300.0f;
+		CrouchSpeed = DefaultSpeed - 100.0f;
 		SprintSpeed = DefaultSpeed + 300.0f;
 	}
 
@@ -115,6 +118,7 @@ private:
 
 	float MaxSanity;
 	float CurrentSanity;
+	float SanityDrainRate;
 
 	float MaxStamina;
 	float CurrentStamina;

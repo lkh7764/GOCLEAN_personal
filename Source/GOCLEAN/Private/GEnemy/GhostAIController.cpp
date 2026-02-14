@@ -35,7 +35,7 @@ void AGhostAIController::OnPossess(APawn* InPawn)
 	bIsChasing = false;
 	bIsPatrolling = true;
 
-	ManifestRadius = 300.0f;
+	ManifestRadius = 500.0f;
 	HuntRadius = 100.0f;
 
 	//MoveToPatrolPoint();
@@ -138,13 +138,13 @@ void AGhostAIController::PlayerHunt()
 	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPlayerCharacter->GetActorLocation());
 	if (Distance < ManifestRadius)
 	{
-		GhostCharacter->GetMesh()->SetHiddenInGame(true);
+		GhostCharacter->GetMesh()->SetHiddenInGame(false);
 	}
 
 	if (Distance < HuntRadius)
 	{
-		GhostCharacter->GetMesh()->SetHiddenInGame(false);
-
+		GhostCharacter->GetMesh()->SetHiddenInGame(true);
+		
 		Cast<AGOCLEANCharacter>(TargetPlayerCharacter)->OnHunted();
 
 		UE_LOG(LogTemp, Warning, TEXT("Player Hunted"));

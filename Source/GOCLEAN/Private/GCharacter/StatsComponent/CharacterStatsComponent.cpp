@@ -10,13 +10,15 @@ void UCharacterStatsComponent::BeginPlay()
 	Super::BeginPlay();
 	
 	// Character base stats initalize
-	InitializeStats(2, 100.0f, 10.0f, 1.0f, 1.0f, 1.0f, 600.0f);
+	InitializeStats(2, 100.0f, 10.0f, 1.0f, 1.0f, 1.0f, 400.0f);
 }
 
 void UCharacterStatsComponent::ResetStats()
 {
 	SetCurrentSanity(100.0f);
 	SetCurrentStamina(10.0f);
+	SetDefaultSpeed(400.0f);
+	SetSanityDrainRate(10.0f);
 }
 
 void UCharacterStatsComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -33,6 +35,8 @@ float UCharacterStatsComponent::GetCurrentSanity() const { return CurrentSanity;
 void UCharacterStatsComponent::SetCurrentSanity(float NewCurrentSanity) { CurrentSanity = NewCurrentSanity; }
 void UCharacterStatsComponent::IncreaseCurrentSanity(float Amount) { CurrentSanity += Amount; }
 void UCharacterStatsComponent::DecreaseCurrentSanity(float Amount) { CurrentSanity -= Amount; }
+void UCharacterStatsComponent::SetSanityDrainRate(float NewCurrentSanityDrainRate) { SanityDrainRate = NewCurrentSanityDrainRate; }
+float UCharacterStatsComponent::GetSanityDrainRate() { return SanityDrainRate; }
 
 float UCharacterStatsComponent::GetCurrentStamina() const { return CurrentStamina; }
 float UCharacterStatsComponent::GetStaminaDrainRate() const { return StaminaDrainRate; }
@@ -51,6 +55,6 @@ void UCharacterStatsComponent::DecreaseDefaultSpeed(float Amount) { DefaultSpeed
 void UCharacterStatsComponent::SetDefaultSpeed(float NewDefaultSpeed) {
 	DefaultSpeed = NewDefaultSpeed;
 	WalkSpeed = NewDefaultSpeed;
-	CrouchSpeed = NewDefaultSpeed - 300;
+	CrouchSpeed = NewDefaultSpeed - 100;
 	SprintSpeed = NewDefaultSpeed + 300;
 }
