@@ -57,12 +57,14 @@ private:
 	void CheckArrivalCurrentPatrolPoint();
 
 	// Chase
-	void CheckEnrageEventCondition();
+	void CheckRageEventCondition();
+	void StartUnendingRageEvent();
 	void StartChase();
-	void ChasePlayer();
+	void ChasePlayer(AActor* TargetPlayerCharacter);
 
 	// Hunt
 	void PlayerHunt();
+	void EndlessPlayerHunt();
 
 
 
@@ -81,7 +83,8 @@ private:
 
 	// Chase
 	bool bIsChasing;
-	bool bIsEnrageEvent;
+	bool bIsRageEvent;
+	bool bIsUnendingRageEvent;
 	FTimerHandle ChasingPlayerHandle;
 
 	// Hunt

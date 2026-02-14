@@ -13,6 +13,8 @@
 #include "Engine/GameInstance.h"
 #include "GUI/Manager/GUIManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameModeBase.h"
+#include "Animation/AnimSingleNodeInstance.h"
 
 #include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
 #include "GPlayerSystem/InteractionComponent.h"
@@ -59,7 +61,6 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 
 	StatsComp = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("StasComp"));
 
-
 	// States //
 	bIsRecoveringStamina = false;
 	bIsCrouching = false;
@@ -68,6 +69,9 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 
 	InteractionComp = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	EquipComp = CreateDefaultSubobject<UGEquipmentComponent>(TEXT("EquipmentComponent"));
+
+
+	// Level sequence
 }
 
 
@@ -99,7 +103,7 @@ void AGOCLEANCharacter::Tick(float DeltaTime)
 
 	// JSH Flag: Sanity
 	//UE_LOG(LogTemp, Warning, TEXT("Current Player Sanity: %f"), CurrentSanity);
-	StatsComp->DecreaseCurrentSanity(0.0167f);
+	StatsComp->DecreaseCurrentSanity(StatsComp->GetSanityDrainRate() * DeltaTime);
 	//StatsComp->SetCurrentSanity(StatsComp->GetCurrentSanity());
 }
 
@@ -139,10 +143,82 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void AGOCLEANCharacter::OnHunted()
 {
-	StatsComp->DecreaseLife(1);
-	if (StatsComp->GetCurrentLife() <= 0) return;
+	UE_LOG(LogTemp, Warning, TEXT("Player Hunted"));
+	
+	GetCharacterMovement()->StopMovementImmediately();
 
-	// Respawn() + 자리에 더미 캐릭터 남음
+	FTimerHandle DelayHandle;
+	FTimerHandle DestroyHandle;
+	float AnimationDuration = 3.0f;
+
+	AActor* SpawnedDummyActor = GetWorld()->SpawnActor<AActor>(DummyGhost, GetActorLocation(), GetActorRotation());
+
+	if (ACharacter* DummyGhostCharacter = Cast<ACharacter>(SpawnedDummyActor))
+	{
+		UAnimationAsset* AnimAsset = DummyGhostCharacter->GetMesh()->GetSingleNodeInstance()->GetCurrentAsset();
+		AnimationDuration = AnimAsset->GetPlayLength();
+	}
+
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	PlayerController->SetIgnoreLookInput(true);
+	PlayerController->SetIgnoreMoveInput(true);
+	CameraComp->bUsePawnControlRotation = false;
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	GetWorldTimerManager().SetTimer(DelayHandle, this, &AGOCLEANCharacter::PlayHuntCameraSequence, AnimationDuration-1.3f, false);
+	GetWorldTimerManager().SetTimer(DestroyHandle, [SpawnedDummyActor]() { SpawnedDummyActor->Destroy(); }, AnimationDuration+0.5f, false);
+	
+	if (StatsComp->GetCurrentLife() <= 0) return;
+}
+
+void AGOCLEANCharacter::Respawn()
+{
+	GetWorld()->SpawnActor<AActor>(DummyCharacter, GetActorLocation(), GetActorRotation());
+
+	GetMesh()->SetHiddenInGame(false);
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	PlayerController->SetIgnoreLookInput(false);
+	PlayerController->SetIgnoreMoveInput(false);
+	CameraComp->bUsePawnControlRotation = true;
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+
+	SetActorLocationAndRotation(RespawnTransform.GetLocation(), RespawnTransform.GetRotation());
+
+	StatsComp->DecreaseLife(1);
+	StatsComp->ResetStats();
+}
+
+void AGOCLEANCharacter::PlayHuntCameraSequence()
+{
+	if (HuntCameraSequence == nullptr) return;
+
+	GetMesh()->SetHiddenInGame(true);
+
+	if (bIsCrouching) AGOCLEANCharacter::Crouch();
+
+	ALevelSequenceActor* SequenceActor = nullptr;
+	
+	ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+		GetWorld(),
+		HuntCameraSequence,
+		FMovieSceneSequencePlaybackSettings(),
+		SequenceActor
+	);
+
+	SequenceActor->bOverrideInstanceData = true;
+
+	UDefaultLevelSequenceInstanceData* InstanceData = NewObject<UDefaultLevelSequenceInstanceData>(SequenceActor);
+	InstanceData->TransformOrigin = FTransform(FVector(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z-100.0f));
+
+	SequenceActor->DefaultInstanceData = InstanceData;
+
+	SequenceActor->SetBindingByTag("PlayerCamera", { this });
+
+	SequencePlayer->Play();
+	
+
+	SequencePlayer->OnFinished.AddDynamic(this, &AGOCLEANCharacter::Respawn);
 }
 
 void AGOCLEANCharacter::Jump()
@@ -187,20 +263,20 @@ void AGOCLEANCharacter::Crouch()
 
 	if (bIsCrouching)
 	{
-		ACharacter::Crouch();
+		ACharacter::UnCrouch();
 		// Legacy Standing
 		//GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHalfHeight);
-		//CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f));
+		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f));
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
 
 		bIsCrouching = false;
 	}
 	else
 	{
-		ACharacter::UnCrouch();
+		ACharacter::Crouch();
 		// Legacy Crouching
 		//GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchingCapsuleHalfHeight);
-		//CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f));
+		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f));
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetCrouchSpeed();
 
 		bIsCrouching = true;
@@ -246,7 +322,7 @@ void AGOCLEANCharacter::StartStaminaRecovery()
 
 void AGOCLEANCharacter::RecoverStamina() 
 {
-	if (StatsComp == nullptr) return;
+	if (StatsComp == nullptr) return; 
 
 	// JSH TEMP: CurrentStamina += StaminaRecoveryRate * 0.1f;
 	StatsComp->IncreaseCurrentStamina(StatsComp->GetStaminaRecoveryRate() * 0.1f);

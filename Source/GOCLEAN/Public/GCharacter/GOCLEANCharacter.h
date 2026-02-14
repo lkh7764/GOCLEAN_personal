@@ -29,6 +29,11 @@
 
 #include "GCharacter/StatsComponent/CharacterStatsComponent.h"
 
+#include "LevelSequence.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequenceActor.h"
+#include "DefaultLevelSequenceInstanceData.h"
+
 #include "GOCLEANCharacter.generated.h"
 
 class UInputComponent;
@@ -64,22 +69,42 @@ public:
 	void SetPlayerCurrentSanity(float NewPlayerCurrentSanity);
 
 
-	// OnHunted
+	// OnHunted //
 	void OnHunted();
+
+	void PlayHuntCameraSequence();
 
 
 private:
 	// Components //
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComp;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonMeshComp;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> CameraComp;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpotLightComponent> FlashlightComp;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCharacterStatsComponent> StatsComp;
+
+
+	// Dummy //
+	UPROPERTY(EditAnywhere, Category = "DummyActor")
+	TSubclassOf<AActor> DummyGhost;
+
+	UPROPERTY(EditAnywhere, Category = "DummyActor")
+	TSubclassOf<AActor> DummyCharacter;
+
+
+	// Respawn //
+	UPROPERTY(EditAnywhere, Category = "RespawnPoint")
+	FTransform RespawnTransform;
+
 
 	// Input Actions //
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
@@ -100,6 +125,15 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
 	TObjectPtr<UInputAction> FlashlightAction;
 
+
+	// Level sequence //
+	UPROPERTY(EditAnywhere, Category="Camera sequence")
+	TObjectPtr<ULevelSequence> HuntCameraSequence;
+
+
+	// Respawn //
+	UFUNCTION()
+	void Respawn();
 
 
 
@@ -125,8 +159,6 @@ private:
 	void ToggleFlashlight();
 
 
-
-
 	// Handles //
 	FTimerHandle StaminaRecoveryHandle;
 
@@ -135,8 +167,6 @@ private:
 	bool bIsRecoveringStamina;
 	bool bIsCrouching;
 	bool bIsSprinting;
-
-
 
 
 	// Equipments & Interaction //
