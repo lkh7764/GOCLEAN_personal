@@ -16,12 +16,7 @@ UGEquipmentComponent::UGEquipmentComponent()
 
 	SetIsReplicatedByDefault(true);
 
-
-	// test
-	EquipmentSlots.Add("Eq_Hand");
-	EquipmentSlots.Add("Eq_Mop");
-	EquipmentSlots.Add("Eq_Cleaner");
-	EquipmentSlots.Add("Eq_Spray");
+	InitiateEquipmentSlots();
 }
 void UGEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -53,6 +48,71 @@ void UGEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 FName UGEquipmentComponent::GetCurrentEquipmentID()
 {
-	return "Eq_Hand";
+	return GetEquipmentID(CurrentSlotIndex);
 }
 
+bool UGEquipmentComponent::ChangeEuquipmentInCurrSlot(FName ChangedEquipID)
+{
+	return ChangeEquipment(CurrentSlotIndex, ChangedEquipID);
+}
+
+bool UGEquipmentComponent::ChangeCurrentSlot(int32 ChangedSlotIndex)
+{
+	return ChangeCurrentSlot_Interval(CurrentSlotIndex, ChangedSlotIndex);
+}
+
+
+FName UGEquipmentComponent::GetEquipmentID(int32 SlotIndex)
+{
+	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() >= SlotIndex || SlotIndex < 0)
+	{
+		return "Error";
+	}
+
+	return EquipmentSlots[SlotIndex];
+}
+
+bool UGEquipmentComponent::ChangeEquipment(int32 SlotIndex, FName EquipID)
+{
+	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() >= SlotIndex || SlotIndex < 0)
+	{
+		return false;
+	}
+
+	// 나중에 유효한 equip id인지 검사하는 로직 추가 필요 -> UGDataManagerSubsystem::
+
+	EquipmentSlots[SlotIndex] = EquipID;
+	return true;
+}
+
+bool UGEquipmentComponent::ChangeCurrentSlot_Interval(int32 From, int32 To)
+{
+	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() >= To || To < 0)
+	{
+		return false;
+	}
+
+	if (From == 0 && GetCurrentEquipmentID() == "Eq_OVariable")
+	{
+		// 오브젝트 매니저에서 PickedObjectID에 접근 후, 해당 오브젝트에 대하여 ChangeState 호출: Invisible -> Static
+		PickedObjectID = -1;
+	}
+
+	CurrentSlotIndex = To;
+
+	return true;
+}
+
+
+
+bool UGEquipmentComponent::InitiateEquipmentSlots()
+{
+	EquipmentSlots.Empty();
+
+	EquipmentSlots.Add("Eq_Hand");
+	EquipmentSlots.Add("Eq_Mop");
+	EquipmentSlots.Add("Eq_Hand");
+	EquipmentSlots.Add("Eq_Hand");
+
+	return true;
+}
