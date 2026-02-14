@@ -25,7 +25,7 @@ void AGhostBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetMesh()->SetHiddenInGame(false);
+	GetMesh()->SetHiddenInGame(true);
 
 	// AI Controller
 	GhostAIController = Cast<AGhostAIController>(GetController());

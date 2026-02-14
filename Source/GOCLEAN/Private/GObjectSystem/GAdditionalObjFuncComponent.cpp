@@ -4,7 +4,7 @@
 #include "GObjectSystem/GAdditionalObjFuncComponent.h"
 
 #include "GTypes/IGInteractable.h"
-#include "GObjectSystem/GNonfixedObject.h"
+#include "GObjectSystem/GNonfixedObjCoreComponent.h"
 
 // Sets default values for this component's properties
 UGAdditionalObjFuncComponent::UGAdditionalObjFuncComponent()
@@ -18,14 +18,14 @@ void UGAdditionalObjFuncComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
-	// 1. 액터가 interactable 한지 확인
-	if (IGInteractable* Interface = Cast<IGInteractable>(GetOwner()))
+
+	TArray<UActorComponent*> InteractComps =
+		GetOwner()->GetComponentsByInterface(UGInteractable::StaticClass());
+	if (InteractComps.Num() > 0)
 	{
-		// 2. 액터의 델리게이트에 현재 인터랙션 기능을 등록
-		if (AGNonfixedObject* OwnerActor = Cast<AGNonfixedObject>(GetOwner()))
+		if (UGNonfixedObjCoreComponent* CoreComp = Cast<UGNonfixedObjCoreComponent>(GetOwner()))
 		{
-			OwnerActor->GetOnInteractionDelegate().AddUObject(this, &UGAdditionalObjFuncComponent::OnInteractionTriggered);
+			CoreComp->GetOnInteractionDelegate().AddUObject(this, &UGAdditionalObjFuncComponent::OnInteractionTriggered);
 		}
 	}
 }

@@ -52,14 +52,18 @@ void UInteractionComponent::PerformLineTrace()
 	
 	// shoot ray
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_GInteractable, Params);
-	// DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 0.1f, 0, 2.0f);
+	DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 0.1f, 0, 2.0f);
 	if (bHit)
 	{
 		AActor* HitActor = HitResult.GetActor();
-		if (HitActor && HitActor->GetClass()->ImplementsInterface(UGInteractable::StaticClass()))
+		if (!HitActor) return;
+
+		TArray<UActorComponent*> InteractComps =
+			HitActor->GetComponentsByInterface(UGInteractable::StaticClass());
+
+		if (InteractComps.Num() > 0)
 		{
-			CurrentTarget = HitActor;
-			// GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Cyan, FString::Printf(TEXT("Target: %s"), *CurrentTarget->GetName()));
+			CurrentTarget = InteractComps[0];
 			return;
 		}
 	}

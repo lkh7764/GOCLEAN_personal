@@ -29,6 +29,15 @@
 
 #include "GCharacter/StatsComponent/CharacterStatsComponent.h"
 
+#include "LevelSequence.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequenceActor.h"
+#include "DefaultLevelSequenceInstanceData.h"
+
+#include "Animation/AnimMontage.h"
+#include "Engine/DataTable.h"
+#include "GCharacter/DataTable/FAnimationData.h"
+
 #include "GOCLEANCharacter.generated.h"
 
 class UInputComponent;
@@ -64,22 +73,42 @@ public:
 	void SetPlayerCurrentSanity(float NewPlayerCurrentSanity);
 
 
-	// OnHunted
+	// OnHunted //
 	void OnHunted();
+
+	void PlayHuntCameraSequence();
 
 
 private:
 	// Components //
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComp;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonMeshComp;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> CameraComp;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpotLightComponent> FlashlightComp;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCharacterStatsComponent> StatsComp;
+
+
+	// Dummy //
+	UPROPERTY(EditAnywhere, Category = "DummyActor")
+	TSubclassOf<AActor> DummyGhost;
+
+	UPROPERTY(EditAnywhere, Category = "DummyActor")
+	TSubclassOf<AActor> DummyCharacter;
+
+
+	// Respawn //
+	UPROPERTY(EditAnywhere, Category = "RespawnPoint")
+	FTransform RespawnTransform;
+
 
 	// Input Actions //
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
@@ -100,6 +129,15 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
 	TObjectPtr<UInputAction> FlashlightAction;
 
+
+	// Level sequence //
+	UPROPERTY(EditAnywhere, Category="Camera sequence")
+	TObjectPtr<ULevelSequence> HuntCameraSequence;
+
+
+	// Respawn //
+	UFUNCTION()
+	void Respawn();
 
 
 
@@ -125,6 +163,17 @@ private:
 	void ToggleFlashlight();
 
 
+	// Animation //
+	UPROPERTY(EditDefaultsOnly, Category="Animation")
+	bool Gender;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UDataTable> FirstPersonAnimDataTable;
+	UPROPERTY(EditDefaultsOnly, Category="Animation")
+	TObjectPtr<UDataTable> ThirdPersonManAnimDataTable;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UDataTable> ThirdPersonWomanAnimDataTable;
+
+	void PlayerInteractionAnim();
 
 
 	// Handles //
@@ -137,11 +186,16 @@ private:
 	bool bIsSprinting;
 
 
-
-
 	// Equipments & Interaction //
 	UPROPERTY(VisibleAnywhere, Replicated)
 	int32 AnimID;
+
+	UFUNCTION(BlueprintCallable)
+	void SetAnimID(int32 NewID) { AnimID = NewID; }
+
+	UFUNCTION(BlueprintPure)
+	int32 GetAnimID() { return AnimID; }
+
 
 	UPROPERTY(VisibleAnywhere, Replicated)
 	TObjectPtr<UGEquipmentComponent> EquipComp;

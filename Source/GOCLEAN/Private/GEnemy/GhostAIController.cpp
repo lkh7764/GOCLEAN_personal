@@ -21,8 +21,8 @@ void AGhostAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	if(!bIsEnrageEvent) 
-		CheckEnrageEventCondition();
+	if(!bIsRageEvent) 
+		CheckRageEventCondition();
 }
 
 void AGhostAIController::OnPossess(APawn* InPawn)
@@ -31,11 +31,11 @@ void AGhostAIController::OnPossess(APawn* InPawn)
 
 	GetWorld()->GetTimerManager().SetTimer(CheckPlayerSanityCorruptionHandle, this, &AGhostAIController::CheckPlayerSanityCorruptionRate, 5.0f, true);
 
-	bIsEnrageEvent = false;
+	bIsRageEvent = false;
 	bIsChasing = false;
 	bIsPatrolling = true;
 
-	ManifestRadius = 300.0f;
+	ManifestRadius = 500.0f;
 	HuntRadius = 100.0f;
 
 	//MoveToPatrolPoint();
@@ -90,13 +90,19 @@ void AGhostAIController::CheckArrivalCurrentPatrolPoint()
 	}
 }
 
-void AGhostAIController::CheckEnrageEventCondition()
+void AGhostAIController::CheckRageEventCondition()
 {
-	if (GetPlayerSanityCorruptionRate() >= 30 && !bIsEnrageEvent) {
-		bIsEnrageEvent = true;
+	if (GetPlayerSanityCorruptionRate() >= 30 && !bIsRageEvent) {
+		bIsRageEvent = true;
 		StartChase();
 	}
 	else return;
+}
+
+void AGhostAIController::StartUnendingRageEvent()
+{
+	bIsUnendingRageEvent = true;
+	StartChase();
 }
 
 void AGhostAIController::StartChase()
@@ -104,22 +110,63 @@ void AGhostAIController::StartChase()
 	bIsChasing = true;
 	bIsPatrolling = false;
 
-	ChasePlayer();
+	ChasePlayer(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 }
 
-void AGhostAIController::ChasePlayer()
+void AGhostAIController::ChasePlayer(AActor* TargetPlayerCharacter)
 {
-	AActor* TargetPlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 	if (TargetPlayerCharacter == nullptr) return;
 
 	MoveToActor(TargetPlayerCharacter);
 
-	GetWorld()->GetTimerManager().SetTimer(ChasingPlayerHandle, this, &AGhostAIController::PlayerHunt, 0.2f, true);
+	if(bIsRageEvent) GetWorld()->GetTimerManager().SetTimer(ChasingPlayerHandle, this, &AGhostAIController::PlayerHunt, 0.2f, true);
+	else if(bIsUnendingRageEvent) GetWorld()->GetTimerManager().SetTimer(ChasingPlayerHandle, this, &AGhostAIController::EndlessPlayerHunt, 0.2f, true);
 }
 
 void AGhostAIController::PlayerHunt()
 {
-	if (!bIsEnrageEvent) return;
+	if (!bIsRageEvent) return;
+
+	//UE_LOG(LogTemp, Warning, TEXT("Hunting Player"));
+	AGhostBase* GhostCharacter = Cast<AGhostBase>(GetPawn());
+	if (GhostCharacter == nullptr) return;
+
+	// JSH TODO: With Server
+	AActor* TargetPlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (TargetPlayerCharacter == nullptr) return;
+
+	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPlayerCharacter->GetActorLocation());
+	if (Distance < ManifestRadius)
+	{
+		GhostCharacter->GetMesh()->SetHiddenInGame(false);
+	}
+
+	if (Distance < HuntRadius)
+	{
+		GhostCharacter->GetMesh()->SetHiddenInGame(true);
+		
+		Cast<AGOCLEANCharacter>(TargetPlayerCharacter)->OnHunted();
+
+		UE_LOG(LogTemp, Warning, TEXT("Player Hunted"));
+
+		GetWorld()->GetTimerManager().ClearTimer(ChasingPlayerHandle);
+		bIsRageEvent = false;
+		bIsChasing = false;
+		bIsPatrolling = true;
+		PlayerSanityCorruptionRate = 0;
+
+		// JSH Temp: Player sanity reset
+		//AGOCLEANCharacter* Player = Cast<AGOCLEANCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		if (Player == nullptr) return;
+		Player->SetPlayerCurrentSanity(100.0f);
+
+		MoveToPatrolPoint();
+	}
+}
+
+void AGhostAIController::EndlessPlayerHunt()
+{
+	if (!bIsUnendingRageEvent) return;
 
 	//UE_LOG(LogTemp, Warning, TEXT("Hunting Player"));
 	AGhostBase* GhostCharacter = Cast<AGhostBase>(GetPawn());
@@ -139,19 +186,17 @@ void AGhostAIController::PlayerHunt()
 	{
 		GhostCharacter->GetMesh()->SetHiddenInGame(false);
 
+		Cast<AGOCLEANCharacter>(TargetPlayerCharacter)->OnHunted();
+
 		UE_LOG(LogTemp, Warning, TEXT("Player Hunted"));
 
 		GetWorld()->GetTimerManager().ClearTimer(ChasingPlayerHandle);
-		bIsEnrageEvent = false;
 		bIsChasing = false;
 		bIsPatrolling = true;
-		PlayerSanityCorruptionRate = 0;
 
 		// JSH Temp: Player sanity reset
 		//AGOCLEANCharacter* Player = Cast<AGOCLEANCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-		if (Player == nullptr) return;
-		Player->SetPlayerCurrentSanity(100.0f);
 
-		MoveToPatrolPoint();
+		if (bIsUnendingRageEvent) EndlessPlayerHunt();
 	}
 }

@@ -1,82 +1,65 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GObjectSystem/GNonfixedObject.h"
-#include "Components/StaticMeshComponent.h"
-#include "Components/BoxComponent.h"
-#include "GTypes/IGInteractable.h"
 
-// Sets default values
+#include "Components/BoxComponent.h"
+#include "Net/UnrealNetwork.h"
+
+#include "GTypes/DataTableRow/GObjectDataRow.h"
+#include "GDataManagerSubsystem.h"
+#include "GObjectSystem/GNonfixedObjCoreComponent.h"
+
+
+
 AGNonfixedObject::AGNonfixedObject()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 
-	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
-	SetRootComponent(MeshComp);
+	bReplicates = true;
+	SetReplicateMovement(true);
 
 
-	InteractionVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionVolume"));
-	InteractionVolume->SetupAttachment(RootComponent);
+	RootPrimitive = CreateDefaultSubobject<UStaticMeshComponent>("RootPrimitive");
+	SetRootComponent(RootPrimitive);
 
-	InteractionVolume->SetCollisionObjectType(ECC_WorldDynamic);
+
+	InteractionVolume = CreateDefaultSubobject<UBoxComponent>("InteractionVolume");
+	InteractionVolume->SetupAttachment(RootPrimitive);
+
 	InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	InteractionVolume->SetCollisionResponseToAllChannels(ECR_Ignore);
-	InteractionVolume->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Block);
+	InteractionVolume->SetCollisionResponseToAllChannels(ECR_Overlap);
+	InteractionVolume->SetHiddenInGame(false);
 
-	InteractionCnt = 0;
-	State = ENonfixedObjState::E_Static;
+	InteractionVolume->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Block);
+	InteractionVolume->SetSimulatePhysics(false);
+
+
+	CoreComp = CreateDefaultSubobject<UGNonfixedObjCoreComponent>("CoreComponent");
+
 }
 
-// Called when the game starts or when spawned
+void AGNonfixedObject::UpdateInteractionBounds()
+{
+	if (!RootPrimitive) return;
+
+	FBoxSphereBounds Bounds = RootPrimitive->Bounds;
+
+	InteractionVolume->SetBoxExtent(Bounds.BoxExtent);
+	InteractionVolume->SetRelativeLocation(FVector(0, 0, Bounds.BoxExtent.Z));
+}
+
+
 void AGNonfixedObject::BeginPlay()
 {
-	Super::BeginPlay();
-	
+	UpdateInteractionBounds();
 }
 
-// Called every frame
+
 void AGNonfixedObject::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	OnStateUpdate();
 }
 
-
-bool AGNonfixedObject::Initialize(const FGNonfixedObjData& NewData)
-{
-	TID = NewData.TID;
-
-	// update properties
-
-	return true;
-}
-
-
-
-bool AGNonfixedObject::CanInteract(FName EquipID) const
-{
-	// check equip id
-
-    return true;
-}
-
-void AGNonfixedObject::ExecuteInteraction(FName EquipID)
-{
-	InteractionCnt++;
-	UE_LOG(LogTemp, Log, TEXT("[GEquipment] %s Interacted! Count: %d, Tool: %s"), *GetName(), InteractionCnt, *EquipID.ToString());
-
-	// InteractionCnt에 따른 동작은 아래 델리게이트에서
-    TriggerInteraction();
-}
-
-void AGNonfixedObject::OnStateUpdate()
-{
-	// 상태별 업데이트 로직
-}
-
-void AGNonfixedObject::CleanUp() {}
-bool AGNonfixedObject::ChangeState(ENonfixedObjState ChangedState) { State = ChangedState; return true; }
-void AGNonfixedObject::OnStateExit() {}
-void AGNonfixedObject::OnStateEnter() {}
 

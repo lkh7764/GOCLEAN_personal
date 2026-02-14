@@ -26,10 +26,13 @@ public:
 
     // Visual //
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    TArray<TSoftObjectPtr<UStaticMesh>> MeshAssets;
+    TArray<TSoftObjectPtr<UStaticMesh>> SM_MeshAssets;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    TArray<TSoftObjectPtr<UMaterialInstance>> DecalAssets;
+    TArray<TSoftObjectPtr<USkeletalMesh>> SK_MeshAssets;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+    TArray<TSoftClassPtr<AActor>> DEC_MeshAssets;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
     bool bUseBothHands;

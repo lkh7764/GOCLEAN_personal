@@ -1,0 +1,49 @@
+﻿---,TID,DisplayName,SM_MeshAssets,SK_MeshAssets,DEC_MeshAssets,bUseBothHands,Category,Pollution,MatchedEquipID,InteractionFinCnt,PickedEquipID,SpawnLayer,DerivedObjID,DerivedObjCnt
+NewRow0,Obj_Default,테스트,None,None,None,FALSE,E_None,0,"(""Eq_Hand"",""Eq_IVariable"")",1,None,0,None,0
+NewRow1,Obj_Incinerator,드럼통 소각로,None,None,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
+NewRow2,Obj_WaterTank,물펌프,None,None,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
+NewRow3,Obj_MagicFloor,퇴마진,None,None,None,FALSE,E_Fixed,0,"(""Eq_IVariable"")",1,None,0,None,0
+NewRow4,Obj_CBasket,청소용 바구니,None,None,None,TRUE,E_Equip,0,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow5,Obj_CBucket,양동이,None,None,None,TRUE,E_Equip,0,"(""Eq_Hand"", ""Eq_Mop"", ""Eq_AutoMop"")",1,Eq_OVariable,0,None,0
+NewRow6,Obj_VendingMachine,벤딩 머신,None,None,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
+NewRow7,Obj_TBox,제령 도구 박스,None,None,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
+NewRow8,Obj_TPile,쇠말뚝,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_TPile,0,None,0
+NewRow9,Obj_TBowl,닭피가 담긴 사발,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_TBowl,0,None,0
+NewRow10,Obj_TAmulet,부적,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_TAmulet,0,None,0
+NewRow11,Obj_Cleaner,비단 빗자루,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Cleaner,0,None,0
+NewRow12,Obj_Axe,도끼,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Axe,0,None,0
+NewRow13,Obj_Spray,닭피 스프레이,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Spray,0,None,0
+NewRow14,Obj_Mop,물걸레,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Mop,0,None,0
+NewRow15,Obj_Pad,귀신 노트,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Pad,0,None,0
+NewRow16,Obj_Flashlight,기본 손전등,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Flashlight,0,None,0
+NewRow17,Obj_VBill,지전,None,None,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VBill,0,None,0
+NewRow18,Obj_VDoll,제웅,None,None,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VDoll,0,None,0
+NewRow19,Obj_VAlcoholGlass,부적을 탄 술,None,None,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VAlcoholGlass,0,None,0
+NewRow20,Obj_VCoin,엽전 묶음,None,None,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VCoin,0,Obj_VCoinUsed,1
+NewRow21,Obj_CoinUsed,사용된 엽전 묶음,None,None,None,TRUE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow22,Obj_FPot,백자 달항아리,None,None,None,TRUE,E_Fetish_N,0,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow23,Obj_WoodBox,나무 상자,None,None,None,TRUE,E_Trash_B,5,"(""Eq_Axe"")",5,None,0,Obj_WoodPiece,10
+NewRow24,Obj_WoodPiece,부서진 나무 판자,None,None,None,TRUE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow25,Obj_KimchiJar,장독대,None,None,None,TRUE,E_Trash_B,5,"(""Eq_Axe"")",3,None,0,Obj_KJarPiece,10
+NewRow26,Obj_KJarPiece,부서진 장독대 파편,None,None,None,TRUE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow27,Obj_Chair,의자,None,None,None,TRUE,E_Trash_B,3,"(""Eq_Axe"")",3,None,0,Obj_ChairPiece,6
+NewRow28,Obj_ChairPiece,부서진 의자 파편,None,None,None,TRUE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow29,Obj_RubberTub,고무 대야,None,None,None,TRUE,E_Trash_B,3,"(""Eq_Axe"")",3,None,0,None,0
+NewRow30,Obj_BodyPiece1,시체 조각,None,None,None,TRUE,E_Trash_S,2,"(""Eq_Hand"")",1,Eq_OVariable,0,Obj_Blood1,1
+NewRow31,Obj_BodyPiece2,시체 조각,None,None,None,TRUE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow32,Obj_Blood1,핏자국,None,None,None,FALSE,E_Filth,0.5,"(""Eq_Mop"", ""Eq_AutoMop"")",2,None,0,None,0
+NewRow33,Obj_Blood2,핏자국,None,None,None,FALSE,E_Filth,1,"(""Eq_Mop"", ""Eq_AutoMop"")",4,None,0,None,0
+NewRow34,Obj_Blood3,핏자국,None,None,None,FALSE,E_Filth,2,"(""Eq_Mop"", ""Eq_AutoMop"")",6,None,0,None,0
+NewRow35,Obj_FootprintR,핏발자국,None,None,None,FALSE,E_Filth,0.5,"(""Eq_Mop"", ""Eq_AutoMop"")",2,None,0,None,0
+NewRow36,Obj_FootprintL,핏발자국,None,None,None,FALSE,E_Filth,0.5,"(""Eq_Mop"", ""Eq_AutoMop"")",2,None,0,None,0
+NewRow37,Obj_FloorCushion,방석,None,None,None,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow38,Obj_PlasticChair,플라스틱 의자,None,None,None,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow39,Obj_TrashCan,쓰레기통,None,None,None,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow40,Obj_TrashCup1,종이컵,None,None,None,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow41,Obj_TrashCup2,종이컵,None,None,None,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow42,Obj_Knife,칼,None,None,None,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+NewRow43,Obj_Hole,구멍,None,None,None,FALSE,E_Filth,2,"(""Eq_Spray"")",1,None,0,Obj_ScatteredBlood,1
+NewRow44,Obj_GEvidence,귀신 흔적,None,None,None,FALSE,E_Filth,2,"(""Eq_Spray"")",1,None,0,Obj_ScatteredBlood,1
+NewRow45,Obj_ScatteredBlood,흩뿌려진 피,None,None,None,FALSE,E_Filth,1,"(""Eq_Mop"", ""Eq_AutoMop"")",4,None,0,None,0
+NewRow46,Obj_Soot,그을음,None,None,None,FALSE,E_Filth,1,"(""Eq_Cleaner"")",4,None,0,None,0
+NewRow47,Obj_Frost,성에,None,None,None,FALSE,E_Filth,1,"(""Eq_Cleaner"")",4,None,0,None,0
