@@ -10,28 +10,99 @@
 #include "GAdditionalObjFuncComponent.generated.h"
 
 
-UCLASS(Abstract, Blueprintable)
+class AGOCLEANCharacter;
+class AGNonfixedObject;
+
+
+UCLASS(Abstract)
 class GOCLEAN_API UGAdditionalObjFuncComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 
 public:	
-	// Sets default values for this component's properties
 	UGAdditionalObjFuncComponent();
 
+	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) {}
+
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
-	virtual void OnInteractionTriggered() PURE_VIRTUAL(UGAdditionalObjFuncComponent::OnInteractionTriggered, );
+	virtual void OnInteractionTriggered(AGOCLEANCharacter* Target) PURE_VIRTUAL(UGAdditionalObjFuncComponent::OnInteractionTriggered, );
 
-public:	
-	// Called every frame
-	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) {}
+	UFUNCTION()
+	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) 
+		PURE_VIRTUAL(UGAdditionalObjFuncComponent::OnStateChangeTriggered, );
 		
 };
 
 
+UCLASS()
+class GOCLEAN_API UGPickComponent : public UGAdditionalObjFuncComponent
+{
+	GENERATED_BODY()
 
+
+public:
+	UGPickComponent();
+
+	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) override;
+
+
+protected:
+	virtual void BeginPlay() override;
+
+	virtual void OnInteractionTriggered(AGOCLEANCharacter* Target) override;
+
+	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) override;
+
+
+	// custom functions
+	UFUNCTION()
+	void PickUpObject(AGOCLEANCharacter* Target);
+
+	UFUNCTION()
+	void DropObject();
+
+
+private:
+	bool bIsPickedUp = false;
+
+	AGOCLEANCharacter* OwnerPlayer;
+
+};
+
+
+UCLASS()
+class GOCLEAN_API UGRemovingComponent : public UGAdditionalObjFuncComponent
+{
+	GENERATED_BODY()
+
+
+public:
+	UGRemovingComponent();
+
+	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) override;
+
+
+protected:
+	virtual void BeginPlay() override;
+
+	virtual void OnInteractionTriggered(AGOCLEANCharacter* Target) override;
+
+	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) override {};
+
+
+	// custom functions
+	UFUNCTION()
+	void SetVisualByInteractionCnt(AGNonfixedObject* Owner);
+
+	UFUNCTION()
+	void SetDestroyThisObject(AGNonfixedObject* Owner);
+
+
+private:
+	int32 InteractionMaxCnt;
+
+};
