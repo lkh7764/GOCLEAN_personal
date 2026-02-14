@@ -42,6 +42,7 @@ enum class EObjectEvent_C2S : uint8
 
     // 공통 로직 
     Object_TryInteract,              // 상호작용 실행 (대상 오브젝트 인스턴스ID)
+
 };
 
 
