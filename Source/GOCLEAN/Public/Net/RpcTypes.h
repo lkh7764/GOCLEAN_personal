@@ -15,6 +15,11 @@ enum class ERpcModule : uint8
     Player,     // 플레이어
 };
 
+
+/// ==============
+/// ObjectEvent
+/// ==============
+
 UENUM(BlueprintType)
 enum class EObjectEvent_C2S : uint8
 {
@@ -102,6 +107,10 @@ struct FObjectPayload_C2S
     UPROPERTY(BlueprintReadWrite)
     FUniqueNetIdRepl SenderId;
 
+    // 플레이어 인덱스
+    UPROPERTY(BlueprintReadWrite)
+    int32 PlayerIndex = -1;
+
     // 대상 오브젝트 인스턴스 ID (캐비닛/양동이/바구니/인터랙션 등)
     UPROPERTY(BlueprintReadWrite)
     int32 TargetInstanceId = INDEX_NONE;
@@ -143,6 +152,10 @@ struct FObjectPayload_S2C
     UPROPERTY(BlueprintReadWrite)
     FUniqueNetIdRepl TargetPlayerId; 
 
+    // 플레이어 인덱스
+    UPROPERTY(BlueprintReadWrite)
+    int32 PlayerIndex = -1;
+
     // 완료/생성/파괴/거부 대상 등
     UPROPERTY(BlueprintReadWrite)
     int32 TargetInstanceId = INDEX_NONE; 
@@ -154,4 +167,55 @@ struct FObjectPayload_S2C
     // 거부 디버깅
     UPROPERTY(BlueprintReadWrite)
     EObjectRejectReason RejectReason = EObjectRejectReason::None;
+};
+
+
+
+/// ==============
+/// PlayerEvent
+/// ==============
+
+UENUM(BlueprintType)
+enum class EPlayerEvent_C2S : uint8
+{
+
+};
+
+UENUM(BlueprintType)
+enum class EPlayerEvent_S2C : uint8
+{
+
+};
+
+
+USTRUCT(BlueprintType)
+struct FPlayerPayload_C2S
+{
+    GENERATED_BODY()
+
+    // 플레이어 ID
+    UPROPERTY(BlueprintReadWrite)
+    FUniqueNetIdRepl SenderId;
+
+    // 플레이어 인덱스
+    UPROPERTY(BlueprintReadWrite)
+    int32 PlayerIndex = -1;
+
+  
+};
+
+USTRUCT(BlueprintType)
+struct FPlayerPayload_S2C
+{
+    GENERATED_BODY()
+
+    // 특정 플레이어만 대상 (비어있을 경우 브로드캐스트)
+    UPROPERTY(BlueprintReadWrite)
+    FUniqueNetIdRepl SenderId;
+
+    // 플레이어 인덱스
+    UPROPERTY(BlueprintReadWrite)
+    int32 PlayerIndex = -1;
+
+
 };
