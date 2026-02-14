@@ -17,6 +17,11 @@ UGEquipmentComponent::UGEquipmentComponent()
 	SetIsReplicatedByDefault(true);
 
 
+	// test
+	EquipmentSlots.Add("Eq_Hand");
+	EquipmentSlots.Add("Eq_Mop");
+	EquipmentSlots.Add("Eq_Cleaner");
+	EquipmentSlots.Add("Eq_Spray");
 }
 void UGEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -50,29 +55,4 @@ FName UGEquipmentComponent::GetCurrentEquipmentID()
 {
 	return "Eq_Hand";
 }
-
-
-
-//bool AGOCLEANCharacter::InitiateEquipMeshPool()
-//{
-//	// call in constructor
-//
-//
-//	int32 TempSlots = 5;
-//	// init skeletal mesh
-//	for (int i = 0; i < TempSlots; ++i)
-//	{
-//		FString Compname = FString::Printf(TEXT("SlotMeshComp_%d"), i);
-//		USkeletalMeshComponent* NewMesh = CreateDefaultSubobject<USkeletalMeshComponent>(*Compname);
-//
-//		if (NewMesh)
-//		{
-//			// character로 이동 후, Onwer 빼기
-//			NewMesh->SetupAttachment(Onwer->GetMesh(), TEXT("socket_name"));
-//			NewMesh->SetHiddenInGame(true);
-//		}
-//	}
-//
-//	return true;
-//}
 
