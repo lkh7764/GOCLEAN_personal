@@ -343,7 +343,32 @@ void AGOCLEANCharacter::ToggleFlashlight()
 	FlashlightComp->ToggleVisibility();
 }
 
+// Animation //
+void AGOCLEANCharacter::PlayerInteractionAnim()
+{
+	if (FirstPersonAnimDataTable == nullptr || ThirdPersonManAnimDataTable == nullptr || ThirdPersonWomanAnimDataTable == nullptr) return;
+	
+	const FAnimationData* FirstPersonAnimRow = FirstPersonAnimDataTable->FindRow<FAnimationData>(FName(*FString::FromInt(GetAnimID())), TEXT(""));
 
+	if (FirstPersonAnimRow == nullptr) return;
+
+	if (Gender == 0)
+	{
+		const FAnimationData* ThirdPersonAnimRow = ThirdPersonManAnimDataTable->FindRow<FAnimationData>(FName(*FString::FromInt(GetAnimID())), TEXT(""));
+
+		if (FirstPersonAnimRow->Montage == nullptr || ThirdPersonAnimRow == nullptr) return;
+		FirstPersonMeshComp->GetAnimInstance()->Montage_Play(FirstPersonAnimRow->Montage);
+		ThirdPersonMeshComp->GetAnimInstance()->Montage_Play(ThirdPersonAnimRow->Montage);
+	}
+	else if (Gender == 1)
+	{
+		const FAnimationData* ThirdPersonAnimRow = ThirdPersonWomanAnimDataTable->FindRow<FAnimationData>(FName(*FString::FromInt(GetAnimID())), TEXT(""));
+
+		if (FirstPersonAnimRow->Montage == nullptr || ThirdPersonAnimRow == nullptr) return;
+		FirstPersonMeshComp->GetAnimInstance()->Montage_Play(FirstPersonAnimRow->Montage);
+		ThirdPersonMeshComp->GetAnimInstance()->Montage_Play(ThirdPersonAnimRow->Montage);
+	}
+}
 
 // Equipments & Interaction //
 void AGOCLEANCharacter::DoInteraction()
@@ -360,8 +385,6 @@ void AGOCLEANCharacter::DoInteraction()
 	if (!Data) return;
 
 	SetAnimID(Data->IdleToActivateAnimID_First);
-
-
 	// require rpc function
 	//		empty
 }

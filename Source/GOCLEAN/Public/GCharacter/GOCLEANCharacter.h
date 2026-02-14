@@ -34,6 +34,10 @@
 #include "LevelSequenceActor.h"
 #include "DefaultLevelSequenceInstanceData.h"
 
+#include "Animation/AnimMontage.h"
+#include "Engine/DataTable.h"
+#include "GCharacter/DataTable/FAnimationData.h"
+
 #include "GOCLEANCharacter.generated.h"
 
 class UInputComponent;
@@ -157,6 +161,19 @@ private:
 	void RecoverStamina();
 
 	void ToggleFlashlight();
+
+
+	// Animation //
+	UPROPERTY(EditDefaultsOnly, Category="Animation")
+	bool Gender;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UDataTable> FirstPersonAnimDataTable;
+	UPROPERTY(EditDefaultsOnly, Category="Animation")
+	TObjectPtr<UDataTable> ThirdPersonManAnimDataTable;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UDataTable> ThirdPersonWomanAnimDataTable;
+
+	void PlayerInteractionAnim();
 
 
 	// Handles //
