@@ -17,7 +17,9 @@ public class GOCLEAN : ModuleRules
             "AIModule", 
             "GameplayTasks", 
             "NavigationSystem", 
-            "DeveloperSettings" 
+            "DeveloperSettings" ,
+            "OnlineSubsystem",
+            "OnlineSubsystemUtils"
         });
 
         // Personal Folder

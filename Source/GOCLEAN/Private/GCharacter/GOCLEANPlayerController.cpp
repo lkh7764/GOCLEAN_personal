@@ -2,6 +2,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 
+AGOCLEANPlayerController::AGOCLEANPlayerController()
+{
+	RPCRouter = CreateDefaultSubobject<URPCRouterComponent>(TEXT("RPCRouter"));
+}
+
 void AGOCLEANPlayerController::BeginPlay()
 {
 	Super::BeginPlay();

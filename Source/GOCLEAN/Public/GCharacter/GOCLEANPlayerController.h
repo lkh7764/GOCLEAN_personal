@@ -11,17 +11,28 @@
 #include "GOCLEANPlayerController.generated.h"
 
 class UInputMappingContext;
+class URPCRouterComponent;
 
 UCLASS()
 class GOCLEAN_API AGOCLEANPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+public:
+	AGOCLEANPlayerController();
+
+	UFUNCTION(BlueprintPure, Category = "RPC")
+	URPCRouterComponent* GetRPCRouter() const { return RPCRouter; }
 	
 protected:
 
 	/** Input Mapping Context to be used for player input */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputMappingContext* InputMappingContext;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RPC")
+	URPCRouterComponent* RPCRouter = nullptr;
 
 	// Begin Actor interface
 protected:
