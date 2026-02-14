@@ -16,6 +16,17 @@ public:
     // UGOCLEANSettings();
 
 
+    // DtatTables //
+    UPROPERTY(Config, EditAnywhere, Category = "DataTalbes")
+    TSoftObjectPtr<UDataTable> ObjectDataTablePath;
+
+    UPROPERTY(Config, EditAnywhere, Category = "DataTalbes")
+    TSoftObjectPtr<UDataTable> EquipmentDataTablePath;
+
+    UPROPERTY(Config, EditAnywhere, Category = "DataTalbes")
+    TSoftObjectPtr<UDataTable> ThatchedHouseMapDataTablePath;
+
+
     // Participant // 
     UPROPERTY(Config, EditAnywhere, Category = "Participant", meta = (ClampMin = "1", ClampMax = "10"))
     int32 ParticipantMax;

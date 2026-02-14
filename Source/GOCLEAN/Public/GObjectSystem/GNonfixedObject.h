@@ -5,104 +5,50 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
-#include "GTypes/GObjectTypes.h"
-#include "GTypes/IGInteractable.h"
-
 #include "GNonfixedObject.generated.h"
 
 
-class UStaticMeshComponent;
 class UGAdditionalObjFuncComponent;
+class UGNonfixedObjCoreComponent;
 class UBoxComponent;
-
-
-DECLARE_MULTICAST_DELEGATE(FOnNonfixedObjIneracted);
+class UStaticMeshComponent;
 
 
 UCLASS()
-class GOCLEAN_API AGNonfixedObject : public AActor, public IGInteractable
+class GOCLEAN_API AGNonfixedObject : public AActor
 {
 	GENERATED_BODY()
-	
 
 
-	// variables
-private:
-
-	// Variables //
-	// instance ID - ObjectPool에서 재활용 시, 생성된 obj cnt가 instance id로 사용됨
-	UPROPERTY(VisibleAnywhere)
-	int32 IID;
-
-	// type ID - 현재 오브젝트가 어떤 오브젝트인지 식별하는 ID
-	UPROPERTY(VisibleAnywhere)
-	FName TID;
-
-	// static mesh component - TID에 따른 오브젝트 static mesh 
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> MeshComp;
-
-
-	// state - 현재 오브젝트의 상태
-	UPROPERTY(VisibleAnywhere)
-	ENonfixedObjState State;
-
-	
-	// Actions //
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UBoxComponent> InteractionVolume; // Collision Profile -> Interactable
-
-	UPROPERTY(VisibleAnywhere)
-	TArray<TObjectPtr<UGAdditionalObjFuncComponent>> FuncCompList;
-
-	UPROPERTY(VisibleAnywhere)
-	int32 InteractionCnt;
-
-	// 인터랙션 발생 시, 해당 오브젝트가 수행해야할 동작 묶음
-	FOnNonfixedObjIneracted OnNonfixedObjInteracted;
-
-
-	// custom func
+	// defaults
 public:
-	// initialize
-	void CleanUp();
-	bool Initialize(const FGNonfixedObjData& NewData);
-
-	// state
-	bool ChangeState(ENonfixedObjState ChangedState);
-
-	// interact
-	virtual bool CanInteract(FName EquipID) const override;
-	virtual void ExecuteInteraction(FName EquipID) override;
-
-	FOnNonfixedObjIneracted& GetOnInteractionDelegate() { return OnNonfixedObjInteracted; }
-
-
-private:
-	// state
-	void OnStateExit();
-	void OnStateEnter();
-	void OnStateUpdate();
-
-	// interact
-	void TriggerInteraction()
-	{
-		OnNonfixedObjInteracted.Broadcast();
-	}
-
-
-
-	// constructor
-public:	
 	AGNonfixedObject();
 
-
+	// virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// life cycle
 protected:
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	virtual void Tick(float DeltaTime) override;
+
+
+	// variables
+protected:
+	// root
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UStaticMeshComponent> RootPrimitive;
+
+	void UpdateInteractionBounds();
+
+	// interaction
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UBoxComponent> InteractionVolume; // Collision Profile -> Interactable
+
+
+	// root
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UGNonfixedObjCoreComponent> CoreComp;
 
 };

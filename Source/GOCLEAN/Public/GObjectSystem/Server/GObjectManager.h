@@ -29,7 +29,7 @@ public:
 protected:
 	// Variables: nonfixed Object
 	UPROPERTY()
-	TArray<TObjectPtr<AGFixedObject>> NfixedObjPool;
+	TArray<TObjectPtr<AGNonfixedObject>> NfixedObjPool;
 
 	UPROPERTY(VisibleAnywhere, Category = "NonfixedObject Pool");
 	int32 NfixedObjCnt;
@@ -44,7 +44,7 @@ protected:
 	TArray<int32> FreeObjsStack;	
 
 	UPROPERTY()
-	TMap<int32, TObjectPtr<AGFixedObject>> NfixedObjects;	// key: IID | value: pool mapping
+	TMap<int32, TObjectPtr<AGNonfixedObject>> NfixedObjects;	// key: IID | value: pool mapping
 
 	// 1. Obj가 Destory 상태가 되면 즉시 Pool로 보내지 말고 해당 Queue에 넣는다.
 	// 2. 해당 Queue는 최근 삭제된 10개의 오브젝트만 보관한다.
@@ -87,6 +87,13 @@ public:
 	void InitiateObjects(UObject*);
 	// 스폰이 완료된 오브젝트 데이터를 
 	void SetObjectDatas();
+
+	UFUNCTION(BlueprintCallable)
+	AGNonfixedObject* SpawnNonfixedObject(
+		FName TID,
+		const FVector& Location,
+		const FRotator& Rotation
+	);
 
 };
 
