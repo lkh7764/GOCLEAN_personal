@@ -5,24 +5,24 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
-#include "GNonfixedObject.generated.h"
+#include "MyGNonfixedSkeletalObject.generated.h"
 
 
 class UGAdditionalObjFuncComponent;
 class UGNonfixedObjCoreComponent;
 class UBoxComponent;
-class UStaticMeshComponent;
+class USkeletalMeshComponent;
 
 
 UCLASS()
-class GOCLEAN_API AGNonfixedObject : public AActor
+class GOCLEAN_API AGNonfixedSkeletalObject : public AActor
 {
 	GENERATED_BODY()
 
 
 	// defaults
 public:
-	AGNonfixedObject();
+	AGNonfixedSkeletalObject();
 
 	// virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -38,7 +38,7 @@ public:
 protected:
 	// root
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> RootPrimitive;
+	TObjectPtr<USkeletalMeshComponent> RootPrimitive;
 
 	void UpdateInteractionBounds();
 

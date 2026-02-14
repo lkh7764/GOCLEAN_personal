@@ -20,7 +20,7 @@ public:
 	UPROPERTY(EditAnywhere, Category="Interaction")
 	float InteractionRange = 300.0f;
 
-	AActor* GetCurrentTarget() const { return CurrentTarget; }
+	UActorComponent* GetCurrentTarget() const { return CurrentTarget; }
 
 
 
@@ -33,7 +33,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UPROPERTY()
-	AActor* CurrentTarget;
+	UActorComponent* CurrentTarget;
 
 	void PerformLineTrace();
 		
