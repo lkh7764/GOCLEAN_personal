@@ -9,6 +9,8 @@
 
 #include "GameSessionState.generated.h"
 
+class APlayerSessionState;
+
 /**
  * 
  */
@@ -27,6 +29,32 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void PostInitializeComponents() override;
+
+public:
+
+    // SeatIndex -> PlayerState
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    APlayerSessionState* GetPlayerSessionStateBySeat(int32 SeatIndex) const;
+
+    // SeatIndex -> Pawn
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    APawn* GetPawnBySeat(int32 SeatIndex) const;
+
+    // Pawn -> SeatIndex
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    int32 GetSeatIndexOfPawn(const APawn* Pawn) const;
+
+    // PlayerState -> SeatIndex
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    int32 GetSeatIndexOfPlayerState(const APlayerState* PlayerState) const;
+
+    // 로컬 플레이어 SeatIndex (플레이어가 자기 자신 인덱스 찾기)
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    int32 GetLocalSeatIndex() const;
+
+    // SeatIndex -> PlayerController
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    APlayerController* GetPlayerControllerBySeat(int32 SeatIndex) const;
 
 private:
     UPROPERTY()
@@ -98,7 +126,7 @@ protected:
     void OnRep_FinalRewardMoney();
 
 
-private:
+protected:
     // 영적 게이지
     UPROPERTY(ReplicatedUsing = OnRep_SpiritualGauge)
     float SpiritualGauge = 0.f;
