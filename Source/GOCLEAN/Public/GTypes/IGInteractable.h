@@ -7,6 +7,8 @@
 #include "IGInteractable.generated.h"
 
 
+class AGOCLEANCharacter;
+
 
 // 언리얼 엔진이 해당 인터페이스가 존재함을 인식시키기 위해 정의
 // UObject 시스템에 현재 인터페이스를 등록해주는 역할 / 메타데이터
@@ -19,6 +21,6 @@ class IGInteractable {
 
 
 public:
-    virtual bool CanInteract(FName EquipID) const = 0;
-    virtual void ExecuteInteraction(FName EquipID) = 0;
+    virtual bool CanInteract(FName EquipID, AGOCLEANCharacter* Target) const = 0;
+    virtual void ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target) = 0;
 };
