@@ -20,6 +20,8 @@
 #include "GPlayerSystem/InteractionComponent.h"
 #include "GTypes/IGInteractable.h"
 #include "Net/UnrealNetwork.h"
+#include "GDataManagerSubsystem.h"
+#include "GTypes/DataTableRow/GEquipmentDataRow.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -348,8 +350,17 @@ void AGOCLEANCharacter::DoInteraction()
 {
 	if (!InteractionComp || !EquipComp) return;
 
+	// get equip id
+	FName EquipID = EquipComp->GetCurrentEquipmentID();
+
+
 	// change anim id to active-anim
-	//		empty
+	UGDataManagerSubsystem* DataManager = GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	const FGEquipmentDataRow* Data = DataManager->GetEquipmentData(EquipID);
+	if (!Data) return;
+
+	SetAnimID(Data->IdleToActivateAnimID_First);
+
 
 	// require rpc function
 	//		empty
@@ -357,7 +368,7 @@ void AGOCLEANCharacter::DoInteraction()
 
 void AGOCLEANCharacter::Server_TryInteraction(FName EquipID)
 {
-	AActor* Target = InteractionComp->GetCurrentTarget();
+	UActorComponent* Target = InteractionComp->GetCurrentTarget();
 	if (Target)
 	{
 		IGInteractable* Interactable = Cast<IGInteractable>(Target);
@@ -366,7 +377,7 @@ void AGOCLEANCharacter::Server_TryInteraction(FName EquipID)
 			if (Interactable->CanInteract(EquipID))
 			{
 				Interactable->ExecuteInteraction(EquipID);
-				UE_LOG(LogTemp, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetName());
+				UE_LOG(LogTemp, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetOwner()->GetName());
 			}
 		}
 	}

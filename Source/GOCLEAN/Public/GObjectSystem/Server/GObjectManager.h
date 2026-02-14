@@ -88,12 +88,12 @@ public:
 	// 스폰이 완료된 오브젝트 데이터를 
 	void SetObjectDatas();
 
-	UFUNCTION(BlueprintCallable)
-	AGNonfixedObject* SpawnNonfixedObject(
-		FName TID,
-		const FVector& Location,
-		const FRotator& Rotation
-	);
+	//UFUNCTION(BlueprintCallable)
+	//AGNonfixedObject* SpawnNonfixedObject(
+	//	FName TID,
+	//	const FVector& Location,
+	//	const FRotator& Rotation
+	//);
 
 };
 
