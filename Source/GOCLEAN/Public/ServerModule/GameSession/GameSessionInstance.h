@@ -7,29 +7,57 @@
 #include "GameSessionInstance.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class GOCLEAN_API UGameSessionInstance : public UGameInstance
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
 
 public:
-	/*virtual void Init() override;
-	virtual void Shutdown() override;*/
+    // VOICE
+
+    // 보이스 채널 참가 여부 
+    UFUNCTION(BlueprintCallable)
+    bool IsVoiceJoined() const { return bVoiceJoined; }
+
+    // raw 에너지 (0~1), Vivox에서 측정된 값 
+    UFUNCTION(BlueprintCallable)
+    float GetVoiceEnergyRaw01() const { return VoiceEnergyRaw01; }
+
+    // 보정된 보이스 레벨. AI 추적에 사용 
+    UFUNCTION(BlueprintCallable)
+    float GetVoiceLevelCorrected01() const { return VoiceLevelCorrected01; }
+
+    // 마이크 음소거 여부
+    UFUNCTION(BlueprintCallable)
+    bool IsMicMuted() const { return bVoiceMicMuted; }
+
+    void GetAllVoiceStimuli(TMap<int32, TPair<FVector, float>>& OutVoiceMap) const
+    {
+        OutVoiceMap = VoiceStimuliMap;
+    }
+
+
+    // Subsystem 용 보이스 상태/캐시 업데이트
+    void Voice_UpdateCache(bool bJoined, float EnergyRaw01, float LevelCorrected01, bool bMicMuted, const TMap<int32, TPair<FVector, float>>& InStimuliMap);
 
 private:
-	// 현재 음성 채널 접속 여부
-	bool bIsVoiceConnected = false;
 
-	// 현재 생 음성 에너지 (0~1)
-	float RawVoiceEnergy = 0.f;
+    // 채널 참가 여부
+    bool bVoiceJoined = false;
 
-	// 보정된 음성 레벨 (AI용)
-	float CorrectedVoiceLevel = 0.f;
+    // raw 에너지
+    float VoiceEnergyRaw01 = 0.f;
+    // 보정된 에너지
+    float VoiceLevelCorrected01 = 0.f;
 
-	// 마이크 상태
-	bool bIsMicEnabled = true;
+    // 마이크 상태
+    bool bVoiceMicMuted = false;
+
+    // PlayerIndex -> (Location, CorrectedLevel)
+    TMap<int32, TPair<FVector, float>> VoiceStimuliMap;
+
+
 
 };

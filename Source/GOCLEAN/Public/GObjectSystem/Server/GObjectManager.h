@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-
+#include "Net/RpcTypes.h"
 #include "GObjectManager.generated.h"
 
 
@@ -40,37 +40,37 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "NonfixedObject Pool");
 	FVector PoolLocation = FVector(0.0, -1000.0, 0.0);
 
-	// pool·Î ¹ÝÈ¯µÈ °¡Àå ÃÖ½Å index¸¦ push, spawn ½Ã pop ÇÏ¿© ÇØ´ç indexÀÇ data¸¦ Àç»ç¿ë
+	// poolï¿½ï¿½ ï¿½ï¿½È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö½ï¿½ indexï¿½ï¿½ push, spawn ï¿½ï¿½ pop ï¿½Ï¿ï¿½ ï¿½Ø´ï¿½ indexï¿½ï¿½ dataï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	TArray<int32> FreeObjsStack;	
 
 	UPROPERTY()
 	TMap<int32, TObjectPtr<AGNonfixedObject>> NfixedObjects;	// key: IID | value: pool mapping
 
-	// 1. Obj°¡ Destory »óÅÂ°¡ µÇ¸é Áï½Ã Pool·Î º¸³»Áö ¸»°í ÇØ´ç Queue¿¡ ³Ö´Â´Ù.
-	// 2. ÇØ´ç Queue´Â ÃÖ±Ù »èÁ¦µÈ 10°³ÀÇ ¿ÀºêÁ§Æ®¸¸ º¸°üÇÑ´Ù.
-	// 3. DequeueµÈ indexÀÇ NFixedObj´Â Map¿¡¼­ »èÁ¦µÇ°í Pool·Î º¹±ÍÇÑ´Ù.
+	// 1. Objï¿½ï¿½ Destory ï¿½ï¿½ï¿½Â°ï¿½ ï¿½Ç¸ï¿½ ï¿½ï¿½ï¿½ Poolï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½ Queueï¿½ï¿½ ï¿½Ö´Â´ï¿½.
+	// 2. ï¿½Ø´ï¿½ Queueï¿½ï¿½ ï¿½Ö±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 10ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+	// 3. Dequeueï¿½ï¿½ indexï¿½ï¿½ NFixedObjï¿½ï¿½ Mapï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ Poolï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	TQueue<int32> DestroyedObjs;
 
 
 
 	// Variables: fixed Object
-	//		1. µå·³Åë¼Ò°¢·Î: ¾²·¹±â Å¸ÀÔÀÇ ºñ°íÁ¤ ¿ÀºêÁ§Æ®¸¦ ¼Ò°¢ÇÏ´Â ¿ëµµ. °íÁ¤ À§Ä¡ ½ºÆù.
+	//		1. ï¿½å·³ï¿½ï¿½Ò°ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ò°ï¿½ï¿½Ï´ï¿½ ï¿½ëµµ. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½.
 	UPROPERTY()
 	TObjectPtr<AGFixedObject> Fireplace;
 
-	//		2. ¹°ÅÊÅ©: ¹°¾çµ¿ÀÌ¸¦ µé°í »óÈ£ÀÛ¿ëÇÒ ½Ã, ¹°À» Ã¤¿ì´Â ¿ëµµ. °íÁ¤ À§Ä¡ ½ºÆù.
+	//		2. ï¿½ï¿½ï¿½ï¿½Å©: ï¿½ï¿½ï¿½çµ¿ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½Û¿ï¿½ï¿½ï¿½ ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ Ã¤ï¿½ï¿½ï¿½ ï¿½ëµµ. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½.
 	UPROPERTY()
 	TObjectPtr<AGFixedObject> WaterTank;
 
-	//		3. º¥µù¸Ó½Å: º¥µù¾ÆÀÌÅÛÀ» ½ºÆùÇÏ´Â ¿ëµµ. °íÁ¤ À§Ä¡ ½ºÆù.
+	//		3. ï¿½ï¿½ï¿½ï¿½ï¿½Ó½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ëµµ. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½.
 	UPROPERTY()
 	TObjectPtr<AGFixedObject> VendingMachine;
 
-	//		4. Ä³ºñ³Ý: ÇÃ·¹ÀÌ¾î°¡ ±Í½ÅÀ» ÇÇÇØ ¼û´Â ¿ëµµ. °íÁ¤ À§Ä¡ ½ºÆù.
+	//		4. Ä³ï¿½ï¿½ï¿½: ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½Í½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ëµµ. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½.
 	UPROPERTY()
 	TArray<TObjectPtr<AGFixedObject>> Cabinets;
 
-	//		5. Åð¸¶Áø: Åð¸¶¸¦ ÁøÇàÇÏ´Â ¿ëµµ. ·£´ý À§Ä¡ ½ºÆù.
+	//		5. ï¿½ï¿½ï¿½ï¿½: ï¿½ð¸¶¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ëµµ. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½.
 	UPROPERTY()
 	TObjectPtr<AGFixedObject> ExocismCircle;
 
@@ -83,9 +83,9 @@ protected:
 
 
 public:	
-	// ºñ°íÁ¤¿ÀºêÁ§Æ® Ç®°ú °íÁ¤¿ÀºêÁ§Æ®¿¡ UGObjectData¸¦ ÇÒ´ç 
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® Ç®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ UGObjectDataï¿½ï¿½ ï¿½Ò´ï¿½ 
 	void InitiateObjects(UObject*);
-	// ½ºÆùÀÌ ¿Ï·áµÈ ¿ÀºêÁ§Æ® µ¥ÀÌÅÍ¸¦ 
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ 
 	void SetObjectDatas();
 
 	//UFUNCTION(BlueprintCallable)
@@ -94,6 +94,73 @@ public:
 	//	const FVector& Location,
 	//	const FRotator& Rotation
 	//);
+
+public:
+	// C -> S (ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½)
+
+	// Æ¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½Û¿ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleTryInteract(class APlayerController* PC, int32 TargetInstanceId);
+
+	// ï¿½Ò°ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½â¹° ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleIncineratorThrowTrash(class APlayerController* PC, const TArray<int32>& TrashInstanceIds);
+
+	// Ä³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleCabinetEnter(class APlayerController* PC, int32 CabinetInstanceId);
+
+	// Ä³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleCabinetExit(class APlayerController* PC, int32 CabinetInstanceId);
+
+	// ï¿½ï¿½ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleWaterTankStartFill(class APlayerController* PC, int32 WaterTankInstanceId);
+
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Ó½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleVendingSelectItem(class APlayerController* PC, FName ItemTypeId);
+
+	// ï¿½çµ¿ï¿½Ì·ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleBucketPourWater(class APlayerController* PC, int32 BucketInstanceId);
+
+	// ï¿½çµ¿ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleBucketEmptyWater(class APlayerController* PC, int32 BucketInstanceId);
+
+	// ï¿½çµ¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleBucketIncreaseContamination(class APlayerController* PC, int32 BucketInstanceId, int32 Delta);
+
+	// ï¿½Ù±ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½â¹° ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleBasketPutTrash(class APlayerController* PC, int32 BasketInstanceId, int32 TrashParam);
+
+	// ï¿½Ù±ï¿½ï¿½ï¿½ ï¿½ï¿½â¹° ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã» Ã³ï¿½ï¿½
+	void HandleBasketEmptyTrash(class APlayerController* PC, int32 BasketInstanceId);
+
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Øºï¿½ ï¿½Ï·ï¿½ ï¿½Ë¸ï¿½ Ã³ï¿½ï¿½
+	void HandleObjectActorSpawnReady(class APlayerController* PC, int32 ObjectInstanceId);
+
+public:
+	// S -> C (Å¬ï¿½ó¿¡¼ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½)
+
+	// ï¿½Ò°ï¿½ ï¿½Ï·ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® Ã³ï¿½ï¿½
+	void OnIncineratorTrashBurnFinished(int32 CompletedInstanceId);
+
+	// ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½ Ã³ï¿½ï¿½
+	void OnWaterTankFillFinished(int32 WaterTankInstanceId);
+
+	// ï¿½çµ¿ï¿½ï¿½ ï¿½ï¿½ ï¿½ß±ï¿½ ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+	void OnBucketScoopWater(int32 BucketInstanceId);
+
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+	void OnObjectSpawned(int32 SpawnedInstanceId);
+
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ä±ï¿½ Ã³ï¿½ï¿½
+	void OnObjectDestroyed(int32 DestroyedInstanceId);
+
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Øºï¿½ ï¿½Ï·ï¿½ Ã³ï¿½ï¿½
+	void OnObjectSpawnDataReady();
+
+	// ï¿½ï¿½È£ï¿½Û¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½È³ï¿½ Ã³ï¿½ï¿½
+	void OnObjectInteractableHint(FName ObjectTypeId, int32 TargetInstanceId);
+
+	// ï¿½ï¿½È£ï¿½Û¿ï¿½ ï¿½Åºï¿½ ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+	void OnObjectInteractionRejected(EObjectRejectReason Reason, int32 TargetInstanceId);
+	
 
 };
 

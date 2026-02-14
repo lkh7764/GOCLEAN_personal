@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+
+#include <GObjectSystem/Server/GObjectManager.h>
+
 #include "GameSessionState.generated.h"
 
 /**
@@ -17,6 +20,18 @@ class GOCLEAN_API AGameSessionState : public AGameState
 public:
 	AGameSessionState();
 
+public:
+
+    UGObjectManager* GetObjectManager() const { return ObjectManager; }
+
+protected:
+    virtual void BeginPlay() override;
+
+private:
+    UPROPERTY()
+    UGObjectManager* ObjectManager;
+
+
     // Getters (Client/Server)
     float GetSpiritualGauge() const { return SpiritualGauge; }
     float GetRestGauge() const { return RestGauge; }
@@ -26,7 +41,7 @@ public:
     int32 GetFinalRewardMoney() const { return FinalRewardMoney; }
 
 
-
+public:
     // GameMode에서 호출 (Server-only mutators)
     // 게이지 증감 (클램프 포함)
     void AddSpiritualGauge(float Delta, float Min = 0.f, float Max = 100.f);

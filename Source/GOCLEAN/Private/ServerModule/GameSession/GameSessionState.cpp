@@ -6,7 +6,19 @@
 
 AGameSessionState::AGameSessionState()
 {
+    ObjectManager = nullptr;
+
 	bReplicates = true;
+}
+
+void AGameSessionState::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (HasAuthority())
+    {
+        ObjectManager = NewObject<UGObjectManager>(this);
+    }
 }
 
 void AGameSessionState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
