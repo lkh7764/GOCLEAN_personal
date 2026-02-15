@@ -45,8 +45,13 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<AGOCLEANCharacter> Onwer;
 
-	UPROPERTY(VisibleAnywhere)
-	TArray<TObjectPtr<USkeletalMeshComponent>> SlotVisualComponents;
+
+	//		picked ID
+	UPROPERTY(VisibleAnywhere, Replicated)
+	int32 PickedObjectID;
+
+	UPROPERTY(VisibleAnywhere, Replicated)
+	int32 PickedItemID;
 
 
 
@@ -56,6 +61,11 @@ public:
 	FName GetCurrentEquipmentID();
 	bool ChangeEuquipmentInCurrSlot(FName ChangedEquipID);
 	bool ChangeCurrentSlot(int32 ChangedSlotIndex);
+
+	int32 GetPickedObjectID() const { return PickedObjectID; }
+	void SetPickedObjectID(int32 IID) { PickedObjectID = IID; }
+	int32 GetPickedItemID() const { return PickedItemID; }
+	void SetPickedItemID(int32 IID) { PickedItemID = IID; }
 
 
 private:
@@ -68,7 +78,6 @@ private:
 
 	// in-beginPlay
 	bool InitiateEquipmentSlots();
-	bool RegisterSlotVisualComps();
 	
 
 

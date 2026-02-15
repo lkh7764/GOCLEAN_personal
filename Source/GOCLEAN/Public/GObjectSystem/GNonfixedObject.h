@@ -33,6 +33,8 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	UGNonfixedObjCoreComponent* GetNonfixedObjCoreComp() const { return CoreComp; }
+
 
 	// variables
 protected:

@@ -12,13 +12,18 @@
 #include "GNonfixedObjCoreComponent.generated.h"
 
 
-DECLARE_MULTICAST_DELEGATE(FOnNonfixedObjIneracted);
+class AGOCLEANCharacter;
+
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNonfixedObjIneracted, AGOCLEANCharacter*);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnNonfixedObjStateChanged, ENonfixedObjState, ENonfixedObjState);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class GOCLEAN_API UGNonfixedObjCoreComponent : public UActorComponent, public IGInteractable
 {
 	GENERATED_BODY()
+
 
 public:	
 	// Sets default values for this component's properties
@@ -51,16 +56,20 @@ public:
 	FOnNonfixedObjIneracted GetOnInteractionDelegate() { return OnNonfixedObjInteracted; }
 
 	// interact
-	virtual bool CanInteract(FName EquipID) const override;
-	virtual void ExecuteInteraction(FName EquipID) override;
+	virtual bool CanInteract(FName EquipID, AGOCLEANCharacter* Target) const override;
+	virtual void ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target) override;
+
+
+	// state
+	bool ChangeState(ENonfixedObjState ChangedState);
+
+	ENonfixedObjState GetNonfixedObjState() const { return State; }
+
+	FOnNonfixedObjStateChanged GetOnStateChangedDelegate() { return OnNonfixedObjStateChanged; }
+
 
 
 protected:
-
-	void TriggerInteraction()
-	{
-		OnNonfixedObjInteracted.Broadcast();
-	}
 
 	// OnReq
 	UFUNCTION()
@@ -73,12 +82,10 @@ protected:
 	ENonfixedObjState State;
 
 	// state
-	void OnStateExit();
-	void OnStateEnter();
+	void OnStateExit(ENonfixedObjState ExitedState);
+	void OnStateEnter(ENonfixedObjState EnteredState);
 	void OnStateUpdate();
 
-	// state
-	bool ChangeState(ENonfixedObjState ChangedState);
 
 	UFUNCTION()
 	void OnRep_State();
@@ -88,5 +95,7 @@ private:
 
 	// 인터랙션 발생 시, 해당 오브젝트가 수행해야할 동작 묶음
 	FOnNonfixedObjIneracted OnNonfixedObjInteracted;
+
+	FOnNonfixedObjStateChanged OnNonfixedObjStateChanged;
 
 };

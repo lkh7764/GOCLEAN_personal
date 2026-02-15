@@ -43,21 +43,21 @@ void UGNonfixedObjCoreComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 
 // interface
-bool UGNonfixedObjCoreComponent::CanInteract(FName EquipID) const
+bool UGNonfixedObjCoreComponent::CanInteract(FName EquipID, AGOCLEANCharacter* Target) const
 {
 	// check equip id
 
 	return true;
 }
 
-void UGNonfixedObjCoreComponent::ExecuteInteraction(FName EquipID)
+void UGNonfixedObjCoreComponent::ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target)
 {
 	if (!GetOwner()->HasAuthority())
 		return;
 
 	InteractionCnt++;
 	// InteractionCnt에 따른 동작은 아래 델리게이트에서
-	TriggerInteraction();
+	OnNonfixedObjInteracted.Broadcast(Target);
 
 	UE_LOG(LogTemp, Log, TEXT("[GEquipment] %s Interacted! Count: %d, Tool: %s"), *GetName(), InteractionCnt, *EquipID.ToString());
 }
@@ -71,4 +71,50 @@ void UGNonfixedObjCoreComponent::OnRep_InteractionCnt()
 void UGNonfixedObjCoreComponent::OnRep_State()
 {
 	// update visual
+}
+
+
+// state
+bool UGNonfixedObjCoreComponent::ChangeState(ENonfixedObjState ChangedState)
+{
+	ENonfixedObjState PrevState = State;
+	if (PrevState == ChangedState) return false;
+
+	OnStateExit(PrevState);
+	State = ChangedState;
+	OnStateEnter(ChangedState);
+
+	OnNonfixedObjStateChanged.Broadcast(PrevState, ChangedState);
+
+	return true;
+}
+
+void UGNonfixedObjCoreComponent::OnStateExit(ENonfixedObjState ExitedState)
+{
+	// 추후 OnfixedObjStateChanged 델리게이트를 Exit과 Enter로 분할
+}
+
+void UGNonfixedObjCoreComponent::OnStateEnter(ENonfixedObjState EnteredState)
+{
+	// 추후 OnfixedObjStateChanged 델리게이트를 Exit과 Enter로 분할
+	switch (EnteredState)
+	{
+	case ENonfixedObjState::E_Static:
+
+		break;
+	case ENonfixedObjState::E_Kinematic:
+		break;
+	case ENonfixedObjState::E_Fixed:
+		break;
+	case ENonfixedObjState::E_Invisible:
+		break;
+	case ENonfixedObjState::E_Disintegrating:
+		break;
+	case ENonfixedObjState::E_Destroyed:
+		break;
+	case ENonfixedObjState::E_Temporary:
+		break;
+	default:
+		break;
+	}
 }

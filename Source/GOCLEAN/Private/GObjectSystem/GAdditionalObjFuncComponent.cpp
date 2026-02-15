@@ -4,16 +4,21 @@
 #include "GObjectSystem/GAdditionalObjFuncComponent.h"
 
 #include "GTypes/IGInteractable.h"
+#include "GTypes/DataTableRow/GObjectDataRow.h"
 #include "GObjectSystem/GNonfixedObjCoreComponent.h"
+#include "GObjectSystem/GNonfixedObject.h"
+#include "GCharacter/GOCLEANCharacter.h"
+#include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
+#include "GDataManagerSubsystem.h"
+#include "GObjectSystem/Server/GObjectManager.h"
 
-// Sets default values for this component's properties
+
+
 UGAdditionalObjFuncComponent::UGAdditionalObjFuncComponent()
 {
 	
 }
 
-
-// Called when the game starts
 void UGAdditionalObjFuncComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -23,10 +28,303 @@ void UGAdditionalObjFuncComponent::BeginPlay()
 		GetOwner()->GetComponentsByInterface(UGInteractable::StaticClass());
 	if (InteractComps.Num() > 0)
 	{
-		if (UGNonfixedObjCoreComponent* CoreComp = Cast<UGNonfixedObjCoreComponent>(GetOwner()))
+		if (UGNonfixedObjCoreComponent* CoreComp = Cast<UGNonfixedObjCoreComponent>(InteractComps[0]))
 		{
 			CoreComp->GetOnInteractionDelegate().AddUObject(this, &UGAdditionalObjFuncComponent::OnInteractionTriggered);
+			CoreComp->GetOnStateChangedDelegate().AddUObject(this, &UGAdditionalObjFuncComponent::OnStateChangeTriggered);
 		}
+	}
+}
+
+
+
+UGPickComponent::UGPickComponent()
+{
+
+}
+
+void UGPickComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
+{
+	Super::InitializeAdditionalData(Data);
+
+	bIsPickedUp = false;
+	OwnerPlayer = nullptr;
+}
+
+void UGPickComponent::BeginPlay() 
+{
+	Super::BeginPlay();
+}
+
+void UGPickComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
+{
+	PickUpObject(Target);
+}
+
+void UGPickComponent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState)
+{
+	if (PrevState == ENonfixedObjState::E_Invisible && ChangedState == ENonfixedObjState::E_Static)
+	{
+		DropObject();
+	}
+}
+
+void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
+{
+	// if (Target->GetEquipComp()->GetCurrentEquipmentID() != "Eq_Hand") return;
+
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner && Owner->GetNonfixedObjCoreComp() && GetWorld())
+	{
+		bIsPickedUp = true;
+		OwnerPlayer = Target;
+
+		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
+
+		UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+		const FGObjectDataRow* Data =
+			DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
+
+		if (Data)
+		{
+			FName PickedEquipID = Data->PickedEquipID;
+			// Target->GetEquipComp()->ChangeEuquipmentInCurrSlot(PickedEquipID);
+
+			if (PickedEquipID == "Eq_OVariable")
+			{
+				// Target->GetEquipComp()->SetPickedObjectID(Owner->GetNonfixedObjCoreComp()->IID);
+			}
+			else if (Data->Category == EGObjectCategory::E_Item_P)
+			{
+				// Target->GetEquipComp()->SetPickedItemID(Owner->GetNonfixedObjCoreComp()->IID);
+			}
+		}
+	}
+}
+
+void UGPickComponent::DropObject()
+{
+	if (!OwnerPlayer) return;
+
+	AGNonfixedObject* OwnerActor = Cast<AGNonfixedObject>(GetOwner());
+	if (!OwnerActor) return;
+
+
+	// set owner player's
+	float DropDistance = 100.0f;
+	FVector DropLocation = OwnerPlayer->GetActorLocation() + (OwnerPlayer->GetActorForwardVector() * DropDistance);
+
+	DropLocation.Z = OwnerPlayer->GetActorLocation().Z;
+
+
+	// set owner actor's
+	OwnerActor->SetActorLocation(DropLocation);
+	OwnerActor->SetActorRotation(OwnerPlayer->GetActorRotation());
+	OwnerActor->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
+
+
+	bIsPickedUp = false;
+	OwnerPlayer = nullptr;
+}
+
+
+
+UGRemovingComponent::UGRemovingComponent()
+{
+
+}
+
+void UGRemovingComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
+{
+	Super::InitializeAdditionalData(Data);
+
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner && Owner->GetNonfixedObjCoreComp() && GetWorld())
+	{
+		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
+
+		UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+		const FGObjectDataRow* Data =
+			DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
+
+		if (Data)
+		{
+			InteractionMaxCnt = Data->InteractionFinCnt;
+		}
+	}
+}
+
+void UGRemovingComponent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UGRemovingComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
+{
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner && Owner->GetNonfixedObjCoreComp())
+	{
+		if (Owner->GetNonfixedObjCoreComp()->InteractionCnt < InteractionMaxCnt)
+		{
+			SetVisualByInteractionCnt(Owner);
+		}
+		else
+		{
+			SetDestroyThisObject(Owner);
+		}
+	}
+}
+
+void UGRemovingComponent::SetVisualByInteractionCnt(AGNonfixedObject* Owner)
+{
+	Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
+
+	UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	const FGObjectDataRow* Data =
+		DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
+
+	if (Data)
+	{
+		if (Data->Category == EGObjectCategory::E_Filth)
+		{
+			// 데칼타입의 경우, 메시의 알파값을 감소
+
+			// 물걸레의 오염도를 증가
+		}
+		else if (Data->Category == EGObjectCategory::E_Trash_B)
+		{
+			// 큰 쓰레기의 경우, 1/2 달성 시 broken 메시 활성화
+		}
+	}
+}
+
+void UGRemovingComponent::SetDestroyThisObject(AGNonfixedObject* Owner)
+{
+	Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Destroyed);
+}
+
+
+
+
+UGMultiInteractionComponent::UGMultiInteractionComponent()
+{
+
+}
+
+void UGMultiInteractionComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
+{
+	Super::InitializeAdditionalData(Data);
+}
+
+void UGMultiInteractionComponent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+
+
+
+UGBurningCompopnent::UGBurningCompopnent()
+{
+
+}
+
+void UGBurningCompopnent::InitializeAdditionalData(const FGNonfixedObjData& Data)
+{
+	Super::InitializeAdditionalData(Data);
+}
+
+void UGBurningCompopnent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UGBurningCompopnent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState)
+{
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner) return;
+
+	if (PrevState == ENonfixedObjState::E_Invisible && ChangedState == ENonfixedObjState::E_Disintegrating)
+	{
+		StartBurning();
+	}
+
+	else if (PrevState == ENonfixedObjState::E_Disintegrating && ChangedState != ENonfixedObjState::E_Destroyed)
+	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(BurnTimerHandle))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(BurnTimerHandle);
+		}
+	}
+}
+
+void UGBurningCompopnent::StartBurning()
+{
+	if (!GetWorld()) return;
+
+	GetWorld()->GetTimerManager().SetTimer(
+		BurnTimerHandle,
+		this,
+		&UGBurningCompopnent::OnBurnTimerFinished,
+		BurningInterval,
+		false
+	);
+}
+
+void UGBurningCompopnent::OnBurnTimerFinished()
+{
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner && Owner->GetNonfixedObjCoreComp())
+	{
+		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Destroyed);
+	}
+}
+
+
+
+
+UGSpawnerCompopnent::UGSpawnerCompopnent()
+{
+
+}
+
+void UGSpawnerCompopnent::InitializeAdditionalData(const FGNonfixedObjData& Data)
+{
+	Super::InitializeAdditionalData(Data);
+}
+
+void UGSpawnerCompopnent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UGSpawnerCompopnent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState)
+{
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner) return;
+
+	if (ChangedState == ENonfixedObjState::E_Destroyed)
+	{
+		SpawnDerivedObject(Owner);
+	}
+}
+
+void UGSpawnerCompopnent::SpawnDerivedObject(AGNonfixedObject* Owner)
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	auto* DataManager = World->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	auto* Data = DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
+	if (!Data) return;
+
+	auto* ObjectManager = World->GetSubsystem<UGObjectManager>();
+	if (ObjectManager)
+	{
+		FVector SpawnLocation = Owner->GetActorLocation();
+		FRotator SpawnerRotation = Owner->GetActorRotation();
+
+		// ObjectManager->SpawnObject()
 	}
 }
 
