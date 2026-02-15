@@ -6,6 +6,7 @@
 #include "GameFramework/GameState.h"
 
 #include <GObjectSystem/Server/GObjectManager.h>
+#include <GPlayerSystem/Server/GPlayerManager.h>
 
 #include "GameSessionState.generated.h"
 
@@ -25,6 +26,7 @@ public:
 public:
 
     UGObjectManager* GetObjectManager() const { return ObjectManager; }
+    UGPlayerManager* GetPlayerManager() const { return PlayerManager; }
 
 protected:
     virtual void BeginPlay() override;
@@ -59,6 +61,9 @@ public:
 private:
     UPROPERTY()
     UGObjectManager* ObjectManager;
+
+    UPROPERTY()
+    UGPlayerManager* PlayerManager = nullptr;
 
 
     // Getters (Client/Server)

@@ -175,16 +175,88 @@ struct FObjectPayload_S2C
 /// PlayerEvent
 /// ==============
 
+
+UENUM(BlueprintType)
+enum class EPlayerAnimState : uint8
+{
+    Idle,
+    Stand,
+    Crouch,
+    Dead,
+};
+
+UENUM(BlueprintType)
+enum class EPlayerOneShot : uint8
+{
+    None,
+
+    // idle 제외, active 기본
+    Axe,
+    Cleaner,
+    Cleaner_activetoldle,
+    Hold_drop,
+    Hold_pick,
+    Holdx_interaction,
+    Mop,
+    Mop_idletoActive,
+    Mop_swap,
+    OneHandHold,
+    GhostAHunt,
+    Spray,
+    Spray_activeToIdle,
+    Spray_idleToActive
+};
+
+// 현재 소지 아이템 상태
+UENUM(BlueprintType)
+enum class EPlayerHeldItem : uint8
+{
+    Hand,			// 맨손
+    OVariables,		// 오브젝트
+    Flashilight,	// 손전등
+    Pad,			// 귀신노트
+    Mop,			// 물걸레
+    Axe,			// 도끼
+    Cleaner,		// 비단 빗자루
+    Spray,			// 닭피 스프레이
+    TBowl,			// 닭피가 담긴 사발
+    TAmulet,		// 부적
+    TPile,			// 쇠말뚝
+    VBill,			// 지전
+    VDoll,			// 제웅
+    VAlcoholGlass,	// 부적을 탄 술
+    VCoin,			// 엽전 묶음
+    AutoMop,		// 전동 물걸레
+};
+
+UENUM(BlueprintType)
+enum class EPlayerRejectReason : uint8
+{
+    None,
+    InvalidState,   // 죽음/스턴/상호작용 중 등으로 불가
+    Cooldown,       // 쿨타임
+    NotEnoughStat,  // 스태미나/정신력 부족 등
+    InvalidParam,   // 파라미터 이상
+};
+
 UENUM(BlueprintType)
 enum class EPlayerEvent_C2S : uint8
 {
-
+    RequestSetAnimState,         // 클라 입력에 따라 애니 상태 변경 요청    
+    RequestSetHeldItem,          // 클라 입력에 따라 소지 아이템 변경 요청
+    RequestPlayOneShot,          // 던지기/청소/아이템 사용 등 한 번 재생 요청
 };
 
 UENUM(BlueprintType)
 enum class EPlayerEvent_S2C : uint8
 {
+    NotifyAnimStateChanged,      // 플레이어 애니 상태 변경 브로드캐스트 (지속 상태: 달리기, 웅크리기 등)
+    NotifyHeldItemChanged,       // 플레이어 소지 아이템 변경 브로드캐스트
 
+    PlayOneShot,                 // 1회성 연출 재생 (아이템 사용, 사망 등)
+    NotifyDeath,                 // 사망 알림 (GameState 쪽 사망상태)
+
+    ActionRejected,              // 입력 요청 거절
 };
 
 
@@ -193,14 +265,23 @@ struct FPlayerPayload_C2S
 {
     GENERATED_BODY()
 
-    // 플레이어 ID
+    // 요청 애니 상태
     UPROPERTY(BlueprintReadWrite)
-    FUniqueNetIdRepl SenderId;
+    EPlayerAnimState AnimState = EPlayerAnimState::Idle;
 
-    // 플레이어 인덱스
+    // 요청 소지 아이템
     UPROPERTY(BlueprintReadWrite)
-    int32 PlayerIndex = -1;
+    EPlayerHeldItem HeldItem = EPlayerHeldItem::Hand;
 
+    UPROPERTY(BlueprintReadWrite)
+    EPlayerOneShot OneShot = EPlayerOneShot::None;
+
+    // 예비용 데이터 공간
+    UPROPERTY(BlueprintReadWrite)
+    int32 ParamInt = 0;
+
+    UPROPERTY(BlueprintReadWrite)
+    float ParamFloat = 0.f;
   
 };
 
@@ -209,13 +290,31 @@ struct FPlayerPayload_S2C
 {
     GENERATED_BODY()
 
-    // 특정 플레이어만 대상 (비어있을 경우 브로드캐스트)
-    UPROPERTY(BlueprintReadWrite)
-    FUniqueNetIdRepl SenderId;
-
-    // 플레이어 인덱스
+    // 대상 플레이어 인덱스
     UPROPERTY(BlueprintReadWrite)
     int32 PlayerIndex = -1;
 
+    // 애니 상태
+    UPROPERTY(BlueprintReadWrite)
+    EPlayerAnimState AnimState = EPlayerAnimState::Idle;
+
+    // 소지 아이템
+    UPROPERTY(BlueprintReadWrite)
+    EPlayerHeldItem HeldItem = EPlayerHeldItem::Hand;
+
+    // 1회성 연출 ID (청소, 물건 드랍 등)
+    UPROPERTY(BlueprintReadWrite)
+    EPlayerOneShot OneShotId = EPlayerOneShot::None;
+
+    // 거절 사유
+    UPROPERTY(BlueprintReadWrite)
+    EPlayerRejectReason RejectReason = EPlayerRejectReason::None;
+
+    // 예비용 데이터 공간
+    UPROPERTY(BlueprintReadWrite)
+    int32 ParamInt = 0;
+
+    UPROPERTY(BlueprintReadWrite)
+    float ParamFloat = 0.f;
 
 };
