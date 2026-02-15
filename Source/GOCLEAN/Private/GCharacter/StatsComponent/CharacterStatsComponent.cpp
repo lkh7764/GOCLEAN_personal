@@ -35,7 +35,7 @@ float UCharacterStatsComponent::GetCurrentSanity() const { return CurrentSanity;
 void UCharacterStatsComponent::SetCurrentSanity(float NewCurrentSanity) { CurrentSanity = NewCurrentSanity; }
 void UCharacterStatsComponent::IncreaseCurrentSanity(float Amount) { CurrentSanity += Amount; }
 void UCharacterStatsComponent::DecreaseCurrentSanity(float Amount) { CurrentSanity -= Amount; }
-void UCharacterStatsComponent::SetSanityDrainRate(float NewCurrentSanityDrainRate) { SanityDrainRate = NewCurrentSanityDrainRate; }
+void UCharacterStatsComponent::SetSanityDrainRate(float NewSanityDrainRate) { SanityDrainRate = NewSanityDrainRate; }
 float UCharacterStatsComponent::GetSanityDrainRate() { return SanityDrainRate; }
 
 float UCharacterStatsComponent::GetCurrentStamina() const { return CurrentStamina; }
