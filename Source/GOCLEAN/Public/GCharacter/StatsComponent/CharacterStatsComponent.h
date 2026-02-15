@@ -133,9 +133,11 @@ private:
 
 
 	// Character stats //
+	UPROPERTY(Replicated)
 	int32 Life;
 
 	float MaxSanity;
+	UPROPERTY(Replicated)
 	float CurrentSanity;
 	float SanityDrainRate;
 
@@ -145,6 +147,7 @@ private:
 	float StaminaRecoveryRate;
 	float StaminaRecoveryDelay;
 
+	UPROPERTY(Replicated)
 	float DefaultSpeed;
 	float WalkSpeed;
 	float CrouchSpeed;
