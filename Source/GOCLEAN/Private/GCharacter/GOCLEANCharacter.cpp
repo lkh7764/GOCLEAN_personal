@@ -64,8 +64,8 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 	StatsComp = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("StasComp"));
 
 	// States //
+	AnimState = EPlayerAnimState::Stand;
 	bIsRecoveringStamina = false;
-	bIsCrouching = false;
 	bIsSprinting = false;
 
 
@@ -103,10 +103,7 @@ void AGOCLEANCharacter::Tick(float DeltaTime)
 		}
 	}
 
-	// JSH Flag: Sanity
-	//UE_LOG(LogTemp, Warning, TEXT("Current Player Sanity: %f"), CurrentSanity);
 	StatsComp->DecreaseCurrentSanity(StatsComp->GetSanityDrainRate() * DeltaTime);
-	//StatsComp->SetCurrentSanity(StatsComp->GetCurrentSanity());
 }
 
 void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -124,14 +121,14 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGOCLEANCharacter::Look);
 
 		// Crouch
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::Crouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::TryCrouch);
 
 		// Sprint & SprintRelease
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::Sprint);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AGOCLEANCharacter::SprintRelease);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::TrySprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AGOCLEANCharacter::TrySprintRelease);
 
 		// Flashlight toggle
-		EnhancedInputComponent->BindAction(FlashlightAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::ToggleFlashlight);
+		EnhancedInputComponent->BindAction(FlashlightAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::TryToggleFlashlight);
 
 
 		// Interact
@@ -142,6 +139,73 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component."), *GetNameSafe(this));
 	}
 }
+
+// Server //
+void AGOCLEANCharacter::TryCrouch()
+{
+	Server_RequestCrouch();
+}
+void AGOCLEANCharacter::TrySprint()
+{
+	Server_RequestSprint();
+}
+void AGOCLEANCharacter::TrySprintRelease()
+{
+	Server_RequestSprintRelease();
+}
+void AGOCLEANCharacter::TryToggleFlashlight()
+{
+	Server_RequestToggleFlashlight();
+}
+void AGOCLEANCharacter::TryPlayerInteractionAnim()
+{
+	Server_RequestPlayerInteractionAnim();
+}
+
+void AGOCLEANCharacter::Server_RequestCrouch_Implementation()
+{
+	Multicast_Crouch();
+}
+void AGOCLEANCharacter::Server_RequestSprint_Implementation()
+{
+	Multicast_Sprint();
+}
+void AGOCLEANCharacter::Server_RequestSprintRelease_Implementation()
+{
+	Multicast_SprintRelease();
+}
+void AGOCLEANCharacter::Server_RequestToggleFlashlight_Implementation()
+{
+	Multicast_ToggleFlashlight();
+}
+void AGOCLEANCharacter::Server_RequestPlayerInteractionAnim_Implementation()
+{
+	Multicast_PlayerInteractionAnim();
+}
+
+void AGOCLEANCharacter::Multicast_ToggleFlashlight_Implementation()
+{
+	ToggleFlashlight();
+}
+void AGOCLEANCharacter::Multicast_PlayerInteractionAnim_Implementation()
+{
+	PlayerInteractionAnim();
+}
+void AGOCLEANCharacter::Multicast_Crouch_Implementation()
+{
+	Crouch();
+}
+void AGOCLEANCharacter::Multicast_Sprint_Implementation()
+{
+	Sprint();
+}
+void AGOCLEANCharacter::Multicast_SprintRelease_Implementation()
+{
+	SprintRelease();
+}
+
+
+// OnHunted //
 
 void AGOCLEANCharacter::OnHunted()
 {
@@ -197,7 +261,7 @@ void AGOCLEANCharacter::PlayHuntCameraSequence()
 
 	GetMesh()->SetHiddenInGame(true);
 
-	if (bIsCrouching) AGOCLEANCharacter::Crouch();
+	if (AnimState == EPlayerAnimState::Crouch) AGOCLEANCharacter::Crouch();
 
 	ALevelSequenceActor* SequenceActor = nullptr;
 	
@@ -225,7 +289,6 @@ void AGOCLEANCharacter::PlayHuntCameraSequence()
 
 void AGOCLEANCharacter::Jump()
 {
-	if (bIsCrouching) return;
 
 	Super::Jump();
 }
@@ -258,30 +321,23 @@ void AGOCLEANCharacter::Crouch()
 {
 	if (StatsComp == nullptr) return;
 
-	if (GetCharacterMovement()->IsFalling()) return;
-
-	float StandingCapsuleHalfHeight = 96.0f;
-	float CrouchingCapsuleHalfHeight = 48.0f;
-
-	if (bIsCrouching)
+	if (AnimState == EPlayerAnimState::Crouch)
 	{
-		ACharacter::UnCrouch();
-		// Legacy Standing
-		//GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHalfHeight);
+		GetCharacterMovement()->UCharacterMovementComponent::UnCrouch();
+
 		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f));
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
 
-		bIsCrouching = false;
+		SetAnimState(EPlayerAnimState::Stand);
 	}
-	else
+	else if(AnimState == EPlayerAnimState::Stand)
 	{
-		ACharacter::Crouch();
-		// Legacy Crouching
-		//GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchingCapsuleHalfHeight);
+		GetCharacterMovement()->UCharacterMovementComponent::Crouch();
+
 		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f));
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetCrouchSpeed();
 
-		bIsCrouching = true;
+		SetAnimState(EPlayerAnimState::Crouch);
 	}
 }
 
@@ -289,7 +345,7 @@ void AGOCLEANCharacter::Sprint()
 {
 	if (StatsComp == nullptr) return;
 
-	if (bIsCrouching || GetCharacterMovement()->IsFalling()) return;
+	if (AnimState == EPlayerAnimState::Crouch) return;
 
 	if (StatsComp->GetCurrentStamina() <= 0.0f) return;
 	
@@ -304,7 +360,7 @@ void AGOCLEANCharacter::SprintRelease()
 {
 	if (StatsComp == nullptr) return;
 
-	if (bIsCrouching) return;
+	if (AnimState == EPlayerAnimState::Crouch) return;
 
 	bIsSprinting = false;
 	GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
@@ -341,6 +397,9 @@ void AGOCLEANCharacter::RecoverStamina()
 void AGOCLEANCharacter::ToggleFlashlight()
 {
 	FlashlightComp->ToggleVisibility();
+
+	SetAnimID(102);
+	TryPlayerInteractionAnim();
 }
 
 // Animation //
@@ -412,5 +471,6 @@ void AGOCLEANCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME(AGOCLEANCharacter, EquipComp);
 	DOREPLIFETIME(AGOCLEANCharacter, AnimID);
+	DOREPLIFETIME(AGOCLEANCharacter, AnimState);
 }
 
