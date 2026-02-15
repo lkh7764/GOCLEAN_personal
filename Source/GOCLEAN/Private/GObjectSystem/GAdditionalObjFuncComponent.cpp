@@ -10,6 +10,7 @@
 #include "GCharacter/GOCLEANCharacter.h"
 #include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
 #include "GDataManagerSubsystem.h"
+#include "GObjectSystem/Server/GObjectManager.h"
 
 
 
@@ -52,7 +53,7 @@ void UGPickComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
 
 void UGPickComponent::BeginPlay() 
 {
-
+	Super::BeginPlay();
 }
 
 void UGPickComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
@@ -155,7 +156,7 @@ void UGRemovingComponent::InitializeAdditionalData(const FGNonfixedObjData& Data
 
 void UGRemovingComponent::BeginPlay()
 {
-
+	Super::BeginPlay();
 }
 
 void UGRemovingComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
@@ -201,3 +202,129 @@ void UGRemovingComponent::SetDestroyThisObject(AGNonfixedObject* Owner)
 {
 	Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Destroyed);
 }
+
+
+
+
+UGMultiInteractionComponent::UGMultiInteractionComponent()
+{
+
+}
+
+void UGMultiInteractionComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
+{
+	Super::InitializeAdditionalData(Data);
+}
+
+void UGMultiInteractionComponent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+
+
+
+UGBurningCompopnent::UGBurningCompopnent()
+{
+
+}
+
+void UGBurningCompopnent::InitializeAdditionalData(const FGNonfixedObjData& Data)
+{
+	Super::InitializeAdditionalData(Data);
+}
+
+void UGBurningCompopnent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UGBurningCompopnent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState)
+{
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner) return;
+
+	if (PrevState == ENonfixedObjState::E_Invisible && ChangedState == ENonfixedObjState::E_Disintegrating)
+	{
+		StartBurning();
+	}
+
+	else if (PrevState == ENonfixedObjState::E_Disintegrating && ChangedState != ENonfixedObjState::E_Destroyed)
+	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(BurnTimerHandle))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(BurnTimerHandle);
+		}
+	}
+}
+
+void UGBurningCompopnent::StartBurning()
+{
+	if (!GetWorld()) return;
+
+	GetWorld()->GetTimerManager().SetTimer(
+		BurnTimerHandle,
+		this,
+		&UGBurningCompopnent::OnBurnTimerFinished,
+		BurningInterval,
+		false
+	);
+}
+
+void UGBurningCompopnent::OnBurnTimerFinished()
+{
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner && Owner->GetNonfixedObjCoreComp())
+	{
+		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Destroyed);
+	}
+}
+
+
+
+
+UGSpawnerCompopnent::UGSpawnerCompopnent()
+{
+
+}
+
+void UGSpawnerCompopnent::InitializeAdditionalData(const FGNonfixedObjData& Data)
+{
+	Super::InitializeAdditionalData(Data);
+}
+
+void UGSpawnerCompopnent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UGSpawnerCompopnent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState)
+{
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner) return;
+
+	if (ChangedState == ENonfixedObjState::E_Destroyed)
+	{
+		SpawnDerivedObject(Owner);
+	}
+}
+
+void UGSpawnerCompopnent::SpawnDerivedObject(AGNonfixedObject* Owner)
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	auto* DataManager = World->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	auto* Data = DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
+	if (!Data) return;
+
+	auto* ObjectManager = World->GetSubsystem<UGObjectManager>();
+	if (ObjectManager)
+	{
+		FVector SpawnLocation = Owner->GetActorLocation();
+		FRotator SpawnerRotation = Owner->GetActorRotation();
+
+		// ObjectManager->SpawnObject()
+	}
+}
+

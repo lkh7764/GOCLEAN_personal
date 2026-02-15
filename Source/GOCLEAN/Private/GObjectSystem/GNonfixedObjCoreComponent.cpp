@@ -78,6 +78,7 @@ void UGNonfixedObjCoreComponent::OnRep_State()
 bool UGNonfixedObjCoreComponent::ChangeState(ENonfixedObjState ChangedState)
 {
 	ENonfixedObjState PrevState = State;
+	if (PrevState == ChangedState) return false;
 
 	OnStateExit(PrevState);
 	State = ChangedState;
@@ -96,4 +97,24 @@ void UGNonfixedObjCoreComponent::OnStateExit(ENonfixedObjState ExitedState)
 void UGNonfixedObjCoreComponent::OnStateEnter(ENonfixedObjState EnteredState)
 {
 	// 추후 OnfixedObjStateChanged 델리게이트를 Exit과 Enter로 분할
+	switch (EnteredState)
+	{
+	case ENonfixedObjState::E_Static:
+
+		break;
+	case ENonfixedObjState::E_Kinematic:
+		break;
+	case ENonfixedObjState::E_Fixed:
+		break;
+	case ENonfixedObjState::E_Invisible:
+		break;
+	case ENonfixedObjState::E_Disintegrating:
+		break;
+	case ENonfixedObjState::E_Destroyed:
+		break;
+	case ENonfixedObjState::E_Temporary:
+		break;
+	default:
+		break;
+	}
 }

@@ -106,3 +106,88 @@ private:
 	int32 InteractionMaxCnt;
 
 };
+
+
+UCLASS()
+class GOCLEAN_API UGMultiInteractionComponent : public UGAdditionalObjFuncComponent
+{
+	GENERATED_BODY()
+
+
+public:
+	UGMultiInteractionComponent();
+
+	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) override;
+
+
+protected:
+	virtual void BeginPlay() override;
+
+	virtual void OnInteractionTriggered(AGOCLEANCharacter* Target) override {};
+
+	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) override {};
+
+};
+
+
+UCLASS()
+class GOCLEAN_API UGBurningCompopnent : public UGAdditionalObjFuncComponent
+{
+	GENERATED_BODY()
+
+
+public:
+	UGBurningCompopnent();
+
+	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) override;
+
+
+protected:
+	virtual void BeginPlay() override;
+
+	virtual void OnInteractionTriggered(AGOCLEANCharacter* Target) override {};
+
+	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) override;
+
+
+	// custom functions
+	UFUNCTION()
+	void StartBurning();
+
+
+private:
+	FTimerHandle BurnTimerHandle;
+
+	void OnBurnTimerFinished();
+
+	UPROPERTY(EditAnywhere, Category = "Burning")
+	float BurningInterval = 5.0f;
+
+};
+
+
+UCLASS()
+class GOCLEAN_API UGSpawnerCompopnent : public UGAdditionalObjFuncComponent
+{
+	GENERATED_BODY()
+
+
+public:
+	UGSpawnerCompopnent();
+
+	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) override;
+
+
+protected:
+	virtual void BeginPlay() override;
+
+	virtual void OnInteractionTriggered(AGOCLEANCharacter* Target) override {};
+
+	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) override;
+
+
+	// custom functions
+	UFUNCTION()
+	void SpawnDerivedObject(AGNonfixedObject* Owner);
+
+};

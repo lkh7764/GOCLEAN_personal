@@ -1,49 +1,49 @@
 ﻿---,TID,DisplayName,SM_MeshAssets,SK_MeshAssets,DEC_MeshAssets,bUseBothHands,Category,Pollution,MatchedEquipID,InteractionFinCnt,PickedEquipID,SpawnLayer,DerivedObjID,DerivedObjCnt
-NewRow0,Obj_Default,테스트,None,None,None,FALSE,E_None,0,"(""Eq_Hand"",""Eq_IVariable"")",1,None,0,None,0
-NewRow1,Obj_Incinerator,드럼통 소각로,None,None,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
-NewRow2,Obj_WaterTank,물펌프,None,None,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
-NewRow3,Obj_MagicFloor,퇴마진,None,None,None,FALSE,E_Fixed,0,"(""Eq_IVariable"")",1,None,0,None,0
-NewRow4,Obj_CBasket,청소용 바구니,None,None,None,TRUE,E_Equip,0,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow5,Obj_CBucket,양동이,None,None,None,TRUE,E_Equip,0,"(""Eq_Hand"", ""Eq_Mop"", ""Eq_AutoMop"")",1,Eq_OVariable,0,None,0
-NewRow6,Obj_VendingMachine,벤딩 머신,None,None,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
-NewRow7,Obj_TBox,제령 도구 박스,None,None,None,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
-NewRow8,Obj_TPile,쇠말뚝,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_TPile,0,None,0
-NewRow9,Obj_TBowl,닭피가 담긴 사발,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_TBowl,0,None,0
-NewRow10,Obj_TAmulet,부적,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_TAmulet,0,None,0
-NewRow11,Obj_Cleaner,비단 빗자루,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Cleaner,0,None,0
-NewRow12,Obj_Axe,도끼,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Axe,0,None,0
-NewRow13,Obj_Spray,닭피 스프레이,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Spray,0,None,0
-NewRow14,Obj_Mop,물걸레,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Mop,0,None,0
-NewRow15,Obj_Pad,귀신 노트,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Pad,0,None,0
-NewRow16,Obj_Flashlight,기본 손전등,None,None,None,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Flashlight,0,None,0
-NewRow17,Obj_VBill,지전,None,None,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VBill,0,None,0
-NewRow18,Obj_VDoll,제웅,None,None,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VDoll,0,None,0
-NewRow19,Obj_VAlcoholGlass,부적을 탄 술,None,None,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VAlcoholGlass,0,None,0
-NewRow20,Obj_VCoin,엽전 묶음,None,None,None,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VCoin,0,Obj_VCoinUsed,1
-NewRow21,Obj_CoinUsed,사용된 엽전 묶음,None,None,None,TRUE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow22,Obj_FPot,백자 달항아리,None,None,None,TRUE,E_Fetish_N,0,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow23,Obj_WoodBox,나무 상자,None,None,None,TRUE,E_Trash_B,5,"(""Eq_Axe"")",5,None,0,Obj_WoodPiece,10
-NewRow24,Obj_WoodPiece,부서진 나무 판자,None,None,None,TRUE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow25,Obj_KimchiJar,장독대,None,None,None,TRUE,E_Trash_B,5,"(""Eq_Axe"")",3,None,0,Obj_KJarPiece,10
-NewRow26,Obj_KJarPiece,부서진 장독대 파편,None,None,None,TRUE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow27,Obj_Chair,의자,None,None,None,TRUE,E_Trash_B,3,"(""Eq_Axe"")",3,None,0,Obj_ChairPiece,6
-NewRow28,Obj_ChairPiece,부서진 의자 파편,None,None,None,TRUE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow29,Obj_RubberTub,고무 대야,None,None,None,TRUE,E_Trash_B,3,"(""Eq_Axe"")",3,None,0,None,0
-NewRow30,Obj_BodyPiece1,시체 조각,None,None,None,TRUE,E_Trash_S,2,"(""Eq_Hand"")",1,Eq_OVariable,0,Obj_Blood1,1
-NewRow31,Obj_BodyPiece2,시체 조각,None,None,None,TRUE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow32,Obj_Blood1,핏자국,None,None,None,FALSE,E_Filth,0.5,"(""Eq_Mop"", ""Eq_AutoMop"")",2,None,0,None,0
-NewRow33,Obj_Blood2,핏자국,None,None,None,FALSE,E_Filth,1,"(""Eq_Mop"", ""Eq_AutoMop"")",4,None,0,None,0
-NewRow34,Obj_Blood3,핏자국,None,None,None,FALSE,E_Filth,2,"(""Eq_Mop"", ""Eq_AutoMop"")",6,None,0,None,0
-NewRow35,Obj_FootprintR,핏발자국,None,None,None,FALSE,E_Filth,0.5,"(""Eq_Mop"", ""Eq_AutoMop"")",2,None,0,None,0
-NewRow36,Obj_FootprintL,핏발자국,None,None,None,FALSE,E_Filth,0.5,"(""Eq_Mop"", ""Eq_AutoMop"")",2,None,0,None,0
-NewRow37,Obj_FloorCushion,방석,None,None,None,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow38,Obj_PlasticChair,플라스틱 의자,None,None,None,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow39,Obj_TrashCan,쓰레기통,None,None,None,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow40,Obj_TrashCup1,종이컵,None,None,None,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow41,Obj_TrashCup2,종이컵,None,None,None,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow42,Obj_Knife,칼,None,None,None,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
-NewRow43,Obj_Hole,구멍,None,None,None,FALSE,E_Filth,2,"(""Eq_Spray"")",1,None,0,Obj_ScatteredBlood,1
-NewRow44,Obj_GEvidence,귀신 흔적,None,None,None,FALSE,E_Filth,2,"(""Eq_Spray"")",1,None,0,Obj_ScatteredBlood,1
-NewRow45,Obj_ScatteredBlood,흩뿌려진 피,None,None,None,FALSE,E_Filth,1,"(""Eq_Mop"", ""Eq_AutoMop"")",4,None,0,None,0
-NewRow46,Obj_Soot,그을음,None,None,None,FALSE,E_Filth,1,"(""Eq_Cleaner"")",4,None,0,None,0
-NewRow47,Obj_Frost,성에,None,None,None,FALSE,E_Filth,1,"(""Eq_Cleaner"")",4,None,0,None,0
+Obj_Default,Obj_Default,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow0_DisplayName"", ""테스트"")",,,,FALSE,E_None,0,"(""Eq_Hand"",""Eq_IVariable"")",1,None,0,None,0
+Obj_Incinerator,Obj_Incinerator,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow1_DisplayName"", ""드럼통 소각로"")","(""/Game/Assets/Prob/Item_Map/SM_Incinerator.SM_Incinerator"")",,,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
+Obj_WaterTank,Obj_WaterTank,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow2_DisplayName"", ""물펌프"")","(""/Game/Assets/Prob/Item_Map/SM_WaterPump.SM_WaterPump"")",,,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
+Obj_MagicFloor,Obj_MagicFloor,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow3_DisplayName"", ""퇴마진"")",,,,FALSE,E_Fixed,0,"(""Eq_IVariable"")",1,None,0,None,0
+Obj_CBasket,Obj_CBasket,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow4_DisplayName"", ""청소용 바구니"")","(""/Game/Assets/Prob/Item_Map/SM_CleaningTote.SM_CleaningTote"")",,,TRUE,E_Equip,0,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_CBucket,Obj_CBucket,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow5_DisplayName"", ""양동이"")","(""/Game/Assets/Prob/Item_Map/SM_Busket.SM_Busket"")",,,TRUE,E_Equip,0,"(""Eq_Hand"",""Eq_Mop"",""Eq_AutoMop"")",1,Eq_OVariable,0,None,0
+Obj_VendingMachine,Obj_VendingMachine,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow6_DisplayName"", ""벤딩 머신"")","(""/Game/Assets/Prob/Item_Map/SM_VendingMachine.SM_VendingMachine"")",,,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
+Obj_TBox,Obj_TBox,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow7_DisplayName"", ""제령 도구 박스"")","(""/Game/Assets/Prob/Item_Map/SM_Toolbox.SM_Toolbox"")",,,FALSE,E_Fixed,0,"(""Eq_Hand"")",1,None,0,None,0
+Obj_TPile,Obj_TPile,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow8_DisplayName"", ""쇠말뚝"")","(""/Game/Assets/Prob/Item_Map/SM_ToolboxETC03.SM_ToolboxETC03"")",,,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_TPile,0,None,0
+Obj_TBowl,Obj_TBowl,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow9_DisplayName"", ""닭피가 담긴 사발"")","(""/Game/Assets/Prob/Item_Map/SM_ToolboxETC01.SM_ToolboxETC01"")",,,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_TBowl,0,None,0
+Obj_TAmulet,Obj_TAmulet,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow10_DisplayName"", ""부적"")","(""/Game/Assets/Prob/Item_Map/SM_ToolboxETC02.SM_ToolboxETC02"")",,,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_TAmulet,0,None,0
+Obj_Cleaner,Obj_Cleaner,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow11_DisplayName"", ""비단 빗자루"")",,"(""/Game/Graphic/Nayoung/character/ItemMesh/SK_Cleaner.SK_Cleaner"")",,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Cleaner,0,None,0
+Obj_Axe,Obj_Axe,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow12_DisplayName"", ""도끼"")",,"(""/Game/Graphic/Nayoung/character/ItemMesh/SK_Axe.SK_Axe"")",,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Axe,0,None,0
+Obj_Spray,Obj_Spray,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow13_DisplayName"", ""닭피 스프레이"")","(""/Game/Graphic/Nayoung/character/ItemMesh/SM_Spray.SM_Spray"")",,,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Spray,0,None,0
+Obj_Mop,Obj_Mop,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow14_DisplayName"", ""물걸레"")",,"(""/Game/Graphic/Nayoung/character/ItemMesh/SK_Mop.SK_Mop"")",,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Mop,0,None,0
+Obj_Pad,Obj_Pad,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow15_DisplayName"", ""귀신 노트"")","(""/Game/Graphic/Nayoung/character/ItemMesh/SM_Pad.SM_Pad"")",,,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Pad,0,None,0
+Obj_Flashlight,Obj_Flashlight,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow16_DisplayName"", ""기본 손전등"")","(""/Game/Graphic/Nayoung/character/ItemMesh/SM_FlashLight.SM_FlashLight"")",,,FALSE,E_Equip,0,"(""Eq_Hand"")",1,Eq_Flashlight,0,None,0
+Obj_VBill,Obj_VBill,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow17_DisplayName"", ""지전"")","(""/Game/Assets/Prob/Item_Vend/SM_Bill.SM_Bill"")",,,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VBill,0,None,0
+Obj_VDoll,Obj_VDoll,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow18_DisplayName"", ""제웅"")","(""/Game/Assets/Prob/Item_Vend/SM_Doll.SM_Doll"")",,,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VDoll,0,None,0
+Obj_VAlcoholGlass,Obj_VAlcoholGlass,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow19_DisplayName"", ""부적을 탄 술"")","(""/Game/Assets/Prob/Item_Vend/SM_AlcoholGlass.SM_AlcoholGlass"")",,,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VAlcoholGlass,0,None,0
+Obj_VCoin,Obj_VCoin,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow20_DisplayName"", ""엽전 묶음"")","(""/Game/Assets/Prob/Item_Vend/SM_Coin.SM_Coin"")",,,FALSE,E_Item_P,0,"(""Eq_Hand"")",1,Eq_VCoin,0,Obj_VCoinUsed,1
+Obj_CoinUsed,Obj_CoinUsed,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow21_DisplayName"", ""사용된 엽전 묶음"")","(""/Game/Assets/Prob/Item_Vend/SM_Coin.SM_Coin"")",,,TRUE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_FPot,Obj_FPot,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow22_DisplayName"", ""백자 달항아리"")","(""/Game/Assets/Prob/Item_Haunt/SM_Pot.SM_Pot"")",,,TRUE,E_Fetish_N,0,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_WoodBox,Obj_WoodBox,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow23_DisplayName"", ""나무 상자"")","(""/Game/Assets/Prob/Trash_Big/SM_WoodBox.SM_WoodBox"",""/Game/Assets/Prob/Trash_Big/SM_BrokenWoodBox.SM_BrokenWoodBox"")",,,TRUE,E_Trash_B,5,"(""Eq_Axe"")",5,None,0,Obj_WoodPiece,10
+Obj_WoodPiece,Obj_WoodPiece,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow24_DisplayName"", ""부서진 나무 판자"")","(""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_1.SM_WoodBox_Piece_1"",""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_2.SM_WoodBox_Piece_2"",""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_5.SM_WoodBox_Piece_5"",""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_3.SM_WoodBox_Piece_3"",""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_6.SM_WoodBox_Piece_6"",""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_7.SM_WoodBox_Piece_7"",""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_8.SM_WoodBox_Piece_8"",""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_9.SM_WoodBox_Piece_9"",""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_10.SM_WoodBox_Piece_10"",""/Game/Assets/Prob/Trash_Big/SM_WoodBox_Piece_17.SM_WoodBox_Piece_17"")",,,TRUE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_KimchiJar,Obj_KimchiJar,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow25_DisplayName"", ""장독대"")","(""/Game/Assets/Prob/Trash_Big/SM_Jar01b.SM_Jar01b"",""/Game/Assets/Prob/Trash_Big/SM_BrokenJar01b.SM_BrokenJar01b"")",,,TRUE,E_Trash_B,5,"(""Eq_Axe"")",3,None,0,Obj_KJarPiece,10
+Obj_KJarPiece,Obj_KJarPiece,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow26_DisplayName"", ""부서진 장독대 파편"")","(""/Game/Assets/Prob/Trash_Big/SM_Jar01b_Piece.SM_Jar01b_Piece"",""/Game/Graphic/Hyeonmin/Jar01b_Piece/SM_Jar01b_Piece.SM_Jar01b_Piece"",""/Game/Assets/Prob/Trash_Big/SM_Jar01b_Piece_001.SM_Jar01b_Piece_001"",""/Game/Assets/Prob/Trash_Big/SM_Jar01b_Piece_002.SM_Jar01b_Piece_002"",""/Game/Graphic/Hyeonmin/Jar01b_Piece/SM_Jar01b_Piece_002.SM_Jar01b_Piece_002"",""/Game/Assets/Prob/Trash_Big/SM_Jar01b_Piece_003.SM_Jar01b_Piece_003"",""/Game/Graphic/Hyeonmin/Jar01b_Piece/SM_Jar01b_Piece_003.SM_Jar01b_Piece_003"",""/Game/Graphic/Hyeonmin/Jar01b_Piece/SM_Jar01b_Piece_006.SM_Jar01b_Piece_006"",""/Game/Assets/Prob/Trash_Big/SM_Jar01b_Piece_004.SM_Jar01b_Piece_004"",""/Game/Graphic/Hyeonmin/Jar01b_Piece/SM_Jar01b_Piece_005.SM_Jar01b_Piece_005"")",,,TRUE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_Chair,Obj_Chair,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow27_DisplayName"", ""의자"")","(""/Game/Assets/Prob/Trash_Big/SM_Chair.SM_Chair"")",,,TRUE,E_Trash_B,3,"(""Eq_Axe"")",3,None,0,None,0
+Obj_ChairPiece,Obj_ChairPiece,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow28_DisplayName"", ""부서진 의자 파편"")",(None),,,TRUE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_RubberTub,Obj_RubberTub,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow29_DisplayName"", ""고무 대야"")","(""/Game/Assets/Prob/Trash_Big/SM_Basin.SM_Basin"")",,,TRUE,E_Trash_B,3,"(""Eq_Axe"")",3,None,0,None,0
+Obj_BodyPiece1,Obj_BodyPiece1,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow30_DisplayName"", ""시체 조각"")","(""/Game/Assets/Prob/Trash_Small/SM_Bodypiece1.SM_Bodypiece1"",""/Game/Assets/Prob/Trash_Small/SM_Bodypiece2.SM_Bodypiece2"",""/Game/Assets/Prob/Trash_Small/SM_Bodypiece3.SM_Bodypiece3"",""/Game/Assets/Prob/Trash_Small/SM_Bodypiece4.SM_Bodypiece4"",""/Game/Assets/Prob/Trash_Small/SM_Bodypiece5.SM_Bodypiece5"")",,,TRUE,E_Trash_S,2,"(""Eq_Hand"")",1,Eq_OVariable,0,Obj_Blood1,1
+Obj_BodyPiece2,Obj_BodyPiece2,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow31_DisplayName"", ""시체 조각"")","(""/Game/Assets/Prob/Trash_Small/SM_Bodypiece6.SM_Bodypiece6"",""/Game/Assets/Prob/Trash_Small/SM_Bodypiece7.SM_Bodypiece7"")",,,TRUE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_Blood1,Obj_Blood1,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow32_DisplayName"", ""핏자국"")",,,,FALSE,E_Filth,0.5,"(""Eq_Mop"",""Eq_AutoMop"")",2,None,0,None,0
+Obj_Blood2,Obj_Blood2,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow33_DisplayName"", ""핏자국"")",,,,FALSE,E_Filth,1,"(""Eq_Mop"",""Eq_AutoMop"")",4,None,0,None,0
+Obj_Blood3,Obj_Blood3,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow34_DisplayName"", ""핏자국"")",,,,FALSE,E_Filth,2,"(""Eq_Mop"",""Eq_AutoMop"")",6,None,0,None,0
+Obj_FootprintR,Obj_FootprintR,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow35_DisplayName"", ""핏발자국"")",,,,FALSE,E_Filth,0.5,"(""Eq_Mop"",""Eq_AutoMop"")",2,None,0,None,0
+Obj_FootprintL,Obj_FootprintL,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow36_DisplayName"", ""핏발자국"")",,,,FALSE,E_Filth,0.5,"(""Eq_Mop"",""Eq_AutoMop"")",2,None,0,None,0
+Obj_FloorCushion,Obj_FloorCushion,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow37_DisplayName"", ""방석"")","(""/Game/Assets/Prob/Trash_Small/SM_FloorCushion_low.SM_FloorCushion_low"")",,,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_PlasticChair,Obj_PlasticChair,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow38_DisplayName"", ""플라스틱 의자"")","(""/Game/Assets/Prob/Trash_Small/SM_PlasticChair.SM_PlasticChair"")",,,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_TrashCan,Obj_TrashCan,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow39_DisplayName"", ""쓰레기통"")","(""/Game/Assets/Prob/Trash_Small/SM_TrashCan.SM_TrashCan"")",,,FALSE,E_Trash_S,0.5,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_TrashCup1,Obj_TrashCup1,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow40_DisplayName"", ""종이컵"")","(""/Game/Assets/Prob/Trash_Small/SM_TrashCup1.SM_TrashCup1"")",,,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_TrashCup2,Obj_TrashCup2,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow41_DisplayName"", ""종이컵"")","(""/Game/Assets/Prob/Trash_Small/SM_TrashCup2.SM_TrashCup2"")",,,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_Knife,Obj_Knife,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow42_DisplayName"", ""칼"")","(""/Game/Assets/Prob/Trash_Small/SM_TrashKnife.SM_TrashKnife"")",,,FALSE,E_Trash_S,1,"(""Eq_Hand"")",1,Eq_OVariable,0,None,0
+Obj_Hole,Obj_Hole,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow43_DisplayName"", ""구멍"")",,,,FALSE,E_Filth,2,"(""Eq_Spray"")",1,None,0,Obj_ScatteredBlood,1
+Obj_GEvidence,Obj_GEvidence,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow44_DisplayName"", ""귀신 흔적"")",,,,FALSE,E_Filth,2,"(""Eq_Spray"")",1,None,0,Obj_ScatteredBlood,1
+Obj_ScatteredBlood,Obj_ScatteredBlood,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow45_DisplayName"", ""흩뿌려진 피"")",,,,FALSE,E_Filth,1,"(""Eq_Mop"",""Eq_AutoMop"")",4,None,0,None,0
+Obj_Soot,Obj_Soot,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow46_DisplayName"", ""그을음"")",,,,FALSE,E_Filth,1,"(""Eq_Cleaner"")",4,None,0,None,0
+Obj_Frost,Obj_Frost,"NSLOCTEXT(""DT_GObject [DA657BCE9A96B8260AE460FDE60FA5E0]"", ""NewRow47_DisplayName"", ""성에"")",,,,FALSE,E_Filth,1,"(""Eq_Cleaner"")",4,None,0,None,0
