@@ -8,13 +8,7 @@
 AGameSessionState::AGameSessionState()
 {
     ObjectManager = nullptr;
-
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow,
-            FString::Printf(TEXT("[AGameSessionState] AGameSessionState()")));
-    }
-
+    PlayerManager = nullptr;
 
 	bReplicates = true;
 }
@@ -26,6 +20,7 @@ void AGameSessionState::BeginPlay()
     if (HasAuthority())
     {
         ObjectManager = NewObject<UGObjectManager>(this);
+        PlayerManager = NewObject<UGPlayerManager>(this);
     }
 }
 
@@ -34,9 +29,17 @@ void AGameSessionState::PostInitializeComponents()
     Super::PostInitializeComponents();
 
     
-    if (HasAuthority() && !ObjectManager)
+    if (HasAuthority())
     {
-        ObjectManager = NewObject<UGObjectManager>(this);
+        if (ObjectManager) 
+        {
+            ObjectManager = NewObject<UGObjectManager>(this);
+        }
+
+        if (!PlayerManager)
+        {
+            PlayerManager = NewObject<UGPlayerManager>(this);
+        }
     }
 }
 
