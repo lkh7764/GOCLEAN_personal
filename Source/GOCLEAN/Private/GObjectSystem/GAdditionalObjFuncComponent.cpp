@@ -71,7 +71,7 @@ void UGPickComponent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfi
 
 void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
 {
-	if (Target->GetEquipComp()->GetCurrentEquipmentID() != "Eq_Hand") return;
+	// if (Target->GetEquipComp()->GetCurrentEquipmentID() != "Eq_Hand") return;
 
 	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
 	if (Owner && Owner->GetNonfixedObjCoreComp() && GetWorld())
@@ -88,15 +88,15 @@ void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
 		if (Data)
 		{
 			FName PickedEquipID = Data->PickedEquipID;
-			Target->GetEquipComp()->ChangeEuquipmentInCurrSlot(PickedEquipID);
+			// Target->GetEquipComp()->ChangeEuquipmentInCurrSlot(PickedEquipID);
 
 			if (PickedEquipID == "Eq_OVariable")
 			{
-				Target->GetEquipComp()->SetPickedObjectID(Owner->GetNonfixedObjCoreComp()->IID);
+				// Target->GetEquipComp()->SetPickedObjectID(Owner->GetNonfixedObjCoreComp()->IID);
 			}
 			else if (Data->Category == EGObjectCategory::E_Item_P)
 			{
-				Target->GetEquipComp()->SetPickedItemID(Owner->GetNonfixedObjCoreComp()->IID);
+				// Target->GetEquipComp()->SetPickedItemID(Owner->GetNonfixedObjCoreComp()->IID);
 			}
 		}
 	}
