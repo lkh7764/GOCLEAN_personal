@@ -14,7 +14,7 @@ class AGOCLEANCharacter;
 class AGNonfixedObject;
 
 
-UCLASS(Abstract)
+UCLASS(Abstract, Blueprintable)
 class GOCLEAN_API UGAdditionalObjFuncComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -38,7 +38,7 @@ protected:
 };
 
 
-UCLASS()
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
 class GOCLEAN_API UGPickComponent : public UGAdditionalObjFuncComponent
 {
 	GENERATED_BODY()
@@ -74,7 +74,7 @@ private:
 };
 
 
-UCLASS()
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
 class GOCLEAN_API UGRemovingComponent : public UGAdditionalObjFuncComponent
 {
 	GENERATED_BODY()
@@ -108,7 +108,7 @@ private:
 };
 
 
-UCLASS()
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
 class GOCLEAN_API UGMultiInteractionComponent : public UGAdditionalObjFuncComponent
 {
 	GENERATED_BODY()
@@ -130,7 +130,7 @@ protected:
 };
 
 
-UCLASS()
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
 class GOCLEAN_API UGBurningCompopnent : public UGAdditionalObjFuncComponent
 {
 	GENERATED_BODY()
@@ -166,7 +166,7 @@ private:
 };
 
 
-UCLASS()
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
 class GOCLEAN_API UGSpawnerCompopnent : public UGAdditionalObjFuncComponent
 {
 	GENERATED_BODY()
@@ -189,5 +189,32 @@ protected:
 	// custom functions
 	UFUNCTION()
 	void SpawnDerivedObject(AGNonfixedObject* Owner);
+
+};
+
+
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
+class GOCLEAN_API UGInteractSoundCompopnent : public UGAdditionalObjFuncComponent
+{
+	GENERATED_BODY()
+
+
+public:
+	UGInteractSoundCompopnent();
+
+	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) override;
+
+
+protected:
+	virtual void BeginPlay() override;
+
+	virtual void OnInteractionTriggered(AGOCLEANCharacter* Target) override;
+
+	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) override {};
+
+
+	// custom functions
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<USoundBase> CachedInteractSound;
 
 };
