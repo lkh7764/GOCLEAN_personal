@@ -19,7 +19,9 @@ public class GOCLEAN : ModuleRules
             "NavigationSystem", 
             "DeveloperSettings",
             "LevelSequence",
-            "MovieScene"
+            "MovieScene",
+            "OnlineSubsystem",
+            "OnlineSubsystemUtils"
         });
 
         // Personal Folder

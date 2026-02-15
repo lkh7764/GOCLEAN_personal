@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-
+#include "Net/RpcTypes.h"
 #include "GObjectManager.generated.h"
 
 
@@ -18,7 +18,7 @@ class GOCLEAN_API UGObjectManager : public UWorldSubsystem
 
 
 	// constructor
-public:	
+public:
 	UGObjectManager();
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -29,7 +29,7 @@ public:
 protected:
 	// Variables: nonfixed Object
 	UPROPERTY()
-	TArray<TObjectPtr<AGNonfixedObject>> NfixedObjPool;
+	TArray<TObjectPtr<AGFixedObject>> NfixedObjPool;
 
 	UPROPERTY(VisibleAnywhere, Category = "NonfixedObject Pool");
 	int32 NfixedObjCnt;
@@ -40,37 +40,37 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "NonfixedObject Pool");
 	FVector PoolLocation = FVector(0.0, -1000.0, 0.0);
 
-	// pool·Î ¹İÈ¯µÈ °¡Àå ÃÖ½Å index¸¦ push, spawn ½Ã pop ÇÏ¿© ÇØ´ç indexÀÇ data¸¦ Àç»ç¿ë
-	TArray<int32> FreeObjsStack;	
+	// poolë¡œ ë°˜í™˜ëœ ê°€ì¥ ìµœì‹  indexë¥¼ push, spawn ì‹œ pop í•˜ì—¬ í•´ë‹¹ indexì˜ dataë¥¼ ì¬ì‚¬ìš©
+	TArray<int32> FreeObjsStack;
 
 	UPROPERTY()
-	TMap<int32, TObjectPtr<AGNonfixedObject>> NfixedObjects;	// key: IID | value: pool mapping
+	TMap<int32, TObjectPtr<AGFixedObject>> NfixedObjects;	// key: IID | value: pool mapping
 
-	// 1. Obj°¡ Destory »óÅÂ°¡ µÇ¸é Áï½Ã Pool·Î º¸³»Áö ¸»°í ÇØ´ç Queue¿¡ ³Ö´Â´Ù.
-	// 2. ÇØ´ç Queue´Â ÃÖ±Ù »èÁ¦µÈ 10°³ÀÇ ¿ÀºêÁ§Æ®¸¸ º¸°üÇÑ´Ù.
-	// 3. DequeueµÈ indexÀÇ NFixedObj´Â Map¿¡¼­ »èÁ¦µÇ°í Pool·Î º¹±ÍÇÑ´Ù.
+	// 1. Objê°€ Destory ìƒíƒœê°€ ë˜ë©´ ì¦‰ì‹œ Poolë¡œ ë³´ë‚´ì§€ ë§ê³  í•´ë‹¹ Queueì— ë„£ëŠ”ë‹¤.
+	// 2. í•´ë‹¹ QueueëŠ” ìµœê·¼ ì‚­ì œëœ 10ê°œì˜ ì˜¤ë¸Œì íŠ¸ë§Œ ë³´ê´€í•œë‹¤.
+	// 3. Dequeueëœ indexì˜ NFixedObjëŠ” Mapì—ì„œ ì‚­ì œë˜ê³  Poolë¡œ ë³µê·€í•œë‹¤.
 	TQueue<int32> DestroyedObjs;
 
 
 
 	// Variables: fixed Object
-	//		1. µå·³Åë¼Ò°¢·Î: ¾²·¹±â Å¸ÀÔÀÇ ºñ°íÁ¤ ¿ÀºêÁ§Æ®¸¦ ¼Ò°¢ÇÏ´Â ¿ëµµ. °íÁ¤ À§Ä¡ ½ºÆù.
+	//		1. ë“œëŸ¼í†µì†Œê°ë¡œ: ì“°ë ˆê¸° íƒ€ì…ì˜ ë¹„ê³ ì • ì˜¤ë¸Œì íŠ¸ë¥¼ ì†Œê°í•˜ëŠ” ìš©ë„. ê³ ì • ìœ„ì¹˜ ìŠ¤í°.
 	UPROPERTY()
 	TObjectPtr<AGFixedObject> Fireplace;
 
-	//		2. ¹°ÅÊÅ©: ¹°¾çµ¿ÀÌ¸¦ µé°í »óÈ£ÀÛ¿ëÇÒ ½Ã, ¹°À» Ã¤¿ì´Â ¿ëµµ. °íÁ¤ À§Ä¡ ½ºÆù.
+	//		2. ë¬¼íƒ±í¬: ë¬¼ì–‘ë™ì´ë¥¼ ë“¤ê³  ìƒí˜¸ì‘ìš©í•  ì‹œ, ë¬¼ì„ ì±„ìš°ëŠ” ìš©ë„. ê³ ì • ìœ„ì¹˜ ìŠ¤í°.
 	UPROPERTY()
 	TObjectPtr<AGFixedObject> WaterTank;
 
-	//		3. º¥µù¸Ó½Å: º¥µù¾ÆÀÌÅÛÀ» ½ºÆùÇÏ´Â ¿ëµµ. °íÁ¤ À§Ä¡ ½ºÆù.
+	//		3. ë²¤ë”©ë¨¸ì‹ : ë²¤ë”©ì•„ì´í…œì„ ìŠ¤í°í•˜ëŠ” ìš©ë„. ê³ ì • ìœ„ì¹˜ ìŠ¤í°.
 	UPROPERTY()
 	TObjectPtr<AGFixedObject> VendingMachine;
 
-	//		4. Ä³ºñ³İ: ÇÃ·¹ÀÌ¾î°¡ ±Í½ÅÀ» ÇÇÇØ ¼û´Â ¿ëµµ. °íÁ¤ À§Ä¡ ½ºÆù.
+	//		4. ìºë¹„ë„·: í”Œë ˆì´ì–´ê°€ ê·€ì‹ ì„ í”¼í•´ ìˆ¨ëŠ” ìš©ë„. ê³ ì • ìœ„ì¹˜ ìŠ¤í°.
 	UPROPERTY()
 	TArray<TObjectPtr<AGFixedObject>> Cabinets;
 
-	//		5. Åğ¸¶Áø: Åğ¸¶¸¦ ÁøÇàÇÏ´Â ¿ëµµ. ·£´ı À§Ä¡ ½ºÆù.
+	//		5. í‡´ë§ˆì§„: í‡´ë§ˆë¥¼ ì§„í–‰í•˜ëŠ” ìš©ë„. ëœë¤ ìœ„ì¹˜ ìŠ¤í°.
 	UPROPERTY()
 	TObjectPtr<AGFixedObject> ExocismCircle;
 
@@ -82,11 +82,12 @@ protected:
 	void InitFixedObjects();
 
 
-public:	
-	// ºñ°íÁ¤¿ÀºêÁ§Æ® Ç®°ú °íÁ¤¿ÀºêÁ§Æ®¿¡ UGObjectData¸¦ ÇÒ´ç 
+public:
+	// ë¹„ê³ ì •ì˜¤ë¸Œì íŠ¸ í’€ê³¼ ê³ ì •ì˜¤ë¸Œì íŠ¸ì— UGObjectDataë¥¼ í• ë‹¹ 
 	void InitiateObjects(UObject*);
-	// ½ºÆùÀÌ ¿Ï·áµÈ ¿ÀºêÁ§Æ® µ¥ÀÌÅÍ¸¦ 
+	// ìŠ¤í°ì´ ì™„ë£Œëœ ì˜¤ë¸Œì íŠ¸ ë°ì´í„°ë¥¼ 
 	void SetObjectDatas();
+
 
 	//UFUNCTION(BlueprintCallable)
 	//AGNonfixedObject* SpawnNonfixedObject(
@@ -95,5 +96,70 @@ public:
 	//	const FRotator& Rotation
 	//);
 
+public:
+	// C -> S (ì„œë²„ ì²˜ë¦¬)
+
+	// íŠ¹ì • ì˜¤ë¸Œì íŠ¸ì— ëŒ€í•œ ìƒí˜¸ì‘ìš© ìš”ì²­ ì²˜ë¦¬
+	void HandleTryInteract(class APlayerController* PC, int32 TargetInstanceId);
+
+	// ì†Œê°ë¡œì— íê¸°ë¬¼ íˆ¬ì… ìš”ì²­ ì²˜ë¦¬
+	void HandleIncineratorThrowTrash(class APlayerController* PC, const TArray<int32>& TrashInstanceIds);
+
+	// ìºë¹„ë‹› ì…ì¥ ìš”ì²­ ì²˜ë¦¬
+	void HandleCabinetEnter(class APlayerController* PC, int32 CabinetInstanceId);
+
+	// ìºë¹„ë‹› í‡´ì¥ ìš”ì²­ ì²˜ë¦¬
+	void HandleCabinetExit(class APlayerController* PC, int32 CabinetInstanceId);
+
+	// ë¬¼íƒ±í¬ì—ì„œ ë¬¼ ë‹´ê¸° ì‹œì‘ ìš”ì²­ ì²˜ë¦¬
+	void HandleWaterTankStartFill(class APlayerController* PC, int32 WaterTankInstanceId);
+
+	// ë²¤ë”©ë¨¸ì‹  ì•„ì´í…œ ì„ íƒ ìš”ì²­ ì²˜ë¦¬
+	void HandleVendingSelectItem(class APlayerController* PC, FName ItemTypeId);
+
+	// ì–‘ë™ì´ë¡œ ë¬¼ ìŸê¸° ìš”ì²­ ì²˜ë¦¬
+	void HandleBucketPourWater(class APlayerController* PC, int32 BucketInstanceId);
+
+	// ì–‘ë™ì´ ë¬¼ ë¹„ìš°ê¸° ìš”ì²­ ì²˜ë¦¬
+	void HandleBucketEmptyWater(class APlayerController* PC, int32 BucketInstanceId);
+
+	// ì–‘ë™ì´ ì˜¤ì—¼ë„ ì¦ê°€ ìš”ì²­ ì²˜ë¦¬
+	void HandleBucketIncreaseContamination(class APlayerController* PC, int32 BucketInstanceId, int32 Delta);
+
+	// ë°”êµ¬ë‹ˆì— íê¸°ë¬¼ ë‹´ê¸° ìš”ì²­ ì²˜ë¦¬
+	void HandleBasketPutTrash(class APlayerController* PC, int32 BasketInstanceId, int32 TrashParam);
+
+	// ë°”êµ¬ë‹ˆ íê¸°ë¬¼ ë¹„ìš°ê¸° ìš”ì²­ ì²˜ë¦¬
+	void HandleBasketEmptyTrash(class APlayerController* PC, int32 BasketInstanceId);
+
+	// ì˜¤ë¸Œì íŠ¸ ì•¡í„° ìŠ¤í° ì¤€ë¹„ ì™„ë£Œ ì•Œë¦¼ ì²˜ë¦¬
+	void HandleObjectActorSpawnReady(class APlayerController* PC, int32 ObjectInstanceId);
+
+public:
+	// S -> C (í´ë¼ì—ì„œ ìˆ˜ì‹  ì²˜ë¦¬)
+
+	// ì†Œê° ì™„ë£Œëœ ì˜¤ë¸Œì íŠ¸ ì²˜ë¦¬
+	void OnIncineratorTrashBurnFinished(int32 CompletedInstanceId);
+
+	// ë¬¼ ë‹´ê¸° ì™„ë£Œ ì²˜ë¦¬
+	void OnWaterTankFillFinished(int32 WaterTankInstanceId);
+
+	// ì–‘ë™ì´ ë¬¼ ëœ¨ê¸° ê²°ê³¼ ì²˜ë¦¬
+	void OnBucketScoopWater(int32 BucketInstanceId);
+
+	// ì˜¤ë¸Œì íŠ¸ ìƒì„± ì²˜ë¦¬
+	void OnObjectSpawned(int32 SpawnedInstanceId);
+
+	// ì˜¤ë¸Œì íŠ¸ íŒŒê´´ ì²˜ë¦¬
+	void OnObjectDestroyed(int32 DestroyedInstanceId);
+
+	// ì˜¤ë¸Œì íŠ¸ ìŠ¤í° ë°ì´í„° ì¤€ë¹„ ì™„ë£Œ ì²˜ë¦¬
+	void OnObjectSpawnDataReady();
+
+	// ìƒí˜¸ì‘ìš© ê°€ëŠ¥ ì˜¤ë¸Œì íŠ¸ ì•ˆë‚´ ì²˜ë¦¬
+	void OnObjectInteractableHint(FName ObjectTypeId, int32 TargetInstanceId);
+
+	// ìƒí˜¸ì‘ìš© ê±°ë¶€ ê²°ê³¼ ì²˜ë¦¬
+	void OnObjectInteractionRejected(EObjectRejectReason Reason, int32 TargetInstanceId);
 };
 

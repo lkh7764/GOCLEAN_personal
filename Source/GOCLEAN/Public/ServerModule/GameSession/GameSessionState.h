@@ -4,7 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+
+#include <GObjectSystem/Server/GObjectManager.h>
+#include <GPlayerSystem/Server/GPlayerManager.h>
+
 #include "GameSessionState.generated.h"
+
+class APlayerSessionState;
 
 /**
  * 
@@ -17,6 +23,49 @@ class GOCLEAN_API AGameSessionState : public AGameState
 public:
 	AGameSessionState();
 
+public:
+
+    UGObjectManager* GetObjectManager() const { return ObjectManager; }
+    UGPlayerManager* GetPlayerManager() const { return PlayerManager; }
+
+protected:
+    virtual void BeginPlay() override;
+    virtual void PostInitializeComponents() override;
+
+public:
+
+    // SeatIndex -> PlayerState
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    APlayerSessionState* GetPlayerSessionStateBySeat(int32 SeatIndex) const;
+
+    // SeatIndex -> Pawn
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    APawn* GetPawnBySeat(int32 SeatIndex) const;
+
+    // Pawn -> SeatIndex
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    int32 GetSeatIndexOfPawn(const APawn* Pawn) const;
+
+    // PlayerState -> SeatIndex
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    int32 GetSeatIndexOfPlayerState(const APlayerState* PlayerState) const;
+
+    // 로컬 플레이어 SeatIndex (플레이어가 자기 자신 인덱스 찾기)
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    int32 GetLocalSeatIndex() const;
+
+    // SeatIndex -> PlayerController
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    APlayerController* GetPlayerControllerBySeat(int32 SeatIndex) const;
+
+private:
+    UPROPERTY()
+    UGObjectManager* ObjectManager;
+
+    UPROPERTY()
+    UGPlayerManager* PlayerManager = nullptr;
+
+
     // Getters (Client/Server)
     float GetSpiritualGauge() const { return SpiritualGauge; }
     float GetRestGauge() const { return RestGauge; }
@@ -26,7 +75,7 @@ public:
     int32 GetFinalRewardMoney() const { return FinalRewardMoney; }
 
 
-
+public:
     // GameMode에서 호출 (Server-only mutators)
     // 게이지 증감 (클램프 포함)
     void AddSpiritualGauge(float Delta, float Min = 0.f, float Max = 100.f);
@@ -82,7 +131,7 @@ protected:
     void OnRep_FinalRewardMoney();
 
 
-private:
+protected:
     // 영적 게이지
     UPROPERTY(ReplicatedUsing = OnRep_SpiritualGauge)
     float SpiritualGauge = 0.f;
