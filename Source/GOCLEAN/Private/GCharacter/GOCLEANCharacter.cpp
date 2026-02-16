@@ -182,6 +182,14 @@ void AGOCLEANCharacter::Server_RequestPlayerInteractionAnim_Implementation()
 {
 	Multicast_PlayerInteractionAnim();
 }
+void AGOCLEANCharacter::Server_RequestOnHunted_Implementation()
+{
+	Multicast_OnHunted();
+}
+void AGOCLEANCharacter::Server_RequestSetVisible_Implementation(bool IsVisible)
+{
+	Multicast_SetVisible(IsVisible);
+}
 
 void AGOCLEANCharacter::Multicast_ToggleFlashlight_Implementation()
 {
@@ -203,6 +211,14 @@ void AGOCLEANCharacter::Multicast_SprintRelease_Implementation()
 {
 	SprintRelease();
 }
+void AGOCLEANCharacter::Multicast_OnHunted_Implementation()
+{
+	OnHunted();
+}
+void AGOCLEANCharacter::Multicast_SetVisible_Implementation(bool IsVisible)
+{
+	ThirdPersonMeshComp->SetHiddenInGame(!IsVisible);
+}
 
 
 // OnHunted //
@@ -214,6 +230,7 @@ void AGOCLEANCharacter::OnHunted()
 	GetCharacterMovement()->StopMovementImmediately();
 
 	FTimerHandle DelayHandle;
+	FTimerHandle SpawnDummyDelayHandle;
 	FTimerHandle DestroyHandle;
 	float AnimationDuration = 3.0f;
 
@@ -231,17 +248,17 @@ void AGOCLEANCharacter::OnHunted()
 	CameraComp->bUsePawnControlRotation = false;
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
-	GetWorldTimerManager().SetTimer(DelayHandle, this, &AGOCLEANCharacter::PlayHuntCameraSequence, AnimationDuration-1.3f, false);
-	GetWorldTimerManager().SetTimer(DestroyHandle, [SpawnedDummyActor]() { SpawnedDummyActor->Destroy(); }, AnimationDuration+0.5f, false);
+	GetWorldTimerManager().SetTimer(DelayHandle, this, &AGOCLEANCharacter::PlayHuntCameraSequence, AnimationDuration - 1.3f, false);
+	GetWorldTimerManager().SetTimer(SpawnDummyDelayHandle, this, &AGOCLEANCharacter::SpawnDummyCharacter, AnimationDuration - 1.5f, false);
+	GetWorldTimerManager().SetTimer(DestroyHandle, [SpawnedDummyActor]() { SpawnedDummyActor->Destroy(); }, AnimationDuration + 0.5f, false);
 	
 	if (StatsComp->GetCurrentLife() <= 0) return;
 }
 
 void AGOCLEANCharacter::Respawn()
 {
-	GetWorld()->SpawnActor<AActor>(DummyCharacter, GetActorLocation(), GetActorRotation());
-
-	GetMesh()->SetHiddenInGame(false);
+	Server_RequestSetVisible(true);
+	FirstPersonMeshComp->SetHiddenInGame(false);
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	PlayerController->SetIgnoreLookInput(false);
 	PlayerController->SetIgnoreMoveInput(false);
@@ -258,10 +275,9 @@ void AGOCLEANCharacter::Respawn()
 void AGOCLEANCharacter::PlayHuntCameraSequence()
 {
 	if (HuntCameraSequence == nullptr) return;
+	FirstPersonMeshComp->SetHiddenInGame(true);
 
-	GetMesh()->SetHiddenInGame(true);
-
-	if (AnimState == EPlayerAnimState::Crouch) AGOCLEANCharacter::Crouch();
+	if (AnimState == EPlayerAnimState::Crouch) AGOCLEANCharacter::TryCrouch();
 
 	ALevelSequenceActor* SequenceActor = nullptr;
 	
@@ -285,6 +301,12 @@ void AGOCLEANCharacter::PlayHuntCameraSequence()
 	
 
 	SequencePlayer->OnFinished.AddDynamic(this, &AGOCLEANCharacter::Respawn);
+}
+
+void AGOCLEANCharacter::SpawnDummyCharacter()
+{
+	Server_RequestSetVisible(false);
+	GetWorld()->SpawnActor<AActor>(DummyCharacter, GetActorLocation(), GetActorRotation())->SetOwner(this);
 }
 
 void AGOCLEANCharacter::Jump()
@@ -397,9 +419,6 @@ void AGOCLEANCharacter::RecoverStamina()
 void AGOCLEANCharacter::ToggleFlashlight()
 {
 	FlashlightComp->ToggleVisibility();
-
-	SetAnimID(102);
-	TryPlayerInteractionAnim();
 }
 
 // Animation //
@@ -456,9 +475,9 @@ void AGOCLEANCharacter::Server_TryInteraction(FName EquipID)
 		IGInteractable* Interactable = Cast<IGInteractable>(Target);
 		if (Interactable)
 		{
-			if (Interactable->CanInteract(EquipID))
+			if (Interactable->CanInteract(EquipID, Cast<AGOCLEANCharacter>(Target)))
 			{
-				Interactable->ExecuteInteraction(EquipID);
+				Interactable->ExecuteInteraction(EquipID, Cast<AGOCLEANCharacter>(Target));
 				UE_LOG(LogTemp, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetOwner()->GetName());
 			}
 		}
@@ -472,5 +491,6 @@ void AGOCLEANCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AGOCLEANCharacter, EquipComp);
 	DOREPLIFETIME(AGOCLEANCharacter, AnimID);
 	DOREPLIFETIME(AGOCLEANCharacter, AnimState);
+	DOREPLIFETIME(AGOCLEANCharacter, StatsComp);
 }
 

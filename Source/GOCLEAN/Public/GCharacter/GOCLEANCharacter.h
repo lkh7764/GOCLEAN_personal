@@ -98,6 +98,10 @@ public:
 	void Server_RequestSprint();
 	UFUNCTION(Server, Reliable)
 	void Server_RequestSprintRelease();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestOnHunted();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestSetVisible(bool IsVisible);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_Crouch();
@@ -108,13 +112,18 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_ToggleFlashlight();
 	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OnHunted();
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayerInteractionAnim();
-
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetVisible(bool IsVisible);
 
 	// OnHunted //
 	void OnHunted();
 
 	void PlayHuntCameraSequence();
+
+	void SpawnDummyCharacter();
 
 private:
 	// Components //
@@ -130,7 +139,7 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpotLightComponent> FlashlightComp;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	TObjectPtr<UCharacterStatsComponent> StatsComp;
 
 
