@@ -38,6 +38,8 @@
 #include "Engine/DataTable.h"
 #include "GCharacter/DataTable/FAnimationData.h"
 
+#include "Net/RpcTypes.h"
+
 #include "GOCLEANCharacter.generated.h"
 
 class UInputComponent;
@@ -65,19 +67,63 @@ public:
 
 	// Getter, Setter //
 	UFUNCTION(BlueprintPure)
-	bool IsCrouching() const { return bIsCrouching; }
-	UFUNCTION(BlueprintPure)
 	bool IsSprinting() const { return bIsSprinting; }
 
 	float GetPlayerCurrentSanity() const;
 	void SetPlayerCurrentSanity(float NewPlayerCurrentSanity);
 
+	UPROPERTY(Replicated)
+	EPlayerAnimState AnimState;
+	
+	void SetAnimState(EPlayerAnimState NewAnimState) { AnimState = NewAnimState; }
+
+	UFUNCTION(BlueprintPure)
+	EPlayerAnimState GetAnimState() { return AnimState; }
+
+	// Server //
+
+	void TryCrouch();
+	void TrySprint();
+	void TrySprintRelease();
+	void TryToggleFlashlight();
+	void TryPlayerInteractionAnim();
+
+	UFUNCTION(Server, Reliable)
+	void Server_RequestToggleFlashlight();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestPlayerInteractionAnim();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestCrouch();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestSprint();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestSprintRelease();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestOnHunted();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestSetVisible(bool IsVisible);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Crouch();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Sprint();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SprintRelease();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ToggleFlashlight();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OnHunted();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayerInteractionAnim();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetVisible(bool IsVisible);
 
 	// OnHunted //
 	void OnHunted();
 
 	void PlayHuntCameraSequence();
 
+	void SpawnDummyCharacter();
 
 private:
 	// Components //
@@ -93,7 +139,7 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpotLightComponent> FlashlightComp;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	TObjectPtr<UCharacterStatsComponent> StatsComp;
 
 
@@ -182,7 +228,6 @@ private:
 
 	// States //
 	bool bIsRecoveringStamina;
-	bool bIsCrouching;
 	bool bIsSprinting;
 
 
@@ -195,7 +240,6 @@ private:
 
 	UFUNCTION(BlueprintPure)
 	int32 GetAnimID() { return AnimID; }
-
 
 	UPROPERTY(VisibleAnywhere, Replicated)
 	TObjectPtr<UGEquipmentComponent> EquipComp;

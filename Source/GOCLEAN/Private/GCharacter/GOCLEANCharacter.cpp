@@ -64,8 +64,8 @@ AGOCLEANCharacter::AGOCLEANCharacter()
 	StatsComp = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("StasComp"));
 
 	// States //
+	AnimState = EPlayerAnimState::Stand;
 	bIsRecoveringStamina = false;
-	bIsCrouching = false;
 	bIsSprinting = false;
 
 
@@ -103,10 +103,7 @@ void AGOCLEANCharacter::Tick(float DeltaTime)
 		}
 	}
 
-	// JSH Flag: Sanity
-	//UE_LOG(LogTemp, Warning, TEXT("Current Player Sanity: %f"), CurrentSanity);
 	StatsComp->DecreaseCurrentSanity(StatsComp->GetSanityDrainRate() * DeltaTime);
-	//StatsComp->SetCurrentSanity(StatsComp->GetCurrentSanity());
 }
 
 void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -124,14 +121,14 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGOCLEANCharacter::Look);
 
 		// Crouch
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::Crouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::TryCrouch);
 
 		// Sprint & SprintRelease
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::Sprint);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AGOCLEANCharacter::SprintRelease);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::TrySprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AGOCLEANCharacter::TrySprintRelease);
 
 		// Flashlight toggle
-		EnhancedInputComponent->BindAction(FlashlightAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::ToggleFlashlight);
+		EnhancedInputComponent->BindAction(FlashlightAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::TryToggleFlashlight);
 
 
 		// Interact
@@ -143,6 +140,89 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	}
 }
 
+// Server //
+void AGOCLEANCharacter::TryCrouch()
+{
+	Server_RequestCrouch();
+}
+void AGOCLEANCharacter::TrySprint()
+{
+	Server_RequestSprint();
+}
+void AGOCLEANCharacter::TrySprintRelease()
+{
+	Server_RequestSprintRelease();
+}
+void AGOCLEANCharacter::TryToggleFlashlight()
+{
+	Server_RequestToggleFlashlight();
+}
+void AGOCLEANCharacter::TryPlayerInteractionAnim()
+{
+	Server_RequestPlayerInteractionAnim();
+}
+
+void AGOCLEANCharacter::Server_RequestCrouch_Implementation()
+{
+	Multicast_Crouch();
+}
+void AGOCLEANCharacter::Server_RequestSprint_Implementation()
+{
+	Multicast_Sprint();
+}
+void AGOCLEANCharacter::Server_RequestSprintRelease_Implementation()
+{
+	Multicast_SprintRelease();
+}
+void AGOCLEANCharacter::Server_RequestToggleFlashlight_Implementation()
+{
+	Multicast_ToggleFlashlight();
+}
+void AGOCLEANCharacter::Server_RequestPlayerInteractionAnim_Implementation()
+{
+	Multicast_PlayerInteractionAnim();
+}
+void AGOCLEANCharacter::Server_RequestOnHunted_Implementation()
+{
+	Multicast_OnHunted();
+}
+void AGOCLEANCharacter::Server_RequestSetVisible_Implementation(bool IsVisible)
+{
+	Multicast_SetVisible(IsVisible);
+}
+
+void AGOCLEANCharacter::Multicast_ToggleFlashlight_Implementation()
+{
+	ToggleFlashlight();
+}
+void AGOCLEANCharacter::Multicast_PlayerInteractionAnim_Implementation()
+{
+	PlayerInteractionAnim();
+}
+void AGOCLEANCharacter::Multicast_Crouch_Implementation()
+{
+	Crouch();
+}
+void AGOCLEANCharacter::Multicast_Sprint_Implementation()
+{
+	Sprint();
+}
+void AGOCLEANCharacter::Multicast_SprintRelease_Implementation()
+{
+	SprintRelease();
+}
+void AGOCLEANCharacter::Multicast_OnHunted_Implementation()
+{
+	OnHunted();
+}
+void AGOCLEANCharacter::Multicast_SetVisible_Implementation(bool IsVisible)
+{
+	ThirdPersonMeshComp->SetHiddenInGame(!IsVisible);
+}
+
+
+// OnHunted //
+
 void AGOCLEANCharacter::OnHunted()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Player Hunted"));
@@ -150,6 +230,7 @@ void AGOCLEANCharacter::OnHunted()
 	GetCharacterMovement()->StopMovementImmediately();
 
 	FTimerHandle DelayHandle;
+	FTimerHandle SpawnDummyDelayHandle;
 	FTimerHandle DestroyHandle;
 	float AnimationDuration = 3.0f;
 
@@ -167,17 +248,17 @@ void AGOCLEANCharacter::OnHunted()
 	CameraComp->bUsePawnControlRotation = false;
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
-	GetWorldTimerManager().SetTimer(DelayHandle, this, &AGOCLEANCharacter::PlayHuntCameraSequence, AnimationDuration-1.3f, false);
-	GetWorldTimerManager().SetTimer(DestroyHandle, [SpawnedDummyActor]() { SpawnedDummyActor->Destroy(); }, AnimationDuration+0.5f, false);
+	GetWorldTimerManager().SetTimer(DelayHandle, this, &AGOCLEANCharacter::PlayHuntCameraSequence, AnimationDuration - 1.3f, false);
+	GetWorldTimerManager().SetTimer(SpawnDummyDelayHandle, this, &AGOCLEANCharacter::SpawnDummyCharacter, AnimationDuration - 1.5f, false);
+	GetWorldTimerManager().SetTimer(DestroyHandle, [SpawnedDummyActor]() { SpawnedDummyActor->Destroy(); }, AnimationDuration + 0.5f, false);
 	
 	if (StatsComp->GetCurrentLife() <= 0) return;
 }
 
 void AGOCLEANCharacter::Respawn()
 {
-	GetWorld()->SpawnActor<AActor>(DummyCharacter, GetActorLocation(), GetActorRotation());
-
-	GetMesh()->SetHiddenInGame(false);
+	Server_RequestSetVisible(true);
+	FirstPersonMeshComp->SetHiddenInGame(false);
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	PlayerController->SetIgnoreLookInput(false);
 	PlayerController->SetIgnoreMoveInput(false);
@@ -194,10 +275,9 @@ void AGOCLEANCharacter::Respawn()
 void AGOCLEANCharacter::PlayHuntCameraSequence()
 {
 	if (HuntCameraSequence == nullptr) return;
+	FirstPersonMeshComp->SetHiddenInGame(true);
 
-	GetMesh()->SetHiddenInGame(true);
-
-	if (bIsCrouching) AGOCLEANCharacter::Crouch();
+	if (AnimState == EPlayerAnimState::Crouch) AGOCLEANCharacter::TryCrouch();
 
 	ALevelSequenceActor* SequenceActor = nullptr;
 	
@@ -223,9 +303,14 @@ void AGOCLEANCharacter::PlayHuntCameraSequence()
 	SequencePlayer->OnFinished.AddDynamic(this, &AGOCLEANCharacter::Respawn);
 }
 
+void AGOCLEANCharacter::SpawnDummyCharacter()
+{
+	Server_RequestSetVisible(false);
+	GetWorld()->SpawnActor<AActor>(DummyCharacter, GetActorLocation(), GetActorRotation())->SetOwner(this);
+}
+
 void AGOCLEANCharacter::Jump()
 {
-	if (bIsCrouching) return;
 
 	Super::Jump();
 }
@@ -258,30 +343,23 @@ void AGOCLEANCharacter::Crouch()
 {
 	if (StatsComp == nullptr) return;
 
-	if (GetCharacterMovement()->IsFalling()) return;
-
-	float StandingCapsuleHalfHeight = 96.0f;
-	float CrouchingCapsuleHalfHeight = 48.0f;
-
-	if (bIsCrouching)
+	if (AnimState == EPlayerAnimState::Crouch)
 	{
-		ACharacter::UnCrouch();
-		// Legacy Standing
-		//GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHalfHeight);
+		GetCharacterMovement()->UCharacterMovementComponent::UnCrouch();
+
 		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 60.0f));
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
 
-		bIsCrouching = false;
+		SetAnimState(EPlayerAnimState::Stand);
 	}
-	else
+	else if(AnimState == EPlayerAnimState::Stand)
 	{
-		ACharacter::Crouch();
-		// Legacy Crouching
-		//GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchingCapsuleHalfHeight);
+		GetCharacterMovement()->UCharacterMovementComponent::Crouch();
+
 		CameraComp->SetRelativeLocation(FVector(-10.0f, 0.0f, 30.0f));
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetCrouchSpeed();
 
-		bIsCrouching = true;
+		SetAnimState(EPlayerAnimState::Crouch);
 	}
 }
 
@@ -289,7 +367,7 @@ void AGOCLEANCharacter::Sprint()
 {
 	if (StatsComp == nullptr) return;
 
-	if (bIsCrouching || GetCharacterMovement()->IsFalling()) return;
+	if (AnimState == EPlayerAnimState::Crouch) return;
 
 	if (StatsComp->GetCurrentStamina() <= 0.0f) return;
 	
@@ -304,7 +382,7 @@ void AGOCLEANCharacter::SprintRelease()
 {
 	if (StatsComp == nullptr) return;
 
-	if (bIsCrouching) return;
+	if (AnimState == EPlayerAnimState::Crouch) return;
 
 	bIsSprinting = false;
 	GetCharacterMovement()->MaxWalkSpeed = StatsComp->GetWalkSpeed();
@@ -397,9 +475,10 @@ void AGOCLEANCharacter::Server_TryInteraction(FName EquipID)
 		IGInteractable* Interactable = Cast<IGInteractable>(Target);
 		if (Interactable)
 		{
-			if (Interactable->CanInteract(EquipID, this))
+			if (Interactable->CanInteract(EquipID, Cast<AGOCLEANCharacter>(Target)))
 			{
-				Interactable->ExecuteInteraction(EquipID, this);
+				Interactable->ExecuteInteraction(EquipID, Cast<AGOCLEANCharacter>(Target));
+
 				UE_LOG(LogTemp, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetOwner()->GetName());
 			}
 		}
@@ -412,5 +491,7 @@ void AGOCLEANCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME(AGOCLEANCharacter, EquipComp);
 	DOREPLIFETIME(AGOCLEANCharacter, AnimID);
+	DOREPLIFETIME(AGOCLEANCharacter, AnimState);
+	DOREPLIFETIME(AGOCLEANCharacter, StatsComp);
 }
 

@@ -12,6 +12,8 @@
 #include "GObjectSystem/GNonfixedObject.h"
 
 
+#include "GCharacter/GOCLEANCharacter.h"
+
 // Sets default values for this component's properties
 URPCRouterComponent::URPCRouterComponent()
 {
@@ -187,8 +189,11 @@ void URPCRouterComponent::Client_PlayerEvent_Implementation(EPlayerEvent_S2C Eve
     AGameSessionState* GS = World ? World->GetGameState<AGameSessionState>() : nullptr;
     if (!GS) return;
 
-    UGObjectManager* PM = GS->GetObjectManager();
+    UGPlayerManager* PM = GS->GetPlayerManager();
     if (!PM) return;
+
+    APawn* PP = GS->GetPawnBySeat(Payload.PlayerIndex);
+    if (!PP) return;
 
     switch (EventType)
     {
