@@ -22,7 +22,7 @@ void AGameSessionState::BeginPlay()
     {
         ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
         PlayerManager = NewObject<UGPlayerManager>(this);
-        MapManager = NewObject<UGMapManager>(this);
+        MapManager = GetWorld()->GetSubsystem<UGMapManager>();
     }
 }
 
@@ -45,7 +45,7 @@ void AGameSessionState::PostInitializeComponents()
 
         if (!MapManager)
         {
-            MapManager = NewObject<UGMapManager>(this);
+            MapManager = GetWorld()->GetSubsystem<UGMapManager>();
         }
     }
 }

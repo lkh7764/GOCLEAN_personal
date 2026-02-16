@@ -226,3 +226,42 @@ void URPCRouterComponent::Client_PlayerEvent_Implementation(EPlayerEvent_S2C Eve
         break;
     }
 }
+
+void URPCRouterComponent::Server_CleaningEvent_Implementation(ECleaningEvent_C2S EventType, const FCleaningPayload_C2S& Payload)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority())
+        return;
+
+    APlayerController* PC = Cast<APlayerController>(GetOwner());
+    if (!PC) return;
+
+    UWorld* World = GetWorld();
+    AGameSessionState* GS = World ? World->GetGameState<AGameSessionState>() : nullptr;
+    if (!GS) return;
+
+    UGObjectManager* OM = GS->GetObjectManager();
+    if (!OM) return;
+
+    // 디버그용
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green,
+            FString::Printf(TEXT("[Server] CleaningEvent=%d Target=%d"), (int32)EventType, Payload.TargetInstanceId));
+    }
+
+    switch (EventType)
+    {
+    case ECleaningEvent_C2S::UseEquipmentOnObject:
+        // Payload: EquipmentTypeId + TargetInstanceId
+        OM->HandleUseEquipmentOnObject(PC, Payload.EquipmentTypeId, Payload.TargetInstanceId);
+        break;
+
+    case ECleaningEvent_C2S::UseItemOnObject:
+        // Payload: ItemId + TargetInstanceId (소모형/설치형 분기는 OM 내부에서 ItemId로 판단)
+        OM->HandleUseItemOnObject(PC, Payload.ItemId, Payload.TargetInstanceId);
+        break;
+
+    default:
+        break;
+    }
+}
