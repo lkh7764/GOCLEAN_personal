@@ -53,6 +53,8 @@ void AGNonfixedObject::UpdateInteractionBounds()
 
 void AGNonfixedObject::BeginPlay()
 {
+	Super::BeginPlay();
+
 	UpdateInteractionBounds();
 }
 
@@ -189,5 +191,14 @@ void AGNonfixedObject::UpdateVisualByState()
 
 		break;
 	}
+}
+
+
+
+void AGNonfixedObject::UpdateObjectData(int32 IID)
+{
+	if (!CoreComp) return;
+
+	CoreComp->IID = IID;
 }
 

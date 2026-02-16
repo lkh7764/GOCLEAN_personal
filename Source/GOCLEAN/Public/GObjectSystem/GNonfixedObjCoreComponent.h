@@ -46,7 +46,7 @@ public:
 	int32 IID;
 
 	// type ID - 현재 오브젝트가 어떤 오브젝트인지 식별하는 ID
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "ID")
+	UPROPERTY(EditAnywhere, Replicated, Category = "ID")
 	FName TID;
 
 

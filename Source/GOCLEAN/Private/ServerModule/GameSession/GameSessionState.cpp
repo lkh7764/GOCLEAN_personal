@@ -19,7 +19,7 @@ void AGameSessionState::BeginPlay()
 
     if (HasAuthority())
     {
-        ObjectManager = NewObject<UGObjectManager>(this);
+        ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
         PlayerManager = NewObject<UGPlayerManager>(this);
     }
 }
@@ -33,7 +33,7 @@ void AGameSessionState::PostInitializeComponents()
     {
         if (ObjectManager) 
         {
-            ObjectManager = NewObject<UGObjectManager>(this);
+            ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
         }
 
         if (!PlayerManager)

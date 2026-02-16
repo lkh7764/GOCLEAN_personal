@@ -45,7 +45,7 @@ public:
 	void SetObjectData(FGNonfixedObjData& InitData) {};
 
 	// TID는 유지하되, 그 외의 설정을 해야하는 경우 -> UGObjectManager::FindAllNonfixedObjects
-	void UpdateObjectData() {};
+	void UpdateObjectData(int32 IID);
 
 	void UpdateVisualByState();
 

@@ -11,6 +11,7 @@
 #include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
 #include "GDataManagerSubsystem.h"
 #include "GObjectSystem/Server/GObjectManager.h"
+#include "../../GOCLEAN.h"
 
 #include "Kismet/GameplayStatics.h"
 
@@ -19,12 +20,15 @@
 UGAdditionalObjFuncComponent::UGAdditionalObjFuncComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+
+	SetIsReplicatedByDefault(true);
 }
 
 void UGAdditionalObjFuncComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UE_LOG(LogGObject, Log, TEXT("[AdditionalFuncComp] Begin Play %s: Add delegate funcs"), *GetOwner()->GetName());
 
 	TArray<UActorComponent*> InteractComps =
 		GetOwner()->GetComponentsByInterface(UGInteractable::StaticClass());
@@ -113,6 +117,10 @@ void UGPickComponent::DropObject()
 
 
 	// set owner player's
+	OwnerPlayer->GetEquipComp()->ChangeEuquipmentInCurrSlot("Eq_Hand");
+
+
+	// get spawn data from owner player
 	float DropDistance = 100.0f;
 	FVector DropLocation = OwnerPlayer->GetActorLocation() + (OwnerPlayer->GetActorForwardVector() * DropDistance);
 

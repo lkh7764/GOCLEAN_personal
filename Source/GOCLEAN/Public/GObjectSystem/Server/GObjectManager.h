@@ -26,9 +26,14 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
+	bool ShouldCreateSubsystem(UObject* Outer) const;
+
 
 
 protected:
+
+	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+
 	// Variables: nonfixed Object
 	UPROPERTY()
 	TArray<TObjectPtr<AGNonfixedObject>> NfixedObjPool;
@@ -86,7 +91,7 @@ protected:
 
 	// functions
 protected:
-	void InitNonfixedObjects(int32 CreatedPoolSize);
+	void CreateNonfixedObjPool(int32 CreatedPoolSize);
 
 	void InitFixedObjects() {};
 
@@ -114,6 +119,15 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	AGNonfixedObject* GetFromPool();
+
+	AGNonfixedObject* GetNonfixedObject(int32 IID)
+	{
+		if (!NfixedObjects.Contains(IID)) return nullptr;
+
+		return NfixedObjects[IID];
+	}
+
+	bool DropNonfixedObject(int32 IID);
 
 
 

@@ -10,7 +10,9 @@
 // Sets default values for this component's properties
 UGNonfixedObjCoreComponent::UGNonfixedObjCoreComponent()
 {
+	TID = "";
 	SetIsReplicatedByDefault(true);
+
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
@@ -31,7 +33,6 @@ void UGNonfixedObjCoreComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
 }
 
 
@@ -73,7 +74,7 @@ void UGNonfixedObjCoreComponent::OnRep_InteractionCnt()
 void UGNonfixedObjCoreComponent::OnRep_State()
 {
 	// update visual
-	UE_LOG(LogObject, Log, TEXT("Object State was change!: %s"), *UEnum::GetValueAsString(State));
+	UE_LOG(LogGObject, Log, TEXT("Object State was change!: %s"), *UEnum::GetValueAsString(State));
 
 	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
 	if (Owner)
@@ -94,6 +95,7 @@ bool UGNonfixedObjCoreComponent::ChangeState(ENonfixedObjState ChangedState)
 	OnStateEnter(ChangedState);
 
 	OnNonfixedObjStateChanged.Broadcast(PrevState, ChangedState);
+	OnRep_State();
 
 	return true;
 }

@@ -5,6 +5,8 @@
 #include "Net/UnrealNetwork.h"
 #include "GOCLEANSettings.h"
 #include "GCharacter/GOCLEANCharacter.h"
+#include "GObjectSystem/Server/GObjectManager.h"
+#include "../../../GOCLEAN.h"
 
 
 // Sets default values for this component's properties
@@ -18,6 +20,7 @@ UGEquipmentComponent::UGEquipmentComponent()
 
 	InitiateEquipmentSlots();
 }
+
 void UGEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -26,6 +29,10 @@ void UGEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	// DOREPLIFETIME_CONDITION(UGEquipmentComponent, CurrentSlotIndex, COND_OwnerOnly);
 	DOREPLIFETIME(UGEquipmentComponent, EquipmentSlots);
 	DOREPLIFETIME(UGEquipmentComponent, CurrentSlotIndex);
+	DOREPLIFETIME(UGEquipmentComponent, MopPollution);
+	DOREPLIFETIME(UGEquipmentComponent, AutoMopPollution);
+	DOREPLIFETIME(UGEquipmentComponent, PickedObjectID);
+	DOREPLIFETIME(UGEquipmentComponent, PickedItemID);
 }
 
 
@@ -33,6 +40,8 @@ void UGEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 void UGEquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Owner = Cast<AGOCLEANCharacter>(GetOwner());
 }
 
 
@@ -48,8 +57,7 @@ void UGEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 FName UGEquipmentComponent::GetCurrentEquipmentID()
 {
-	return "Eq_Hand";
-	// return GetEquipmentID(CurrentSlotIndex);
+	return GetEquipmentID(CurrentSlotIndex);
 }
 
 bool UGEquipmentComponent::ChangeEuquipmentInCurrSlot(FName ChangedEquipID)
@@ -65,7 +73,7 @@ bool UGEquipmentComponent::ChangeCurrentSlot(int32 ChangedSlotIndex)
 
 FName UGEquipmentComponent::GetEquipmentID(int32 SlotIndex)
 {
-	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() >= SlotIndex || SlotIndex < 0)
+	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() <= SlotIndex || SlotIndex < 0)
 	{
 		return "Error";
 	}
@@ -75,12 +83,24 @@ FName UGEquipmentComponent::GetEquipmentID(int32 SlotIndex)
 
 bool UGEquipmentComponent::ChangeEquipment(int32 SlotIndex, FName EquipID)
 {
-	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() >= SlotIndex || SlotIndex < 0)
+	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() <= SlotIndex || SlotIndex < 0)
 	{
 		return false;
 	}
 
 	// 나중에 유효한 equip id인지 검사하는 로직 추가 필요 -> UGDataManagerSubsystem::
+	FName PrevEquipID = EquipmentSlots[SlotIndex];
+	if (EquipID == "Eq_Hand")
+	{
+		if (SlotIndex == 0)
+		{
+			PickedObjectID = -1;
+		}
+		else if (SlotIndex == 3)
+		{
+			PickedItemID = -1;
+		}
+	}
 
 	EquipmentSlots[SlotIndex] = EquipID;
 	return true;
@@ -88,20 +108,30 @@ bool UGEquipmentComponent::ChangeEquipment(int32 SlotIndex, FName EquipID)
 
 bool UGEquipmentComponent::ChangeCurrentSlot_Interval(int32 From, int32 To)
 {
-	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() >= To || To < 0)
+	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() <= To || To < 0)
 	{
 		return false;
 	}
 
+	bool Result = true;
+
 	if (From == 0 && GetCurrentEquipmentID() == "Eq_OVariable")
 	{
 		// 오브젝트 매니저에서 PickedObjectID에 접근 후, 해당 오브젝트에 대하여 ChangeState 호출: Invisible -> Static
+		auto* ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
+		if (!ObjectManager)
+		{
+			UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] There's no object manager"));
+			return false;
+		}
+
+		Result = ObjectManager->DropNonfixedObject(PickedObjectID);
 		PickedObjectID = -1;
 	}
 
 	CurrentSlotIndex = To;
 
-	return true;
+	return Result;
 }
 
 

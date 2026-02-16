@@ -5,6 +5,7 @@
 
 #include "../../../GOCLEAN.h"
 #include "GObjectSystem/GNonfixedObject.h"
+#include "GObjectSystem/GNonfixedObjCoreComponent.h"
 #include "GObjectSystem/GFixedObject.h"
 
 #include "GCharacter/GOCLEANCharacter.h"
@@ -44,10 +45,8 @@ void UGObjectManager::Initialize(FSubsystemCollectionBase& Collection)
     PoolRoot->SetActorLabel(TEXT("-- OBJECT_POOL_ROOT --"));
     ActiveRoot->SetActorLabel(TEXT("-- ACTIVE_OBJECT_ROOT --"));
 #endif
-
-
-    InitiateObjects();
 }
+
 // Called when the game starts
 void UGObjectManager::Deinitialize()
 {
@@ -56,6 +55,27 @@ void UGObjectManager::Deinitialize()
 	// ...
 	
 }
+
+bool UGObjectManager::ShouldCreateSubsystem(UObject* Outer) const
+{
+    if (!Super::ShouldCreateSubsystem(Outer)) return false;
+
+    UWorld* World = Outer->GetWorld();
+    if (World)
+    {
+        return World->GetNetMode() < NM_Client;
+    }
+
+    return false;
+}
+
+void UGObjectManager::OnWorldBeginPlay(UWorld& InWorld)
+{
+    Super::OnWorldBeginPlay(InWorld);
+
+    InitiateObjects();
+}
+
 
 
 
@@ -138,12 +158,8 @@ AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
 }
 
 // 비고정오브젝트 풀과 고정오브젝트에 UGObjectData를 할당 
-void UGObjectManager::InitNonfixedObjects(int32 CreatedPoolSize)
+void UGObjectManager::CreateNonfixedObjPool(int32 CreatedPoolSize)
 {
-	NfixedObjPool.Empty(PoolSize);
-	FreeObjsStack.Empty();
-	NfixedObjects.Empty();
-
 	for (int32 i = 0; i < CreatedPoolSize; ++i)
 	{
 		auto NewActor = SpawnNewEmptyNonfixedObject();
@@ -156,15 +172,20 @@ void UGObjectManager::InitNonfixedObjects(int32 CreatedPoolSize)
 
 void UGObjectManager::InitiateObjects()
 {
+    NfixedObjPool.Empty(PoolSize);
+    FreeObjsStack.Empty();
+    NfixedObjects.Empty();
+
 #if PROTOTYPE_2026_02
     // 맵에 배치된 오브젝트 중 NonfixedObj 타입의 오브젝트를 로드해옴
     FindAllNonfixedObjects();
 
     // 예비 오브젝트 풀을 생성
-    InitNonfixedObjects(50);
+    CreateNonfixedObjPool(50);
+
 #else
     // 1. 오브젝트풀 생성
-    InitNonfixedObjects(PoolSize);
+    CreateNonfixedObjPool(PoolSize);
 #endif
 
 
@@ -173,7 +194,7 @@ void UGObjectManager::InitiateObjects()
 
 void UGObjectManager::FindAllNonfixedObjects()
 {
-    UE_LOG(LogObjectPool, Warning, TEXT("[Prototype] 맵에 배치된 NonfixedObject를 수집합니다."));
+    UE_LOG(LogObjectPool, Warning, TEXT("[Prototype] Find spawned NonfixedObjects"));
 
     int32 FoundCnt = 0;
     for (TActorIterator<AGNonfixedObject> It(GetWorld()); It; ++It)
@@ -187,16 +208,34 @@ void UGObjectManager::FindAllNonfixedObjects()
             NfixedObjects.Add(FoundCnt, PlacedObj);
 
             PlacedObj->AttachToActor(ActiveRoot, FAttachmentTransformRules::KeepWorldTransform);
-            PlacedObj->UpdateObjectData();
-
-            FoundCnt++;
+            PlacedObj->UpdateObjectData(FoundCnt);
         }
     }
 
 
-    UE_LOG(LogObjectPool, Log, TEXT("[Prototype] 총 %d개의 NonfixedObject를 맵에서 찾았습니다!"), FoundCnt);
+    UE_LOG(LogObjectPool, Log, TEXT("[Prototype] Found %d number of NonfixedObjects!"), FoundCnt);
 
     NfixedObjCnt += FoundCnt;
+}
+
+bool UGObjectManager::DropNonfixedObject(int32 PickedObjectIID)
+{
+    AGNonfixedObject* DroppedObj = GetNonfixedObject(PickedObjectIID);
+    if (!DroppedObj)
+    {
+        UE_LOG(LogGObject, Log, TEXT("[GObjectManager] Cannot found %d order object"), PickedObjectIID);
+        return false;
+    }
+
+    auto* CoreComp = DroppedObj->GetNonfixedObjCoreComp();
+    if (!CoreComp)
+    {
+        UE_LOG(LogGObject, Log, TEXT("[GObjectManager] Cannot found %d order object's core component"), PickedObjectIID);
+        return false;
+    }
+
+    CoreComp->ChangeState(ENonfixedObjState::E_Static);
+    return true;
 }
 
 
@@ -214,7 +253,7 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
     APawn* Pawn = PC->GetPawn();
     if (!Pawn) return;
 
-    UE_LOG(LogTemp, Warning, TEXT("[ObjectManager] Player %s tried to interact with object %d"),  *PC->GetName(), TargetInstanceId);
+    UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] Player %s tried to interact with object %d"),  *PC->GetName(), TargetInstanceId);
     
 
     // 인터렉션 로직 추가
@@ -226,19 +265,29 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
 
     // get equip id
     FName EquipID = EquipComp->GetCurrentEquipmentID();
-
-
-    // PlayerChar->Server_TryInteraction(EquipID);
-    UObject* Target = PlayerChar->GetInteractionComp()->GetCurrentTarget();
-    if (Target)
+    if (EquipID == "Error")
     {
-        IGInteractable* Interactable = Cast<IGInteractable>(Target);
-        if (Interactable)
+        UE_LOG(LogGObject, Warning, TEXT("[GObject] Equip Error!"));
+    }
+    else if (EquipID == "Eq_OVariable")
+    {
+        int32 PickedObjectIID = PlayerChar->GetEquipComp()->GetPickedObjectID();
+
+        DropNonfixedObject(PickedObjectIID);
+    }
+    else
+    {
+        UObject* Target = PlayerChar->GetInteractionComp()->GetCurrentTarget();
+        if (Target)
         {
-            if (Interactable->CanInteract(EquipID, PlayerChar))
+            IGInteractable* Interactable = Cast<IGInteractable>(Target);
+            if (Interactable)
             {
-                Interactable->ExecuteInteraction(EquipID, PlayerChar);
-                UE_LOG(LogObject, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetName());
+                if (Interactable->CanInteract(EquipID, PlayerChar))
+                {
+                    Interactable->ExecuteInteraction(EquipID, PlayerChar);
+                    UE_LOG(LogGObject, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetName());
+                }
             }
         }
     }
