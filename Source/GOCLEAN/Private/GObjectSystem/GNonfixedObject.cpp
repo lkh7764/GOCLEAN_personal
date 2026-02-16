@@ -53,6 +53,8 @@ void AGNonfixedObject::UpdateInteractionBounds()
 
 void AGNonfixedObject::BeginPlay()
 {
+	Super::BeginPlay();
+
 	UpdateInteractionBounds();
 }
 
@@ -62,4 +64,141 @@ void AGNonfixedObject::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+
+
+void AGNonfixedObject::UpdateVisualByState()
+{
+	if (!CoreComp) return;
+	if (!RootPrimitive) return;
+
+	switch (CoreComp->GetNonfixedObjState())
+	{
+	case ENonfixedObjState::E_Static:
+		RootPrimitive->SetSimulatePhysics(true);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		RootPrimitive->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Ignore);
+
+		SetActorHiddenInGame(false);
+
+		if (InteractionVolume)
+		{
+			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			InteractionVolume->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Block);
+		}
+
+		break;
+
+	case ENonfixedObjState::E_Kinematic:
+		RootPrimitive->SetSimulatePhysics(true);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		RootPrimitive->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Ignore);
+
+		SetActorHiddenInGame(false);
+
+		if (InteractionVolume)
+		{
+			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			InteractionVolume->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Block);
+		}
+
+		break;
+
+	case ENonfixedObjState::E_Fixed:
+		RootPrimitive->SetSimulatePhysics(false);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		RootPrimitive->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Ignore);
+
+		SetActorHiddenInGame(false);
+
+		if (InteractionVolume)
+		{
+			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			InteractionVolume->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Block);
+		}
+
+		break;
+
+	case ENonfixedObjState::E_Invisible:
+		RootPrimitive->SetSimulatePhysics(false);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		SetActorHiddenInGame(true);
+
+		if (InteractionVolume)
+		{
+			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+
+		break;
+
+	case ENonfixedObjState::E_Disintegrating:
+		RootPrimitive->SetSimulatePhysics(false);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		SetActorHiddenInGame(false);
+
+		if (InteractionVolume)
+		{
+			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+
+		break;
+
+	case ENonfixedObjState::E_Destroyed:
+		RootPrimitive->SetSimulatePhysics(false);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		SetActorHiddenInGame(true);
+
+		if (InteractionVolume)
+		{
+			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+
+		break;
+
+	case ENonfixedObjState::E_Temporary:
+		RootPrimitive->SetSimulatePhysics(false);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		SetActorHiddenInGame(true);
+
+		if (InteractionVolume)
+		{
+			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+
+		break;
+
+	default:
+		RootPrimitive->SetSimulatePhysics(false);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		SetActorHiddenInGame(true);
+
+		if (InteractionVolume)
+		{
+			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+
+		break;
+	}
+}
+
+
+
+void AGNonfixedObject::UpdateObjectData(int32 IID)
+{
+	if (!CoreComp) return;
+
+	CoreComp->IID = IID;
+}
 

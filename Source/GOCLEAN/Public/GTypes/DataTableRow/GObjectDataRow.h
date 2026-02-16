@@ -67,4 +67,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logic")
     int32 DerivedObjCnt;
 
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+    TObjectPtr<USoundBase> InteractSoundAsset;
+
 };

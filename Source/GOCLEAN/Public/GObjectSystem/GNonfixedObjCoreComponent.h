@@ -8,6 +8,7 @@
 
 #include "GTypes/GObjectTypes.h"
 #include "GTypes/IGInteractable.h"
+#include "GObjectSystem/GAdditionalObjFuncComponent.h"
 
 #include "GNonfixedObjCoreComponent.generated.h"
 
@@ -45,7 +46,7 @@ public:
 	int32 IID;
 
 	// type ID - 현재 오브젝트가 어떤 오브젝트인지 식별하는 ID
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "ID")
+	UPROPERTY(EditAnywhere, Replicated, Category = "ID")
 	FName TID;
 
 
@@ -53,7 +54,7 @@ public:
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_InteractionCnt, Category = "Interaction")
 	int32 InteractionCnt;
 
-	FOnNonfixedObjIneracted GetOnInteractionDelegate() { return OnNonfixedObjInteracted; }
+	FOnNonfixedObjIneracted& GetOnInteractionDelegate() { return OnNonfixedObjInteracted; }
 
 	// interact
 	virtual bool CanInteract(FName EquipID, AGOCLEANCharacter* Target) const override;
@@ -65,7 +66,7 @@ public:
 
 	ENonfixedObjState GetNonfixedObjState() const { return State; }
 
-	FOnNonfixedObjStateChanged GetOnStateChangedDelegate() { return OnNonfixedObjStateChanged; }
+	FOnNonfixedObjStateChanged& GetOnStateChangedDelegate() { return OnNonfixedObjStateChanged; }
 
 
 

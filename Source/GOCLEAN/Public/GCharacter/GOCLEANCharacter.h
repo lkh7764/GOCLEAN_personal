@@ -259,7 +259,7 @@ public:
 
 	void DoInteraction();
 
-	// only Server
-	void Server_TryInteraction(FName EquipID);
+	UGEquipmentComponent* GetEquipComp() const { return EquipComp; }
+	UInteractionComponent* GetInteractionComp() const { return InteractionComp; }
 	
 };

@@ -11,6 +11,7 @@ UENUM(BlueprintType)
 enum class EGFixedObjState : uint8 {
 	E_Static			UMETA(DisplayName = "Static - 정적"),
 	E_Used				UMETA(DisplayName = "Used - 사용중"),
+	E_Invisible			UMETA(DisplayName = "Invisible - 비가시적/비활성화"),
 	E_Destroyed			UMETA(DisplayName = "Destroyed - 파괴됨"),
 
 	E_MAX				UMETA(Hidden)

@@ -58,6 +58,14 @@ void UInteractionComponent::PerformLineTrace()
 		AActor* HitActor = HitResult.GetActor();
 		if (!HitActor) return;
 
+		// 1. actor type
+		if (HitActor->Implements<UGInteractable>())
+		{
+			CurrentTarget = HitActor; // 액터 통째로 저장!
+			return;
+		}
+
+		// 2. actor component type
 		TArray<UActorComponent*> InteractComps =
 			HitActor->GetComponentsByInterface(UGInteractable::StaticClass());
 
