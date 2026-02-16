@@ -62,15 +62,7 @@ void AGDoorway::BeginPlay()
 	{
 		TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AGDoorway::OnOverlapEnd);
 
-		FTimerHandle TestTimerHandle;
-
-		// 3초마다 람다 함수를 실행해서 강제로 문 상태를 뒤집어버립니다!
-		GetWorld()->GetTimerManager().SetTimer(TestTimerHandle, FTimerDelegate::CreateLambda([this]()
-		{
-			OpenDoor(); // 변수 변경! (이 순간 클라이언트로 날아감)
-			UE_LOG(LogTemp, Warning, TEXT("[Server] Door close force: %d"), bIsClosed);
-
-		}), 3.0f, true); // 3초마다 반복 (true)
+		// TEST_OpenAllDoors();
 	}
 	else
 	{
@@ -79,6 +71,18 @@ void AGDoorway::BeginPlay()
 
 		// TriggerBox->DestroyComponent();
 	}
+}
+void AGDoorway::TEST_OpenAllDoors()
+{
+	FTimerHandle TestTimerHandle;
+
+	// 3초마다 람다 함수를 실행해서 강제로 문 상태를 뒤집어버립니다!
+	GetWorld()->GetTimerManager().SetTimer(TestTimerHandle, FTimerDelegate::CreateLambda([this]()
+	{
+		OpenDoor(); // 변수 변경! (이 순간 클라이언트로 날아감)
+		UE_LOG(LogTemp, Warning, TEXT("[Server] Door close force: %d"), bIsClosed);
+
+	}), 3.0f, false); // 3초마다 반복 (true)
 }
 
 void AGDoorway::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)

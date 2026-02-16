@@ -83,7 +83,7 @@ void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
 
 		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
 
-		UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+		UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 		const FGObjectDataRow* Data =
 			DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
 
@@ -145,7 +145,7 @@ void UGRemovingComponent::InitializeAdditionalData(const FGNonfixedObjData& Data
 	{
 		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
 
-		UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+		UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 		const FGObjectDataRow* Data =
 			DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
 
@@ -181,7 +181,7 @@ void UGRemovingComponent::SetVisualByInteractionCnt(AGNonfixedObject* Owner)
 {
 	Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
 
-	UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 	const FGObjectDataRow* Data =
 		DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
 
@@ -316,7 +316,7 @@ void UGSpawnerCompopnent::SpawnDerivedObject(AGNonfixedObject* Owner)
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	auto* DataManager = World->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	auto* DataManager = UGDataManagerSubsystem::Get(World);
 	auto* Data = DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
 	if (!Data) return;
 
@@ -353,7 +353,7 @@ void UGInteractSoundCompopnent::InitializeAdditionalData(const FGNonfixedObjData
 	if (Owner && Owner->GetNonfixedObjCoreComp() && GetWorld())
 	{
 		// 2. 데이터 매니저에서 TID 기반 데이터 가져오기
-		UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+		UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 		const FGObjectDataRow* DataRow = DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
 
 		// 3. 사운드 에셋 캐싱

@@ -83,6 +83,9 @@ private:
 	// internal functions
 	int32 FindPlayerSessionIndex(AActor* PlayerActor);
 
+	// TEST
+	void TEST_OpenAllDoors();
+
 
 protected:
 	// Trigger

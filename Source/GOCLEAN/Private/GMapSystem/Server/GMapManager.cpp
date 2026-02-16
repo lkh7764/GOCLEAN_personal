@@ -29,7 +29,7 @@ void UGMapManager::Initialize(FSubsystemCollectionBase& Collection)
 	UGameInstance* GameInstance = GetWorld()->GetGameInstance();
 	if (!GameInstance) return;
 
-	auto* DataManager = GameInstance->GetSubsystem<UGDataManagerSubsystem>();
+	auto* DataManager = UGDataManagerSubsystem::Get(GetWorld());;
 	if (!DataManager) return;
 
 	TArray<FGMapDataRow*> Datas = DataManager->GetAllMapDatas();

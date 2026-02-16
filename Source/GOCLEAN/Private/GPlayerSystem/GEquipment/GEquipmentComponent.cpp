@@ -48,7 +48,8 @@ void UGEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 FName UGEquipmentComponent::GetCurrentEquipmentID()
 {
-	return GetEquipmentID(CurrentSlotIndex);
+	return "Eq_Hand";
+	// return GetEquipmentID(CurrentSlotIndex);
 }
 
 bool UGEquipmentComponent::ChangeEuquipmentInCurrSlot(FName ChangedEquipID)

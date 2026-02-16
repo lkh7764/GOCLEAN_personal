@@ -8,9 +8,12 @@
 #include "GObjectSystem/GFixedObject.h"
 
 #include "GCharacter/GOCLEANCharacter.h"
+#include "GPlayerSystem/InteractionComponent.h"
 #include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
 #include "GDataManagerSubsystem.h"
+#include "GTypes/IGInteractable.h"
 
+#include "Net/UnrealNetwork.h"
 #include "EngineUtils.h"
 
 
@@ -225,13 +228,20 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
     FName EquipID = EquipComp->GetCurrentEquipmentID();
 
 
-    // change anim id to active-anim
-    UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
-    const FGEquipmentDataRow* Data = DataManager->GetEquipmentData(EquipID);
-    if (!Data) return;
-
-
-    PlayerChar->Server_TryInteraction(EquipID);
+    // PlayerChar->Server_TryInteraction(EquipID);
+    UObject* Target = PlayerChar->GetInteractionComp()->GetCurrentTarget();
+    if (Target)
+    {
+        IGInteractable* Interactable = Cast<IGInteractable>(Target);
+        if (Interactable)
+        {
+            if (Interactable->CanInteract(EquipID, PlayerChar))
+            {
+                Interactable->ExecuteInteraction(EquipID, PlayerChar);
+                UE_LOG(LogObject, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetName());
+            }
+        }
+    }
 }
 
 void UGObjectManager::HandleIncineratorThrowTrash(APlayerController* PC, const TArray<int32>& TrashInstanceIds)

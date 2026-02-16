@@ -116,6 +116,7 @@ public:
 	AGNonfixedObject* GetFromPool();
 
 
+
 public:
 	// C -> S (서버 처리)
 
@@ -182,5 +183,6 @@ public:
 
 	// 상호작용 거부 결과 처리
 	void OnObjectInteractionRejected(EObjectRejectReason Reason, int32 TargetInstanceId);
+
 };
 
