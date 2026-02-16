@@ -3,8 +3,15 @@
 
 #include "GObjectSystem/Server/GObjectManager.h"
 
+#include "../../../GOCLEAN.h"
 #include "GObjectSystem/GNonfixedObject.h"
 #include "GObjectSystem/GFixedObject.h"
+
+#include "GCharacter/GOCLEANCharacter.h"
+#include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
+#include "GDataManagerSubsystem.h"
+
+#include "EngineUtils.h"
 
 
 ////////////////////////////////////////////
@@ -14,17 +21,29 @@
 // Sets default values for this component's properties
 UGObjectManager::UGObjectManager()
 {
-	// 
+    NfixedObjCnt = 0;
 }
-
 
 // Called when the game starts
 void UGObjectManager::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	// ...
-	
+
+	// 1. 앵커 액터 스폰
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    PoolRoot = GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), PoolLocation, FRotator::ZeroRotator, SpawnParams);
+    ActiveRoot = GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+
+#if WITH_EDITOR
+    PoolRoot->SetActorLabel(TEXT("-- OBJECT_POOL_ROOT --"));
+    ActiveRoot->SetActorLabel(TEXT("-- ACTIVE_OBJECT_ROOT --"));
+#endif
+
+
+    InitiateObjects();
 }
 // Called when the game starts
 void UGObjectManager::Deinitialize()
@@ -41,43 +60,178 @@ void UGObjectManager::Deinitialize()
 // INITIATE & ALLOCATE
 ////////////////////////////////////////////
 
+AGNonfixedObject* UGObjectManager::SpawnNewEmptyNonfixedObject()
+{
+    auto NewActor = GetWorld()
+        ->SpawnActor<AGNonfixedObject>(AGNonfixedObject::StaticClass(), PoolLocation, FRotator::ZeroRotator);
+
+    return NewActor;
+}
+
+void UGObjectManager::ReturnToPool(AGNonfixedObject* Actor)
+{
+    if (!Actor) return;
+
+    Actor->SetActorHiddenInGame(true);
+    Actor->SetActorEnableCollision(false);
+
+    Actor->AttachToActor(PoolRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+    NfixedObjPool.Push(Actor);
+}
+
+AGNonfixedObject* UGObjectManager::GetFromPool()
+{
+    if (NfixedObjPool.Num() > 0)
+    {
+        return NfixedObjPool.Pop();
+    }
+
+    return nullptr;
+}
+
+AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
+    FName TID,
+    ENonfixedObjState SpawnState,
+    const FVector& Location,
+    const FRotator& Rotation)
+{
+    // 1. 오브젝트 풀에서 오브젝트 가져오기
+    auto Target = GetFromPool();
+
+    // 2. 오브젝트 풀에 가져올 오브젝트가 없다면 새로 생성
+    if (!Target)
+    {
+        Target = SpawnNewEmptyNonfixedObject();
+    }
+
+    if (Target)
+    {
+        // 3. 위치 및 상태 초기화
+        Target->SetActorLocationAndRotation(Location, Rotation);
+
+        Target->SetActorHiddenInGame(false);
+        Target->SetActorEnableCollision(true); 
+        
+        Target->AttachToActor(ActiveRoot, FAttachmentTransformRules::KeepWorldTransform);
+
+
+        // 4. 스폰 데이터 세팅
+        NfixedObjCnt++;
+
+        FGNonfixedObjData InitData = {
+            NfixedObjCnt,
+            TID,
+            Location,
+            Rotation,
+            SpawnState,
+            true
+        };
+
+        Target->SetObjectData(InitData);
+    }
+
+    return Target;
+}
+
 // 비고정오브젝트 풀과 고정오브젝트에 UGObjectData를 할당 
-void UGObjectManager::InitNonfixedObjects()
+void UGObjectManager::InitNonfixedObjects(int32 CreatedPoolSize)
 {
 	NfixedObjPool.Empty(PoolSize);
 	FreeObjsStack.Empty();
 	NfixedObjects.Empty();
 
-	for (int32 i = 0; i < PoolSize; ++i)
+	for (int32 i = 0; i < CreatedPoolSize; ++i)
 	{
-		auto NewActor = GetWorld()->SpawnActor(AGNonfixedObject::StaticClass(), &PoolLocation);
+		auto NewActor = SpawnNewEmptyNonfixedObject();
 		if (NewActor)
 		{
-			// 부모 설정 -> view port 관리에 용이하도록
+            ReturnToPool(NewActor);
 		}
 	}
 }
-void UGObjectManager::InitiateObjects(UObject* WorldContextObject)
+
+void UGObjectManager::InitiateObjects()
 {
-	// 1. 오브젝트풀 생성
-	InitNonfixedObjects();
+#if PROTOTYPE_2026_02
+    // 맵에 배치된 오브젝트 중 NonfixedObj 타입의 오브젝트를 로드해옴
+    FindAllNonfixedObjects();
+
+    // 예비 오브젝트 풀을 생성
+    InitNonfixedObjects(50);
+#else
+    // 1. 오브젝트풀 생성
+    InitNonfixedObjects(PoolSize);
+#endif
+
+
+    // finish obj load
+}
+
+void UGObjectManager::FindAllNonfixedObjects()
+{
+    UE_LOG(LogObjectPool, Warning, TEXT("[Prototype] 맵에 배치된 NonfixedObject를 수집합니다."));
+
+    int32 FoundCnt = 0;
+    for (TActorIterator<AGNonfixedObject> It(GetWorld()); It; ++It)
+    {
+        AGNonfixedObject* PlacedObj = *It;
+
+        if (PlacedObj)
+        {
+            FoundCnt++;
+
+            NfixedObjects.Add(FoundCnt, PlacedObj);
+
+            PlacedObj->AttachToActor(ActiveRoot, FAttachmentTransformRules::KeepWorldTransform);
+            PlacedObj->UpdateObjectData();
+
+            FoundCnt++;
+        }
+    }
+
+
+    UE_LOG(LogObjectPool, Log, TEXT("[Prototype] 총 %d개의 NonfixedObject를 맵에서 찾았습니다!"), FoundCnt);
+
+    NfixedObjCnt += FoundCnt;
 }
 
 
 
 
-// RPC 함수들
+////////////////////////////////////////////
+// RPC: C to S
+////////////////////////////////////////////
 
 void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInstanceId)
 {
     if (!PC) return;
+
 
     APawn* Pawn = PC->GetPawn();
     if (!Pawn) return;
 
     UE_LOG(LogTemp, Warning, TEXT("[ObjectManager] Player %s tried to interact with object %d"),  *PC->GetName(), TargetInstanceId);
     
+
     // 인터렉션 로직 추가
+    AGOCLEANCharacter* PlayerChar = Cast<AGOCLEANCharacter>(Pawn);
+    if (!PlayerChar) return;
+
+    UGEquipmentComponent* EquipComp = PlayerChar->GetEquipComp();
+    if (!PlayerChar->GetInteractionComp() || !EquipComp) return;
+
+    // get equip id
+    FName EquipID = EquipComp->GetCurrentEquipmentID();
+
+
+    // change anim id to active-anim
+    UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+    const FGEquipmentDataRow* Data = DataManager->GetEquipmentData(EquipID);
+    if (!Data) return;
+
+
+    PlayerChar->Server_TryInteraction(EquipID);
 }
 
 void UGObjectManager::HandleIncineratorThrowTrash(APlayerController* PC, const TArray<int32>& TrashInstanceIds)
@@ -158,7 +312,10 @@ void UGObjectManager::HandleObjectActorSpawnReady(APlayerController* PC, int32 O
 }
 
 
-// S -> C
+
+////////////////////////////////////////////
+// RPC: S to C
+////////////////////////////////////////////
 
 void UGObjectManager::OnIncineratorTrashBurnFinished(int32 CompletedInstanceId)
 {
