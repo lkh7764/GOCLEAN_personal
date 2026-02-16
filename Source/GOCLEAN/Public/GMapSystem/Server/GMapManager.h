@@ -27,13 +27,20 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
+	// -------------------------------
+	//		IN-DOORWAY
+	// -------------------------------
+	void PlayerEnteredZone(FName ZoneName, AActor* PlayerActor);
+	void PlayerExitedZone(FName ZoneName, AActor* PlayerActor);
+
+	void GhostEnteredZone(FName ZoneName, AActor* GhostActor);
+	void GhostExitedZone(FName ZoneName, AActor* GhostActor);
+
+	const FGZoneData* GetZoneData(FName ZoneName) const;
 
 	
 protected:
 	UPROPERTY()
 	TMap<FName, FGZoneData> ZoneDatas;
-
-	UPROPERTY()
-	TArray<TObjectPtr<AGDoorway>> Doorways;
 
 };

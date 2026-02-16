@@ -43,7 +43,7 @@ private:
 
 	//		owner character
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<AGOCLEANCharacter> Onwer;
+	TObjectPtr<AGOCLEANCharacter> Owner;
 
 
 	//		picked ID

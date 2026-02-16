@@ -11,18 +11,24 @@
 #include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
 #include "GDataManagerSubsystem.h"
 #include "GObjectSystem/Server/GObjectManager.h"
+#include "../../GOCLEAN.h"
+
+#include "Kismet/GameplayStatics.h"
 
 
 
 UGAdditionalObjFuncComponent::UGAdditionalObjFuncComponent()
 {
-	
+	PrimaryComponentTick.bCanEverTick = false;
+
+	SetIsReplicatedByDefault(true);
 }
 
 void UGAdditionalObjFuncComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UE_LOG(LogGObject, Log, TEXT("[AdditionalFuncComp] Begin Play %s: Add delegate funcs"), *GetOwner()->GetName());
 
 	TArray<UActorComponent*> InteractComps =
 		GetOwner()->GetComponentsByInterface(UGInteractable::StaticClass());
@@ -71,7 +77,7 @@ void UGPickComponent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfi
 
 void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
 {
-	// if (Target->GetEquipComp()->GetCurrentEquipmentID() != "Eq_Hand") return;
+	if (Target->GetEquipComp()->GetCurrentEquipmentID() != "Eq_Hand") return;
 
 	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
 	if (Owner && Owner->GetNonfixedObjCoreComp() && GetWorld())
@@ -81,22 +87,22 @@ void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
 
 		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
 
-		UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+		UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 		const FGObjectDataRow* Data =
 			DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
 
 		if (Data)
 		{
 			FName PickedEquipID = Data->PickedEquipID;
-			// Target->GetEquipComp()->ChangeEuquipmentInCurrSlot(PickedEquipID);
+			Target->GetEquipComp()->ChangeEuquipmentInCurrSlot(PickedEquipID);
 
 			if (PickedEquipID == "Eq_OVariable")
 			{
-				// Target->GetEquipComp()->SetPickedObjectID(Owner->GetNonfixedObjCoreComp()->IID);
+				Target->GetEquipComp()->SetPickedObjectID(Owner->GetNonfixedObjCoreComp()->IID);
 			}
 			else if (Data->Category == EGObjectCategory::E_Item_P)
 			{
-				// Target->GetEquipComp()->SetPickedItemID(Owner->GetNonfixedObjCoreComp()->IID);
+				Target->GetEquipComp()->SetPickedItemID(Owner->GetNonfixedObjCoreComp()->IID);
 			}
 		}
 	}
@@ -111,6 +117,10 @@ void UGPickComponent::DropObject()
 
 
 	// set owner player's
+	OwnerPlayer->GetEquipComp()->ChangeEuquipmentInCurrSlot("Eq_Hand");
+
+
+	// get spawn data from owner player
 	float DropDistance = 100.0f;
 	FVector DropLocation = OwnerPlayer->GetActorLocation() + (OwnerPlayer->GetActorForwardVector() * DropDistance);
 
@@ -143,7 +153,7 @@ void UGRemovingComponent::InitializeAdditionalData(const FGNonfixedObjData& Data
 	{
 		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
 
-		UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+		UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 		const FGObjectDataRow* Data =
 			DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
 
@@ -179,7 +189,7 @@ void UGRemovingComponent::SetVisualByInteractionCnt(AGNonfixedObject* Owner)
 {
 	Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
 
-	UGDataManagerSubsystem* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 	const FGObjectDataRow* Data =
 		DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
 
@@ -314,7 +324,7 @@ void UGSpawnerCompopnent::SpawnDerivedObject(AGNonfixedObject* Owner)
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	auto* DataManager = World->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	auto* DataManager = UGDataManagerSubsystem::Get(World);
 	auto* Data = DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
 	if (!Data) return;
 
@@ -322,9 +332,59 @@ void UGSpawnerCompopnent::SpawnDerivedObject(AGNonfixedObject* Owner)
 	if (ObjectManager)
 	{
 		FVector SpawnLocation = Owner->GetActorLocation();
-		FRotator SpawnerRotation = Owner->GetActorRotation();
+		FRotator SpawnRotation = Owner->GetActorRotation();
 
-		// ObjectManager->SpawnObject()
+		for (int32 i = 0; i < Data->DerivedObjCnt; ++i)
+		{
+			ObjectManager->SpawnNonfixedObject(
+				Data->DerivedObjID, 
+				ENonfixedObjState::E_Static,
+				SpawnLocation,
+				SpawnRotation);
+		}
 	}
 }
 
+
+
+
+UGInteractSoundCompopnent::UGInteractSoundCompopnent()
+{
+	CachedInteractSound = nullptr;
+}
+
+void UGInteractSoundCompopnent::InitializeAdditionalData(const FGNonfixedObjData& Data)
+{
+	Super::InitializeAdditionalData(Data);
+
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner && Owner->GetNonfixedObjCoreComp() && GetWorld())
+	{
+		// 2. 데이터 매니저에서 TID 기반 데이터 가져오기
+		UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
+		const FGObjectDataRow* DataRow = DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
+
+		// 3. 사운드 에셋 캐싱
+		if (DataRow && DataRow->InteractSoundAsset)
+		{
+			CachedInteractSound = DataRow->InteractSoundAsset;
+		}
+	}
+}
+
+void UGInteractSoundCompopnent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UGInteractSoundCompopnent::OnInteractionTriggered(AGOCLEANCharacter* Target)
+{
+	if (CachedInteractSound && GetOwner())
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			CachedInteractSound,
+			GetOwner()->GetActorLocation()
+		);
+	}
+}
