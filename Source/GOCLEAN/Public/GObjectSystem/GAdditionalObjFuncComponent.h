@@ -49,6 +49,9 @@ public:
 
 	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) override;
 
+	UFUNCTION()
+	void DropObject();
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -62,13 +65,12 @@ protected:
 	UFUNCTION()
 	void PickUpObject(AGOCLEANCharacter* Target);
 
-	UFUNCTION()
-	void DropObject();
-
 
 private:
+	UPROPERTY(VisibleAnywhere)
 	bool bIsPickedUp = false;
 
+	UPROPERTY(VisibleAnywhere)
 	AGOCLEANCharacter* OwnerPlayer;
 
 };
@@ -164,6 +166,7 @@ private:
 	float BurningInterval = 5.0f;
 
 };
+
 
 
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))

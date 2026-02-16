@@ -14,7 +14,6 @@
 #include "GDataManagerSubsystem.h"
 #include "GTypes/IGInteractable.h"
 
-#include "Net/UnrealNetwork.h"
 #include "EngineUtils.h"
 
 
@@ -236,6 +235,157 @@ bool UGObjectManager::DropNonfixedObject(int32 PickedObjectIID)
 
     CoreComp->ChangeState(ENonfixedObjState::E_Static);
     return true;
+}
+
+
+
+////////////////////////////////////////////
+// Fixed Object
+////////////////////////////////////////////
+void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
+{
+    if (TID == "Obj_Incinerator")
+    {
+        if (!Incinerator)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] Incinerator can not spawned over two"));
+            return;
+        }
+
+        Incinerator = Target;
+    }
+    else if (TID == "Obj_WaterTank")
+    {
+        if (!WaterTank)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] WaterTank can not spawned over two"));
+            return;
+        }
+
+        WaterTank = Target;
+    }
+    else if (TID == "Obj_MagicFloor")
+    {
+        ExocismCircle.Add(Target);
+    }
+    else if (TID == "Obj_CBasketSpawner")
+    {
+        if (!BasketSpawner)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] BasketSpawner can not spawned over two"));
+            return;
+        }
+
+        BasketSpawner = Target;
+    }
+    else if (TID == "Obj_CBucketSpawner")
+    {
+        if (!BucketSpawner)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] BucketSpawner can not spawned over two"));
+            return;
+        }
+
+        BucketSpawner = Target;
+    }
+    else if (TID == "Obj_VendingMachine")
+    {
+        if (!VendingMachine)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] VendingMachine can not spawned over two"));
+            return;
+        }
+
+        VendingMachine = Target;
+    }
+    else if (TID == "Obj_TBowlSpawner")
+    {
+        if (!TBowlSpawner)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] TBowlSpawner can not spawned over two"));
+            return;
+        }
+
+        TBowlSpawner = Target;
+    }
+    else if (TID == "Obj_TAmuletSpawner")
+    {
+        if (!TAmuletSpawner)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] TAmuletSpawner can not spawned over two"));
+            return;
+        }
+
+        TAmuletSpawner = Target;
+    }
+    else if (TID == "Obj_TPileSpawner")
+    {
+        if (!TPileSpawner)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] TPileSpawner can not spawned over two"));
+            return;
+        }
+
+        TPileSpawner = Target;
+    }
+    else if (TID == "Obj_Cabinet")
+    {
+        Cabinets.Add(Target);
+    }
+    else if (TID == "Obj_CCTV")
+    {
+        if (!CCTV)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] CCTV can not spawned over two"));
+            return;
+        }
+
+        CCTV = Target;
+    }
+    else
+    {
+        UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] Could not found atched variable: %s"), *Target->GetName());
+    }
+
+    UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] Complete register successly!: %s - %d"), *Target->GetName(), Target->GetInstanceID());
+}
+
+AGFixedObject* UGObjectManager::ActiveRandomExocismCircle()
+{
+    if (ExocismCircle.IsEmpty())
+    {
+        UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] Exocism circle is empty!"));
+        return nullptr;
+    }
+
+    AGFixedObject* SelectedCircle;
+    while (true)
+    {
+        SelectedCircle = ExocismCircle[FMath::RandRange(0, ExocismCircle.Num() - 1)];
+
+        if (SelectedCircle->GetState() == EGFixedObjState::E_Invisible)
+        {
+            UE_LOG(LogGObject, Log, TEXT("[GFixedObject] Found exocism circle to active!"));
+            break;
+        }
+    }
+
+    UpdateExocismCircleStates(SelectedCircle);
+
+    return SelectedCircle;
+}
+
+void UGObjectManager::UpdateExocismCircleStates(AGFixedObject* ActiveCircle)
+{
+    if (!ActiveCircle) return;
+
+    for (auto Circle : ExocismCircle)
+    {
+        if (Circle == ActiveCircle) continue;
+        Circle->ChangeState(EGFixedObjState::E_Invisible);
+    }
+
+    ActiveCircle->ChangeState(EGFixedObjState::E_Static);
 }
 
 

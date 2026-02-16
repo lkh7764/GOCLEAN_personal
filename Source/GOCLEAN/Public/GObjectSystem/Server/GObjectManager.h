@@ -69,7 +69,7 @@ protected:
 	// Variables: fixed Object
 	//		1. 드럼통소각로: 쓰레기 타입의 비고정 오브젝트를 소각하는 용도. 고정 위치 스폰.
 	UPROPERTY()
-	TObjectPtr<AGFixedObject> Fireplace;
+	TObjectPtr<AGFixedObject> Incinerator;
 
 	//		2. 물탱크: 물양동이를 들고 상호작용할 시, 물을 채우는 용도. 고정 위치 스폰.
 	UPROPERTY()
@@ -85,7 +85,31 @@ protected:
 
 	//		5. 퇴마진: 퇴마를 진행하는 용도. 랜덤 위치 스폰.
 	UPROPERTY()
-	TObjectPtr<AGFixedObject> ExocismCircle;
+	TArray<TObjectPtr<AGFixedObject>> ExocismCircle;
+
+	//		6. 물양동이 스포너
+	UPROPERTY()
+	TObjectPtr<AGFixedObject> BucketSpawner;
+
+	//		7. 청소바구니 스포너
+	UPROPERTY()
+	TObjectPtr<AGFixedObject> BasketSpawner;
+
+	//		8. 제령도구:닭피사발 스포너
+	UPROPERTY()
+	TObjectPtr<AGFixedObject> TBowlSpawner;
+
+	//		9. 제령도구:부적 스포너
+	UPROPERTY()
+	TObjectPtr<AGFixedObject> TAmuletSpawner;
+
+	//		10. 제령도구:쇠말뚝 스포너
+	UPROPERTY()
+	TObjectPtr<AGFixedObject> TPileSpawner;
+
+	//		11. CCTV
+	UPROPERTY()
+	TObjectPtr<AGFixedObject> CCTV;
 
 
 
@@ -101,6 +125,7 @@ protected:
 
 
 public:
+	// Nonfixed Object
 	void InitiateObjects();
 
 	void SetObjectDatas() {};
@@ -128,6 +153,14 @@ public:
 	}
 
 	bool DropNonfixedObject(int32 IID);
+
+
+	// Fixed Object
+	void RegisterFixedObject(FName TID, AGFixedObject* Target);
+
+	AGFixedObject* ActiveRandomExocismCircle();
+
+	void UpdateExocismCircleStates(AGFixedObject* ActiveCircle);
 
 
 
