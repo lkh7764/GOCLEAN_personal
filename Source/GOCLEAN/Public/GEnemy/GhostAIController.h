@@ -17,6 +17,10 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "GEnemy/Base/GhostBase.h"
+
+#include "ServerModule/GameSession/GameSessionState.h"
+#include "ServerModule/GameSession/PlayerSessionState.h"
+
 #include "GhostAIController.generated.h"
 
 class AGOCLEANCharacter;
@@ -36,6 +40,17 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	bool IsChasing() const { return bIsChasing; }
+
+	// Server //
+	UPROPERTY()
+	TArray<TObjectPtr<AGOCLEANCharacter>> AlivePlayers;
+
+	UPROPERTY()
+	TObjectPtr<AGOCLEANCharacter> TargetPlayer;
+
+	void UpdatePlayerList();
+	float CalculateAverageSanityCorruptionRate();
+
 
 
 private:
@@ -66,12 +81,13 @@ private:
 	void PlayerHunt();
 	void EndlessPlayerHunt();
 
+	void FindTarget();
+
 
 
 
 	// Check player sanity //
-	TObjectPtr<AGOCLEANCharacter> Player;
-	float PlayerSanityCorruptionRate;
+	float PlayersSanityCorruptionRate;
 	FTimerHandle CheckPlayerSanityCorruptionHandle;
 
 
