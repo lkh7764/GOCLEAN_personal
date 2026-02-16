@@ -9,6 +9,7 @@ AGameSessionState::AGameSessionState()
 {
     ObjectManager = nullptr;
     PlayerManager = nullptr;
+    MapManager = nullptr;
 
 	bReplicates = true;
 }
@@ -21,6 +22,7 @@ void AGameSessionState::BeginPlay()
     {
         ObjectManager = NewObject<UGObjectManager>(this);
         PlayerManager = NewObject<UGPlayerManager>(this);
+        MapManager = NewObject<UGMapManager>(this);
     }
 }
 
@@ -40,6 +42,11 @@ void AGameSessionState::PostInitializeComponents()
         {
             PlayerManager = NewObject<UGPlayerManager>(this);
         }
+
+        if (!MapManager)
+        {
+            MapManager = NewObject<UGMapManager>(this);
+        }
     }
 }
 
@@ -54,6 +61,13 @@ void AGameSessionState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(AGameSessionState, PostExorcismTimeRemaining);
     DOREPLIFETIME(AGameSessionState, AliveSurvivorCount);
     DOREPLIFETIME(AGameSessionState, FinalRewardMoney);
+
+    DOREPLIFETIME(AGameSessionState, SessionPhase);
+    DOREPLIFETIME(AGameSessionState, InGamePhase);
+
+    DOREPLIFETIME(AGameSessionState, SelectedContractId);
+    DOREPLIFETIME(AGameSessionState, SessionJoinCode);
+    DOREPLIFETIME(AGameSessionState, PurchasedVending);
 }
 
 
@@ -259,6 +273,123 @@ void AGameSessionState::SetFinalRewardMoney_Internal(int32 NewValue)
     OnRep_FinalRewardMoney();
 }
 
+void AGameSessionState::SetSessionPhase(ESessionPhase NewPhase)
+{
+    if (!HasAuthority())
+        return;
+
+    if (SessionPhase == NewPhase)
+        return;
+
+    SessionPhase = NewPhase;
+
+    OnRep_SessionPhase();
+}
+
+void AGameSessionState::SetInGamePhase(EInGamePhase NewPhase)
+{
+    if (!HasAuthority())
+        return;
+
+    if (InGamePhase == NewPhase)
+        return;
+
+    InGamePhase = NewPhase;
+
+    OnRep_InGamePhase();
+}
+
+void AGameSessionState::SetSelectedContractId(int32 NewContractId)
+{
+    if (!HasAuthority()) return;
+    if (SelectedContractId == NewContractId) return;
+
+    SelectedContractId = NewContractId;
+    OnRep_SelectedContractId();
+}
+
+
+
+void AGameSessionState::SetSessionJoinCode(const FString& NewCode)
+{
+    if (!HasAuthority()) return;
+    if (SessionJoinCode == NewCode) return;
+
+    SessionJoinCode = NewCode;
+    OnRep_SessionJoinCode();
+}
+
+bool AGameSessionState::HasPurchasedVendingByPlayerId(int32 PlayerId) const
+{
+    for (const FPurchasedVendingEntry& E : PurchasedVending)
+    {
+        if (E.PlayerId == PlayerId)
+            return true;
+    }
+    return false;
+}
+
+bool AGameSessionState::GetPurchasedVendingItemId(int32 PlayerId, int32& OutItemId) const
+{
+    for (const FPurchasedVendingEntry& E : PurchasedVending)
+    {
+        if (E.PlayerId == PlayerId)
+        {
+            OutItemId = E.ItemId;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool AGameSessionState::TryAddPurchasedVending(int32 PlayerId, int32 ItemId)
+{
+    if (!HasAuthority()) return false;
+    if (PlayerId < 0) return false;
+
+    // 1인 1개 제한
+    if (HasPurchasedVendingByPlayerId(PlayerId))
+        return false;
+
+    FPurchasedVendingEntry NewEntry;
+    NewEntry.PlayerId = PlayerId;
+    NewEntry.ItemId = ItemId;
+
+    PurchasedVending.Add(NewEntry);
+
+    OnRep_PurchasedVending();
+    return true;
+}
+
+bool AGameSessionState::RemovePurchasedVending(int32 PlayerId)
+{
+    if (!HasAuthority()) return false;
+
+    const int32 Removed = PurchasedVending.RemoveAll(
+        [PlayerId](const FPurchasedVendingEntry& E)
+        {
+            return E.PlayerId == PlayerId;
+        });
+
+    if (Removed > 0)
+    {
+        OnRep_PurchasedVending();
+        return true;
+    }
+    return false;
+}
+
+void AGameSessionState::ClearPurchasedVending()
+{
+    if (!HasAuthority()) return;
+
+    if (PurchasedVending.Num() == 0)
+        return;
+
+    PurchasedVending.Reset();
+    OnRep_PurchasedVending();
+}
+
 
 
 // OnRep (Client UI 갱신)
@@ -291,3 +422,36 @@ void AGameSessionState::OnRep_FinalRewardMoney()
 {
     // UI 갱신(결과창)
 }
+
+void AGameSessionState::OnRep_SessionPhase()
+{
+    // 로비 위젯 교체, 입력 제한 토글, BGM 전환 등
+
+    BP_OnSessionPhaseChanged(SessionPhase);
+}
+
+void AGameSessionState::OnRep_InGamePhase()
+{
+    // 청소 시작/퇴마 시작/퇴마 종료 연출 트리거 등
+
+    BP_OnInGamePhaseChanged(InGamePhase);
+}
+
+void AGameSessionState::OnRep_SelectedContractId()
+{
+
+}
+
+void AGameSessionState::OnRep_SessionJoinCode()
+{
+
+}
+
+void AGameSessionState::OnRep_PurchasedVending()
+{
+
+}
+
+
+
+

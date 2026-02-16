@@ -478,6 +478,7 @@ void AGOCLEANCharacter::Server_TryInteraction(FName EquipID)
 			if (Interactable->CanInteract(EquipID, Cast<AGOCLEANCharacter>(Target)))
 			{
 				Interactable->ExecuteInteraction(EquipID, Cast<AGOCLEANCharacter>(Target));
+
 				UE_LOG(LogTemp, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetOwner()->GetName());
 			}
 		}

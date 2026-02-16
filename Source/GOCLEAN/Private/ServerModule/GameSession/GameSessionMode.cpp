@@ -10,6 +10,7 @@
 #include "ServerModule/GameSession/GameSessionState.h"
 #include "ServerModule/GameSession/PlayerSessionState.h"
 #include "Net/UnrealNetwork.h"
+#include <ServerModule/GameSession/GameSessionInstance.h>
 
 
 AGameSessionMode::AGameSessionMode()
@@ -114,6 +115,15 @@ void AGameSessionMode::Logout(AController* Exiting)
     // 호스트 여부
     const bool bIsHostLeaving = (ExitingPC && ExitingPC->IsLocalController());
 
+    if (Exiting)
+    {
+        if (APlayerState* PS = Exiting->PlayerState)
+        {
+            HandlePlayerLeft(PS->GetPlayerId());
+        }
+    }
+
+
     Super::Logout(Exiting);
 
     AGameStateBase* GS = GameState;
@@ -178,10 +188,32 @@ void AGameSessionMode::Logout(AController* Exiting)
     // Online Subsystem Steam 세션 종료 로직 추가
 }
 
+void AGameSessionMode::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (!HasAuthority()) return;
+
+    auto* GI = GetGameInstance<UGameSessionInstance>();
+    auto* GSS = GetGameState<AGameSessionState>();
+    if (!GI || !GSS) return;
+
+    if (GSS->GetSelectedContractId() == 0)
+    {
+        GSS->SetSelectedContractId(GI->GetPendingContractId());
+    }
+}
+
 void AGameSessionMode::OnPlayerReadyChanged()
 {
     if (!HasAuthority()) return;
     StartGameIfPossible();
+}
+
+void AGameSessionMode::OnPlayerLoadStateChanged()
+{
+    if (!HasAuthority()) return;
+    TransitionToInGameIfPossible();
 }
 
 
@@ -205,7 +237,6 @@ bool AGameSessionMode::IsHostPlayerState(const APlayerState* PS) const
 
     return false;
 }
-
 
 bool AGameSessionMode::CanStartGame() const
 {
@@ -253,8 +284,102 @@ void AGameSessionMode::StartGameIfPossible()
     {
         bGameStarted = true;
 
-        // 여기서 인게임 시작 처리
+        // 전원이 레디면 로딩 처리
+        TransitionToLoadingPhase();
 
         UE_LOG(LogTemp, Log, TEXT("[GameSessionMode] StartGame triggered."));
+    }
+}
+
+
+bool AGameSessionMode::AreAllPlayersLoaded() const
+{
+    if (!GameState) return false;
+
+    int32 ActiveCount = 0;
+    for (APlayerState* PS : GameState->PlayerArray)
+    {
+        const APlayerSessionState* PSS = Cast<APlayerSessionState>(PS);
+        if (!PSS) continue;
+
+        ActiveCount++;
+        if (!PSS->IsLoadingComplete())
+            return false;
+    }
+
+    return (ActiveCount >= MinPlayersToStart);
+}
+
+
+void AGameSessionMode::TransitionToLoadingPhase()
+{
+    if (!HasAuthority()) return;
+
+    AGameSessionState* GSS = GetGameState<AGameSessionState>();
+    if (!GSS) return;
+
+    GSS->SetSessionPhase(ESessionPhase::Loading);
+
+    // 시작 시점에 모두 Loading으로 세팅
+    for (APlayerState* PS : GameState->PlayerArray)
+    {
+        if (APlayerSessionState* PSS = Cast<APlayerSessionState>(PS))
+        {
+            PSS->SetLoadState(EPlayerLoadState::Loading);
+        }
+    }
+
+    // 여기서 ServerTravel(맵 이동)
+}
+
+
+void AGameSessionMode::TransitionToInGameIfPossible()
+{
+    if (!HasAuthority()) return;
+
+    AGameSessionState* GSS = GetGameState<AGameSessionState>();
+    if (!GSS) return;
+
+    // 로딩 페이즈에서만 InGame 전환 허용
+    if (GSS->GetSessionPhase() != ESessionPhase::Loading)
+        return;
+
+    if (!AreAllPlayersLoaded())
+        return;
+
+    GSS->SetSessionPhase(ESessionPhase::InGame);
+    GSS->SetInGamePhase(EInGamePhase::Cleaning);
+}
+
+bool AGameSessionMode::RequestSetContractId(int32 NewContractId)
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* GSS = GetGameState<AGameSessionState>();
+    if (!GSS) return false;
+
+    GSS->SetSelectedContractId(NewContractId);
+    return true;
+}
+
+bool AGameSessionMode::RequestPurchaseVending(int32 BuyerPlayerId, int32 ItemId)
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* GSS = GetGameState<AGameSessionState>();
+    if (!GSS) return false;
+
+    if (GSS->GetSessionPhase() != ESessionPhase::Lobby) return false;
+
+    return GSS->TryAddPurchasedVending(BuyerPlayerId, ItemId);
+}
+
+void AGameSessionMode::HandlePlayerLeft(int32 PlayerId)
+{
+    if (!HasAuthority()) return;
+
+    if (AGameSessionState* GSS = GetGameState<AGameSessionState>())
+    {
+        GSS->RemovePurchasedVending(PlayerId);
     }
 }
