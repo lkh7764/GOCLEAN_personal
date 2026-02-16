@@ -566,3 +566,28 @@ void UGObjectManager::OnObjectInteractionRejected(EObjectRejectReason Reason, in
 {
     UE_LOG(LogTemp, Warning, TEXT("[S2C] Object_InteractionRejected Reason=%d, TargetIID=%d"), (int32)Reason, TargetInstanceId);
 }
+
+void UGObjectManager::HandleUseEquipmentOnObject(APlayerController* PC, FName EquipmentTypeId, int32 TargetInstanceId)
+{
+    // 청소 도구 (장비)를 이용한 인터렉션
+
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan,
+            FString::Printf(TEXT("[Server][OM] UseEquipment %s -> Target=%d"),
+                *EquipmentTypeId.ToString(), TargetInstanceId));
+    }
+}
+
+void UGObjectManager::HandleUseItemOnObject(APlayerController* PC, int32 ItemId, int32 TargetInstanceId)
+{
+    // 아이템을 이용한 인터렉션
+    //    - 소모형(Consumable): 즉시 효과 적용 + 수량 감소
+    //    - 설치형(Placeable): 설치 오브젝트 스폰/배치 + 수량 감소
+
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan,
+            FString::Printf(TEXT("[Server][OM] UseItem %d -> Target=%d"), ItemId, TargetInstanceId));
+    }
+}

@@ -231,5 +231,11 @@ public:
 	// 상호작용 거부 결과 처리
 	void OnObjectInteractionRejected(EObjectRejectReason Reason, int32 TargetInstanceId);
 
+
+	public:
+		// C -> S : 청소 장비/아이템 사용
+		void HandleUseEquipmentOnObject(class APlayerController* PC, FName EquipmentTypeId, int32 TargetInstanceId);
+		void HandleUseItemOnObject(class APlayerController* PC, int32 ItemId, int32 TargetInstanceId);
+
 };
 
