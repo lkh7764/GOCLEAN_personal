@@ -55,3 +55,10 @@ void AGOCLEANPlayerController::ShowLobbyUI()
         CurrentWidget = nullptr;
     }
 }
+
+
+void AGOCLEANPlayerController::TryDoInteraction()
+{
+    FObjectPayload_C2S Temp;
+    RPCRouter->Server_ObjectEvent(EObjectEvent_C2S::Object_TryInteract, Temp);
+}

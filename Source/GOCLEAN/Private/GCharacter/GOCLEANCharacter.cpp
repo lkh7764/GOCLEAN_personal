@@ -22,6 +22,8 @@
 #include "Net/UnrealNetwork.h"
 #include "GDataManagerSubsystem.h"
 #include "GTypes/DataTableRow/GEquipmentDataRow.h"
+#include "GCharacter/GOCLEANPlayerController.h"
+#include "../../GOCLEAN.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -451,37 +453,10 @@ void AGOCLEANCharacter::PlayerInteractionAnim()
 // Equipments & Interaction //
 void AGOCLEANCharacter::DoInteraction()
 {
-	if (!InteractionComp || !EquipComp) return;
-
-	// get equip id
-	FName EquipID = EquipComp->GetCurrentEquipmentID();
-
-
-	// change anim id to active-anim
-	UGDataManagerSubsystem* DataManager = GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
-	const FGEquipmentDataRow* Data = DataManager->GetEquipmentData(EquipID);
-	if (!Data) return;
-
-	SetAnimID(Data->IdleToActivateAnimID_First);
-	// require rpc function
-	//		empty
-}
-
-void AGOCLEANCharacter::Server_TryInteraction(FName EquipID)
-{
-	UActorComponent* Target = InteractionComp->GetCurrentTarget();
-	if (Target)
+	AGOCLEANPlayerController* GController = Cast<AGOCLEANPlayerController>(GetController());
+	if (GController)
 	{
-		IGInteractable* Interactable = Cast<IGInteractable>(Target);
-		if (Interactable)
-		{
-			if (Interactable->CanInteract(EquipID, Cast<AGOCLEANCharacter>(Target)))
-			{
-				Interactable->ExecuteInteraction(EquipID, Cast<AGOCLEANCharacter>(Target));
-
-				UE_LOG(LogTemp, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetOwner()->GetName());
-			}
-		}
+		GController->TryDoInteraction();
 	}
 }
 
