@@ -30,6 +30,8 @@ public:
 	const FGEquipmentDataRow* GetEquipmentData(FName ID) const;
 	const FGMapDataRow* GetMapData(FName TID) const;
 
+	const TArray<FGMapDataRow*> GetAllMapDatas() const;
+
 
 private:
 	UPROPERTY()
