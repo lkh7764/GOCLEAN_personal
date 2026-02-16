@@ -19,6 +19,8 @@ void APlayerSessionState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	DOREPLIFETIME(APlayerSessionState, Nickname);
 	DOREPLIFETIME(APlayerSessionState, bReady);
 	DOREPLIFETIME(APlayerSessionState, bIsEliminated);
+
+	DOREPLIFETIME(APlayerSessionState, LoadState);
 }
 
 
@@ -77,6 +79,38 @@ void APlayerSessionState::SetEliminated(bool bNewEliminated)
 	OnRep_Eliminated();
 }
 
+void APlayerSessionState::SetLoadState(EPlayerLoadState NewState)
+{
+	if (!HasAuthority())
+		return;
+
+	if (LoadState == NewState)
+		return;
+
+	LoadState = NewState;
+
+	OnRep_LoadState();
+}
+
+void APlayerSessionState::Server_SetLoadState_Implementation(EPlayerLoadState NewState)
+{
+	SetLoadState(NewState);
+
+	if (HasAuthority())
+	{
+		if (UWorld* World = GetWorld())
+		{
+			if (AGameModeBase* GMBase = World->GetAuthGameMode())
+			{
+				if (auto* GM = Cast<AGameSessionMode>(GMBase))
+				{
+					GM->OnPlayerLoadStateChanged();
+				}
+			}
+		}
+	}
+}
+
 
 
 // UI 갱신용 코드
@@ -97,4 +131,10 @@ void APlayerSessionState::OnRep_Ready()
 
 void APlayerSessionState::OnRep_Eliminated()
 {
+}
+
+
+void APlayerSessionState::OnRep_LoadState()
+{
+	BP_OnLoadStateChanged(LoadState);
 }

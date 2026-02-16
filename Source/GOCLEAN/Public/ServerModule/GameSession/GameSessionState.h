@@ -7,16 +7,51 @@
 
 #include <GObjectSystem/Server/GObjectManager.h>
 #include <GPlayerSystem/Server/GPlayerManager.h>
+#include <GMapSystem/Server/GMapManager.h>
 
 #include "GameSessionState.generated.h"
 
 class APlayerSessionState;
 
+UENUM(BlueprintType)
+enum class ESessionPhase : uint8
+{
+    Lobby,          // 로비
+    LobbyCountdown, // 로비 준비 완료 (모두 레디 상태)
+    Loading,        // 로딩 중
+    InGame,         // 인게임
+    Ending,         // 인게임 종료
+};
+
+UENUM(BlueprintType)
+enum class EInGamePhase : uint8
+{
+    None,
+    Cleaning,           // 청소중
+    ExorcismStart,      // 퇴마 시작
+    ExorcismInProgress, // 퇴마 중
+    ExorcismEnd,        // 퇴마 종료
+};
+
+// 구매 벤딩 아이템 관리 구조체
+USTRUCT(BlueprintType)
+struct FPurchasedVendingEntry
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 PlayerId = -1;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 ItemId = -1;
+};
+
+
 /**
  * 
  */
 UCLASS()
-class GOCLEAN_API AGameSessionState : public AGameState
+class GOCLEAN_API AGameSessionState : public AGameStateBase
 {
 	GENERATED_BODY()
 	
@@ -27,6 +62,7 @@ public:
 
     UGObjectManager* GetObjectManager() const { return ObjectManager; }
     UGPlayerManager* GetPlayerManager() const { return PlayerManager; }
+    UGMapManager* GetMapManager() const { return MapManager; }
 
 protected:
     virtual void BeginPlay() override;
@@ -65,6 +101,9 @@ private:
     UPROPERTY()
     UGPlayerManager* PlayerManager = nullptr;
 
+
+    UPROPERTY()
+    UGMapManager* MapManager = nullptr;
 
     // Getters (Client/Server)
     float GetSpiritualGauge() const { return SpiritualGauge; }
@@ -132,6 +171,18 @@ protected:
 
 
 protected:
+    // 의뢰 번호
+    UPROPERTY(ReplicatedUsing = OnRep_SelectedContractId, BlueprintReadOnly)
+    int32 SelectedContractId = 0;
+
+    // 세션 참가 코드
+    UPROPERTY(ReplicatedUsing = OnRep_SessionJoinCode, BlueprintReadOnly)
+    FString SessionJoinCode;
+
+    // 구매 벤딩 아이템(전역 풀)
+    UPROPERTY(ReplicatedUsing = OnRep_PurchasedVending, BlueprintReadOnly)
+    TArray<FPurchasedVendingEntry> PurchasedVending;
+
     // 영적 게이지
     UPROPERTY(ReplicatedUsing = OnRep_SpiritualGauge)
     float SpiritualGauge = 0.f;
@@ -156,4 +207,87 @@ protected:
     UPROPERTY(ReplicatedUsing = OnRep_FinalRewardMoney)
     int32 FinalRewardMoney = 0;
 	
+
+public:
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    ESessionPhase GetSessionPhase() const { return SessionPhase; }
+
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    EInGamePhase GetInGamePhase() const { return InGamePhase; }
+
+
+    // GameMode에서만 호출
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    void SetSessionPhase(ESessionPhase NewPhase);
+
+    UFUNCTION(BlueprintCallable, Category = "Session")
+    void SetInGamePhase(EInGamePhase NewPhase);
+
+protected:
+    // 클라에서 상태 바뀌면 UI/연출 갱신 트리거
+    UPROPERTY(ReplicatedUsing = OnRep_SessionPhase, BlueprintReadOnly, Category = "Session")
+    ESessionPhase SessionPhase = ESessionPhase::Lobby;
+
+    UPROPERTY(ReplicatedUsing = OnRep_InGamePhase, BlueprintReadOnly, Category = "Session")
+    EInGamePhase InGamePhase = EInGamePhase::None;
+
+    UFUNCTION()
+    void OnRep_SessionPhase();
+
+    UFUNCTION()
+    void OnRep_InGamePhase();
+
+    // 블루프린트 호출
+    UFUNCTION(BlueprintImplementableEvent, Category = "Session")
+    void BP_OnSessionPhaseChanged(ESessionPhase NewPhase);
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Session")
+    void BP_OnInGamePhaseChanged(EInGamePhase NewPhase);
+
+
+public:
+    // Selected Contract (의뢰 번호)
+    UFUNCTION(BlueprintCallable, Category = "Session|Contract")
+    int32 GetSelectedContractId() const { return SelectedContractId; }
+
+    // 의뢰 번호 변경
+    void SetSelectedContractId(int32 NewContractId);
+
+    // Session Join Code 
+    UFUNCTION(BlueprintCallable, Category = "Session|Join")
+    const FString& GetSessionJoinCode() const { return SessionJoinCode; }
+
+    // 조인 코드 설정
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Session|Join")
+    void SetSessionJoinCode(const FString& NewCode);
+
+
+    // 구매 여부
+    UFUNCTION(BlueprintCallable, Category = "Session|Vending")
+    bool HasPurchasedVendingByPlayerId(int32 PlayerId) const;
+
+    // 구매 아이템 조회
+    UFUNCTION(BlueprintCallable, Category = "Session|Vending")
+    bool GetPurchasedVendingItemId(int32 PlayerId, int32& OutItemId) const;
+
+    // 구매 추가(1인 1개 제한)
+    bool TryAddPurchasedVending(int32 PlayerId, int32 ItemId);
+
+    // 구매 제거(튕김/환불 등)
+    bool RemovePurchasedVending(int32 PlayerId);
+
+    // 전체 초기화(새 라운드 시작 등)
+    void ClearPurchasedVending();
+        
+
+protected:
+    UFUNCTION()
+    void OnRep_SelectedContractId();
+
+    UFUNCTION()
+    void OnRep_SessionJoinCode();
+
+    UFUNCTION()
+    void OnRep_PurchasedVending();
+
 };

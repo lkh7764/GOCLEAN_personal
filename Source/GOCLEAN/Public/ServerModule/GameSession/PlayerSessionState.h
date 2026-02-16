@@ -6,6 +6,16 @@
 #include "GameFramework/PlayerState.h"
 #include "PlayerSessionState.generated.h"
 
+// 플레이어 로딩 상태
+UENUM(BlueprintType)
+enum class EPlayerLoadState : uint8
+{
+    None,
+    Loading,
+    Loaded
+};
+
+
 /**
  * 
  */
@@ -24,10 +34,22 @@ public:
     bool IsEliminated() const { return bIsEliminated; }
 
 
+    // 로딩 상태 가져오기
+    UFUNCTION(BlueprintCallable, Category = "Player|Load")
+    EPlayerLoadState GetLoadState() const { return LoadState; }
+
+    // 로딩 완료 여부
+    UFUNCTION(BlueprintCallable, Category = "Player|Load")
+    bool IsLoadingComplete() const { return LoadState == EPlayerLoadState::Loaded; }
+
 
     // Client -> Server Requests (RPC) 
     UFUNCTION(Server, Reliable)
     void Server_SetReady(bool bNewReady);
+
+    // Client -> Server 로딩 상태 보고
+    UFUNCTION(Server, Reliable)
+    void Server_SetLoadState(EPlayerLoadState NewState);
 
 protected:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -40,6 +62,9 @@ public:
     void SetNickname(const FString& NewNickname);
     void SetReady(bool bNewReady);
     void SetEliminated(bool bNewEliminated);
+
+    // 서버에서 상태 변경
+    void SetLoadState(EPlayerLoadState NewState);
 
 protected:
     // OnRep 
@@ -55,6 +80,17 @@ protected:
     UFUNCTION()
     void OnRep_Eliminated();
 
+
+protected:
+    UFUNCTION()
+    void OnRep_LoadState();
+
+    UFUNCTION(BlueprintImplementableEvent)
+    void BP_OnLoadStateChanged(EPlayerLoadState NewState);
+
+    // 로딩 상태
+    UPROPERTY(ReplicatedUsing = OnRep_LoadState, BlueprintReadOnly)
+    EPlayerLoadState LoadState = EPlayerLoadState::None;
 
 private:
     // 세션 참여 순서
@@ -72,7 +108,6 @@ private:
     // 탈락 상태 (true면 관전 상태)
     UPROPERTY(ReplicatedUsing = OnRep_Eliminated, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     bool bIsEliminated = false;
-
 
     // 후에 커스터마이징 정보 추가
 	
