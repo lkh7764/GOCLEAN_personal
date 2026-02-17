@@ -79,6 +79,7 @@ void UGNonfixedObjCoreComponent::OnRep_State()
 	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
 	if (Owner)
 	{
+		Owner->UpdatePhysicsByState();
 		Owner->UpdateVisualByState();
 	}
 }

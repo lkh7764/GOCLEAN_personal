@@ -246,7 +246,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
 {
     if (TID == "Obj_Incinerator")
     {
-        if (!Incinerator)
+        if (Incinerator)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] Incinerator can not spawned over two"));
             return;
@@ -256,7 +256,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_WaterTank")
     {
-        if (!WaterTank)
+        if (WaterTank)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] WaterTank can not spawned over two"));
             return;
@@ -270,7 +270,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_CBasketSpawner")
     {
-        if (!BasketSpawner)
+        if (BasketSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] BasketSpawner can not spawned over two"));
             return;
@@ -280,7 +280,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_CBucketSpawner")
     {
-        if (!BucketSpawner)
+        if (BucketSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] BucketSpawner can not spawned over two"));
             return;
@@ -290,7 +290,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_VendingMachine")
     {
-        if (!VendingMachine)
+        if (VendingMachine)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] VendingMachine can not spawned over two"));
             return;
@@ -300,7 +300,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_TBowlSpawner")
     {
-        if (!TBowlSpawner)
+        if (TBowlSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] TBowlSpawner can not spawned over two"));
             return;
@@ -310,7 +310,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_TAmuletSpawner")
     {
-        if (!TAmuletSpawner)
+        if (TAmuletSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] TAmuletSpawner can not spawned over two"));
             return;
@@ -320,7 +320,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_TPileSpawner")
     {
-        if (!TPileSpawner)
+        if (TPileSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] TPileSpawner can not spawned over two"));
             return;
@@ -334,7 +334,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_CCTV")
     {
-        if (!CCTV)
+        if (CCTV)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] CCTV can not spawned over two"));
             return;
@@ -421,9 +421,20 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
     }
     else if (EquipID == "Eq_OVariable")
     {
-        int32 PickedObjectIID = PlayerChar->GetEquipComp()->GetPickedObjectID();
+        TArray<UGBurningCompopnent*> BurningEquip;
+        EquipComp->GetCurrentHeldObject()->GetComponents<UGBurningCompopnent>(BurningEquip);
 
-        DropNonfixedObject(PickedObjectIID);
+        if (PlayerChar->GetInteractionComp()->IsCheckingIncineratorZone() && BurningEquip.Num() > 0)
+        {
+            EquipComp->GetCurrentHeldObject()->
+                GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Disintegrating);
+            PlayerChar->DropHeldObject();
+        }
+        else
+        {
+            EquipComp->GetCurrentHeldObject()->
+                GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
+        }
     }
     else
     {

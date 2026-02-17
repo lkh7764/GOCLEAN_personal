@@ -8,6 +8,7 @@
 #include "GTypes/DataTableRow/GObjectDataRow.h"
 #include "GDataManagerSubsystem.h"
 #include "GObjectSystem/GNonfixedObjCoreComponent.h"
+#include "GCharacter/GOCLEANCharacter.h"
 
 
 
@@ -74,12 +75,74 @@ void AGNonfixedObject::UpdateVisualByState()
 	switch (CoreComp->GetNonfixedObjState())
 	{
 	case ENonfixedObjState::E_Static:
+
+		SetActorHiddenInGame(false);
+
+		break;
+
+
+	case ENonfixedObjState::E_Picked:
+
+		SetActorHiddenInGame(false);
+
+		break;
+
+	case ENonfixedObjState::E_Kinematic:
+
+		SetActorHiddenInGame(false);
+
+		break;
+
+	case ENonfixedObjState::E_Fixed:
+		
+		SetActorHiddenInGame(false);
+
+		break;
+
+	case ENonfixedObjState::E_Invisible:
+
+		SetActorHiddenInGame(true);
+
+		break;
+
+	case ENonfixedObjState::E_Disintegrating:
+
+		SetActorHiddenInGame(false);
+
+		break;
+
+	case ENonfixedObjState::E_Destroyed:
+
+		SetActorHiddenInGame(true);
+
+		break;
+
+	case ENonfixedObjState::E_Temporary:
+
+		SetActorHiddenInGame(true);
+
+		break;
+
+	default:
+
+		SetActorHiddenInGame(true);
+
+		break;
+	}
+}
+void AGNonfixedObject::UpdatePhysicsByState()
+{
+	if (!CoreComp) return;
+	if (!RootPrimitive) return;
+
+	switch (CoreComp->GetNonfixedObjState())
+	{
+	case ENonfixedObjState::E_Static:
 		RootPrimitive->SetSimulatePhysics(true);
+		RootPrimitive->SetEnableGravity(true);
 
 		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		RootPrimitive->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Ignore);
-
-		SetActorHiddenInGame(false);
 
 		if (InteractionVolume)
 		{
@@ -89,13 +152,26 @@ void AGNonfixedObject::UpdateVisualByState()
 
 		break;
 
+
+	case ENonfixedObjState::E_Picked:
+		RootPrimitive->SetSimulatePhysics(false);
+		RootPrimitive->SetEnableGravity(false);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		if (InteractionVolume)
+		{
+			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+
+		break;
+
 	case ENonfixedObjState::E_Kinematic:
 		RootPrimitive->SetSimulatePhysics(true);
+		RootPrimitive->SetEnableGravity(true);
 
 		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		RootPrimitive->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Ignore);
-
-		SetActorHiddenInGame(false);
 
 		if (InteractionVolume)
 		{
@@ -107,11 +183,10 @@ void AGNonfixedObject::UpdateVisualByState()
 
 	case ENonfixedObjState::E_Fixed:
 		RootPrimitive->SetSimulatePhysics(false);
+		RootPrimitive->SetEnableGravity(false);
 
 		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		RootPrimitive->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Ignore);
-
-		SetActorHiddenInGame(false);
 
 		if (InteractionVolume)
 		{
@@ -123,10 +198,9 @@ void AGNonfixedObject::UpdateVisualByState()
 
 	case ENonfixedObjState::E_Invisible:
 		RootPrimitive->SetSimulatePhysics(false);
+		RootPrimitive->SetEnableGravity(false);
 
 		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		SetActorHiddenInGame(true);
 
 		if (InteractionVolume)
 		{
@@ -136,11 +210,15 @@ void AGNonfixedObject::UpdateVisualByState()
 		break;
 
 	case ENonfixedObjState::E_Disintegrating:
-		RootPrimitive->SetSimulatePhysics(false);
+		RootPrimitive->SetSimulatePhysics(true);
+		RootPrimitive->SetEnableGravity(true);
 
-		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		SetActorHiddenInGame(false);
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		RootPrimitive->SetCollisionObjectType(EEC_GIncinerator);
+		RootPrimitive->SetCollisionResponseToAllChannels(ECR_Ignore);
+		RootPrimitive->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+		RootPrimitive->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		RootPrimitive->SetCollisionResponseToChannel(EEC_GIncinerator, ECR_Block);
 
 		if (InteractionVolume)
 		{
@@ -151,10 +229,9 @@ void AGNonfixedObject::UpdateVisualByState()
 
 	case ENonfixedObjState::E_Destroyed:
 		RootPrimitive->SetSimulatePhysics(false);
+		RootPrimitive->SetEnableGravity(false);
 
 		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		SetActorHiddenInGame(true);
 
 		if (InteractionVolume)
 		{
@@ -165,10 +242,9 @@ void AGNonfixedObject::UpdateVisualByState()
 
 	case ENonfixedObjState::E_Temporary:
 		RootPrimitive->SetSimulatePhysics(false);
+		RootPrimitive->SetEnableGravity(false);
 
 		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		SetActorHiddenInGame(true);
 
 		if (InteractionVolume)
 		{
@@ -179,10 +255,9 @@ void AGNonfixedObject::UpdateVisualByState()
 
 	default:
 		RootPrimitive->SetSimulatePhysics(false);
+		RootPrimitive->SetEnableGravity(false);
 
 		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		SetActorHiddenInGame(true);
 
 		if (InteractionVolume)
 		{
@@ -200,5 +275,21 @@ void AGNonfixedObject::UpdateObjectData(int32 IID)
 	if (!CoreComp) return;
 
 	CoreComp->IID = IID;
+}
+
+void AGNonfixedObject::Multicast_OnPickedUp_Implementation(AGOCLEANCharacter* TargetCharacter)
+{
+	if (!TargetCharacter) return;
+
+	// 1. 모든 클라이언트에서 물리를 강제로 끕니다. (가장 중요!)
+	GetStaticMeshComp()->SetSimulatePhysics(false);
+	GetStaticMeshComp()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 2. 모든 클라이언트에서 캐릭터 손에 붙입니다.
+	// 서버가 복제해주길 기다리지 않고 직접 붙여버리는 겁니다.
+	AttachToComponent(TargetCharacter->GetHandMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("Charater001_Bip001-R-HandSocket"));
+
+	// 3. 리더님이 아까 만든 트랜스폼 보정 함수도 여기서 호출!
+	TargetCharacter->SetHeldObjectRelativeTransform(this);
 }
 
