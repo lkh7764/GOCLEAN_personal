@@ -333,6 +333,31 @@ bool AGameSessionState::HasPurchasedVendingByPlayerId(int32 PlayerId) const
     return false;
 }
 
+bool AGameSessionState::TogglePurchasedVending(int32 PlayerId, int32 ItemId)
+{
+    if (!HasAuthority()) return false;
+    if (PlayerId < 0) return false;
+
+    int32 OwnedItemId = -1;
+    const bool bHas = GetPurchasedVendingItemId(PlayerId, OwnedItemId);
+
+    if (!bHas)
+    {
+        // 구매한 적 없으면 추가
+        return TryAddPurchasedVending(PlayerId, ItemId);
+    }
+
+    // 이미 구매한 게 있음
+    if (OwnedItemId == ItemId)
+    {
+        // 같은 걸 다시 누르면 해제
+        return RemovePurchasedVending(PlayerId);
+    }
+
+    // 다른 아이템은 구매 불가
+    return false;
+}
+
 bool AGameSessionState::GetPurchasedVendingItemId(int32 PlayerId, int32& OutItemId) const
 {
     for (const FPurchasedVendingEntry& E : PurchasedVending)

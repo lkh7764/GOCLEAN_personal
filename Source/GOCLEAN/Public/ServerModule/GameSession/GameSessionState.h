@@ -267,6 +267,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Session|Vending")
     bool HasPurchasedVendingByPlayerId(int32 PlayerId) const;
 
+    // 아이템 토글
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Session|Vending")
+    bool TogglePurchasedVending(int32 PlayerId, int32 ItemId);
+
     // 구매 아이템 조회
     UFUNCTION(BlueprintCallable, Category = "Session|Vending")
     bool GetPurchasedVendingItemId(int32 PlayerId, int32& OutItemId) const;
