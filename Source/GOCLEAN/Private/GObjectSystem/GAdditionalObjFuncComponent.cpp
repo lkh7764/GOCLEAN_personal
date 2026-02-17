@@ -3,8 +3,9 @@
 
 #include "GObjectSystem/GAdditionalObjFuncComponent.h"
 
+#include "Components/DecalComponent.h"
+
 #include "GTypes/IGInteractable.h"
-#include "GTypes/DataTableRow/GObjectDataRow.h"
 #include "GObjectSystem/GNonfixedObjCoreComponent.h"
 #include "GObjectSystem/GNonfixedObject.h"
 #include "GObjectSystem/GFixedObject.h"
@@ -145,8 +146,6 @@ void UGRemovingComponent::InitializeAdditionalData(const FGNonfixedObjData& Data
 	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
 	if (Owner && Owner->GetNonfixedObjCoreComp() && GetWorld())
 	{
-		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
-
 		UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 		const FGObjectDataRow* Data =
 			DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
@@ -166,11 +165,29 @@ void UGRemovingComponent::BeginPlay()
 void UGRemovingComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
 {
 	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+
+	// equip check
+	UGEquipmentComponent* EquipComp = Target->GetEquipComp();
+	UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
+	const FGObjectDataRow* Data =
+		DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
+	if (!EquipComp || !Data) return;
+
+	FName EquipID = EquipComp->GetCurrentEquipmentID();
+	if (EquipID == "Eq_Hand" || !Data->MatchedEquipID.Contains(EquipID))
+	{
+		UE_LOG(LogGObject, Log, TEXT("[GObject] equipment is not matched with object type!: %s, %s"), *EquipID.ToString(), *Data->TID.ToString());
+		return;
+	}
+
 	if (Owner && Owner->GetNonfixedObjCoreComp())
 	{
 		if (Owner->GetNonfixedObjCoreComp()->InteractionCnt < InteractionMaxCnt)
 		{
-			SetVisualByInteractionCnt(Owner);
+			SetVisualByInteractionCnt(Owner, EquipComp, *Data);
+
+			// 물걸레의 오염도를 증가
+			EquipComp->AddMopPollution(20.0f);
 		}
 		else
 		{
@@ -179,30 +196,58 @@ void UGRemovingComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
 	}
 }
 
-void UGRemovingComponent::SetVisualByInteractionCnt(AGNonfixedObject* Owner)
+void UGRemovingComponent::SetVisualByInteractionCnt_Implementation(AGNonfixedObject* Owner, UGEquipmentComponent* EquipComp, const FGObjectDataRow& ObjData)
 {
-	UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
-	const FGObjectDataRow* Data =
-		DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
+	if (!Owner || !EquipComp) return;
 
-	if (Data)
+	if (ObjData.Category == EGObjectCategory::E_Filth)
 	{
-		if (Data->Category == EGObjectCategory::E_Filth)
-		{
-			// 데칼타입의 경우, 메시의 알파값을 감소
+		// 데칼타입의 경우, 메시의 알파값을 감소
+		if (InteractionMaxCnt <= 0) return;
 
-			// 물걸레의 오염도를 증가
-		}
-		else if (Data->Category == EGObjectCategory::E_Trash_B)
+		float CleaningRatio = 1.0f - (Owner->GetNonfixedObjCoreComp()->InteractionCnt / (float)InteractionMaxCnt);
+		CleaningRatio = FMath::Clamp(CleaningRatio, 0.0f, 1.0f);
+
+		for (auto Decal : Decals)
 		{
-			// 큰 쓰레기의 경우, 1/2 달성 시 broken 메시 활성화
+			if (!Decal) continue;
+
+			UMaterialInstanceDynamic* DynMat = Decal->CreateDynamicMaterialInstance();
+			if (DynMat)
+			{
+				DynMat->SetScalarParameterValue(TEXT("Opacity"), CleaningRatio);
+			}
+		}
+	}
+	else if (ObjData.Category == EGObjectCategory::E_Trash_B && BrokenMesh)
+	{
+		// 큰 쓰레기의 경우, 1/2 달성 시 broken 메시 활성화
+		if (Owner->GetNonfixedObjCoreComp()->InteractionCnt * 2 >= InteractionMaxCnt)
+		{
+			Owner->GetStaticMeshComp()->SetStaticMesh(BrokenMesh);
 		}
 	}
 }
 
 void UGRemovingComponent::SetDestroyThisObject(AGNonfixedObject* Owner)
 {
+	FVector SpawnLocation = Owner->GetActorLocation();
+	FRotator SpawnRotation = Owner->GetActorRotation();
+
 	Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Destroyed);
+
+	if (DestroyedActor)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		auto* TempActor = GetWorld()->SpawnActor<AActor>(
+			DestroyedActor,
+			SpawnLocation,
+			SpawnRotation,
+			SpawnParams
+		);
+	}
 }
 
 
@@ -311,7 +356,6 @@ void UGBurningCompopnent::OnBurnTimerFinished()
 
 
 
-
 UGSpawnerCompopnent::UGSpawnerCompopnent()
 {
 
@@ -330,7 +374,7 @@ void UGSpawnerCompopnent::BeginPlay()
 void UGSpawnerCompopnent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState)
 {
 	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
-	if (Owner) return;
+	if (!Owner) return;
 
 	if (ChangedState == ENonfixedObjState::E_Destroyed)
 	{
@@ -350,16 +394,33 @@ void UGSpawnerCompopnent::SpawnDerivedObject(AGNonfixedObject* Owner)
 	auto* ObjectManager = World->GetSubsystem<UGObjectManager>();
 	if (ObjectManager)
 	{
-		FVector SpawnLocation = Owner->GetActorLocation();
+		FVector BaseSpawnLocation = Owner->GetActorLocation();
 		FRotator SpawnRotation = Owner->GetActorRotation();
+
+		float RandomXYRadius = 50.0f;
+		float ZOffsetStep = 5.0f;
 
 		for (int32 i = 0; i < Data->DerivedObjCnt; ++i)
 		{
-			ObjectManager->SpawnNonfixedObject(
-				Data->DerivedObjID, 
+			float RandX = (i == 0) ? 0.0f : FMath::RandRange(-RandomXYRadius, RandomXYRadius);
+			float RandY = (i == 0) ? 0.0f : FMath::RandRange(-RandomXYRadius, RandomXYRadius);
+			float OffsetZ = ZOffsetStep * i;
+
+			FVector CurrentSpawnLocation = BaseSpawnLocation + FVector(RandX, RandY, OffsetZ);
+
+			auto* SpawnedObj = ObjectManager->SpawnNonfixedObject(
+				Data->DerivedObjID,
 				ENonfixedObjState::E_Static,
-				SpawnLocation,
+				CurrentSpawnLocation,
 				SpawnRotation);
+
+			if (i == 0 && SpawnedObj)
+			{
+				FVector Origin, BoxExtent;
+				SpawnedObj->GetActorBounds(true, Origin, BoxExtent);
+
+				RandomXYRadius = FMath::Max(BoxExtent.X, BoxExtent.Y) * 1.5f;
+			}
 		}
 	}
 }

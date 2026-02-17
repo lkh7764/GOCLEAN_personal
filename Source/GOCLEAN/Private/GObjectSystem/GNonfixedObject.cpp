@@ -8,7 +8,13 @@
 #include "GTypes/DataTableRow/GObjectDataRow.h"
 #include "GDataManagerSubsystem.h"
 #include "GObjectSystem/GNonfixedObjCoreComponent.h"
+#include "GObjectSystem/GAdditionalObjFuncComponent.h"
+#include "GObjectSystem/Server/GObjectManager.h"
 #include "GCharacter/GOCLEANCharacter.h"
+
+#include "../../GOCLEAN.h"
+
+#include "ServerModule/GameSession/GameSessionState.h"
 
 
 
@@ -135,6 +141,11 @@ void AGNonfixedObject::UpdatePhysicsByState()
 	if (!CoreComp) return;
 	if (!RootPrimitive) return;
 
+	UGDataManagerSubsystem* DataManager;
+	const FGObjectDataRow* Data;
+	AGameSessionState* GameState;
+	UGObjectManager* ObjectManager;
+
 	switch (CoreComp->GetNonfixedObjState())
 	{
 	case ENonfixedObjState::E_Static:
@@ -238,6 +249,26 @@ void AGNonfixedObject::UpdatePhysicsByState()
 			InteractionVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 
+
+		// reduce spirit guage
+		DataManager = UGDataManagerSubsystem::Get(GetWorld());
+		Data = DataManager ? DataManager->GetObjectData(CoreComp->TID) : nullptr;
+		if (!Data) break;
+
+		GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+		if (!GameState) break;
+
+		// GameState->ApplySpiritualOrRestGauge(Data->Pollution)
+
+
+		// 대형 폐기물의 경우, Destroyed Queue에 삽입하여 귀신 단서 행동에서 사용할 수 있도록 함.
+		ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
+		if (ObjectManager)
+		{
+			ObjectManager->OnDestoyed(this, Data);
+		}
+
+
 		break;
 
 	case ENonfixedObjState::E_Temporary:
@@ -275,21 +306,150 @@ void AGNonfixedObject::UpdateObjectData(int32 IID)
 	if (!CoreComp) return;
 
 	CoreComp->IID = IID;
+	UpdateInteractionBounds();
+
+	FGNonfixedObjData Temp;
+
+	TArray<UGAdditionalObjFuncComponent*> FuncComps;
+	GetComponents<UGAdditionalObjFuncComponent>(FuncComps);
+	for (auto FuncComp : FuncComps)
+	{
+		FuncComp->InitializeAdditionalData(Temp);
+	}
 }
 
 void AGNonfixedObject::Multicast_OnPickedUp_Implementation(AGOCLEANCharacter* TargetCharacter)
 {
 	if (!TargetCharacter) return;
 
-	// 1. 모든 클라이언트에서 물리를 강제로 끕니다. (가장 중요!)
 	GetStaticMeshComp()->SetSimulatePhysics(false);
 	GetStaticMeshComp()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// 2. 모든 클라이언트에서 캐릭터 손에 붙입니다.
-	// 서버가 복제해주길 기다리지 않고 직접 붙여버리는 겁니다.
 	AttachToComponent(TargetCharacter->GetHandMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("Charater001_Bip001-R-HandSocket"));
 
-	// 3. 리더님이 아까 만든 트랜스폼 보정 함수도 여기서 호출!
 	TargetCharacter->SetHeldObjectRelativeTransform(this);
 }
+
+
+
+void AGNonfixedObject::SetObjectData(FGNonfixedObjData& InitData)
+{
+	auto* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	auto* Data = DataManager ? DataManager->GetObjectData(InitData.TID) : nullptr;
+	if (!Data)
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[NonfixedObject] Can not find matched object data!: %s"), *InitData.TID.ToString());
+		return;
+	}
+
+
+	// set mesh
+	if (Data->SM_MeshAssets.Num() != 0)
+	{
+		UStaticMesh* LoadedMesh = Data->SM_MeshAssets[FMath::RandRange(0, Data->SM_MeshAssets.Num() - 1)].LoadSynchronous();
+
+		if (LoadedMesh)
+		{
+			RootPrimitive->SetStaticMesh(LoadedMesh);
+		}
+		else
+		{
+			UE_LOG(LogGObject, Error, TEXT("[NonfixedObject] Mesh load failed!"));
+		}
+	}
+
+
+	if (!HasAuthority()) return;
+
+	UpdateInteractionBounds();
+
+	// set init data
+	CoreComp->IID = InitData.IID;
+	CoreComp->TID = InitData.TID;
+
+	// attach component with category
+	switch (Data->Category)
+	{
+	case EGObjectCategory::E_Trash_S:
+	{
+
+		auto* PickComp = NewObject<UGPickComponent>(this, UGPickComponent::StaticClass(), TEXT("PickComponent"));
+		if (PickComp)
+		{
+			PickComp->RegisterComponent();
+			PickComp->InitializeAdditionalData(InitData);
+		}
+
+		auto* BurningComp = NewObject<UGBurningCompopnent>(this, UGBurningCompopnent::StaticClass(), TEXT("BurningComponent"));
+		if (BurningComp)
+		{
+			BurningComp->RegisterComponent();
+			BurningComp->InitializeAdditionalData(InitData);
+		}
+
+		auto* SoundComp = NewObject<UGInteractSoundCompopnent>(this, UGInteractSoundCompopnent::StaticClass(), TEXT("SoundComponent"));
+		if (SoundComp)
+		{
+			SoundComp->RegisterComponent();
+			SoundComp->InitializeAdditionalData(InitData);
+		}
+	}
+
+		break;
+
+	case EGObjectCategory::E_Equip:
+	{
+
+		auto* PickComp = NewObject<UGPickComponent>(this, UGPickComponent::StaticClass(), TEXT("PickComponent"));
+		if (PickComp)
+		{
+			PickComp->RegisterComponent();
+			PickComp->InitializeAdditionalData(InitData);
+		}
+	}
+
+		break;
+
+	case EGObjectCategory::E_Item_F:
+		break;
+
+	case EGObjectCategory::E_Item_P:
+	{
+		auto* PickComp = NewObject<UGPickComponent>(this, UGPickComponent::StaticClass(), TEXT("PickComponent"));
+		if (PickComp)
+		{
+			PickComp->RegisterComponent();
+			PickComp->InitializeAdditionalData(InitData);
+		}
+	}
+
+		break;
+
+	case EGObjectCategory::E_Fetish_N:
+	{
+		auto* PickComp = NewObject<UGPickComponent>(this, UGPickComponent::StaticClass(), TEXT("PickComponent"));
+		if (PickComp)
+		{
+			PickComp->RegisterComponent();
+			PickComp->InitializeAdditionalData(InitData);
+		}
+
+		auto* SoundComp = NewObject<UGInteractSoundCompopnent>(this, UGInteractSoundCompopnent::StaticClass(), TEXT("SoundComponent"));
+		if (SoundComp)
+		{
+			SoundComp->RegisterComponent();
+			SoundComp->InitializeAdditionalData(InitData);
+		}
+	}
+
+		break;
+
+	default:
+		break;
+	}
+
+
+	CoreComp->ChangeState(InitData.SpawnState);
+}
+
 

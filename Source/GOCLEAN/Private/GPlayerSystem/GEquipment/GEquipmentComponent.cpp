@@ -126,10 +126,51 @@ bool UGEquipmentComponent::InitiateEquipmentSlots()
 {
 	EquipmentSlots.Empty();
 
-	EquipmentSlots.Add("Eq_Hand");
+	EquipmentSlots.Add("Eq_Axe");
 	EquipmentSlots.Add("Eq_Mop");
-	EquipmentSlots.Add("Eq_Hand");
+	EquipmentSlots.Add("Eq_Axe");
 	EquipmentSlots.Add("Eq_Hand");
 
 	return true;
+}
+
+
+
+// mop pollution
+void UGEquipmentComponent::AddMopPollution(float Value)
+{
+	FName CurrEquipID = GetCurrentEquipmentID();
+	if (CurrEquipID == "Eq_Mop")
+	{
+		MopPollution += Value;
+		UE_LOG(LogGObject, Log, TEXT("[Equipment] Add Mop's pollution! : %f"), MopPollution);
+	}
+	else if (CurrEquipID == "Eq_AutoMop")
+	{
+		AutoMopPollution += Value;
+		UE_LOG(LogGObject, Log, TEXT("[Equipment] Add AutoMop's pollution! : %f"), AutoMopPollution);
+	}
+	else
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[Equipment] this equipment can not add pollution! : %s"), *CurrEquipID.ToString());
+	}
+}
+
+void UGEquipmentComponent::CleanMopPollution()
+{
+	FName CurrEquipID = GetCurrentEquipmentID();
+	if (CurrEquipID == "Eq_Mop")
+	{
+		MopPollution = 0;
+		UE_LOG(LogGObject, Log, TEXT("[Equipment] Clean Mop's pollution! : %f"), MopPollution);
+	}
+	else if (CurrEquipID == "Eq_AutoMop")
+	{
+		AutoMopPollution = 0;
+		UE_LOG(LogGObject, Log, TEXT("[Equipment] Clean AutoMop's pollution! : %f"), AutoMopPollution);
+	}
+	else
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[Equipment] this equipment can not clean pollution! : %s"), *CurrEquipID.ToString());
+	}
 }

@@ -36,9 +36,10 @@ private:
 	//		pollution
 	UPROPERTY(Replicated)
 	float MopPollution;
-
+	
 	UPROPERTY(Replicated)
 	float AutoMopPollution;
+
 	
 
 	//		owner character
@@ -60,6 +61,19 @@ public:
 
 	AGNonfixedObject* GetCurrentHeldObject() const { return CurrentHeldObject; }
 	void SetCurrentHeldObject(AGNonfixedObject* NFixedObject) { CurrentHeldObject = NFixedObject; }
+
+	UFUNCTION(BlueprintCallable)
+	void AddMopPollution(float Value);
+
+	UFUNCTION(BlueprintCallable)
+	void CleanMopPollution();
+
+	UFUNCTION(BlueprintCallable)
+	float GetMopPollution() { return MopPollution; }
+
+	UFUNCTION(BlueprintCallable)
+	float GetAutoMopPollution() { return AutoMopPollution; }
+
 
 
 private:

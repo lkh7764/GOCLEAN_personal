@@ -30,6 +30,8 @@ public:
 
 	AGFixedObject* GetIncineratorActor() { return Incinerator; }
 
+	void OnDestoyed(AGNonfixedObject* DestroyedObj, const struct FGObjectDataRow* Data);
+
 
 
 protected:

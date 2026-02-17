@@ -14,6 +14,9 @@
 #include "GDataManagerSubsystem.h"
 #include "GTypes/IGInteractable.h"
 
+#include "ServerModule/GameSession/GameSessionState.h"
+#include "GTypes/DataTableRow/GObjectDataRow.h"
+
 #include "EngineUtils.h"
 
 
@@ -94,8 +97,7 @@ void UGObjectManager::ReturnToPool(AGNonfixedObject* Actor)
 {
     if (!Actor) return;
 
-    Actor->SetActorHiddenInGame(true);
-    Actor->SetActorEnableCollision(false);
+    Actor->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_None);
 
     Actor->AttachToActor(PoolRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
@@ -118,6 +120,15 @@ AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
     const FVector& Location,
     const FRotator& Rotation)
 {
+    auto* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+    auto* Data = DataManager ? DataManager->GetObjectData(TID) : nullptr;
+    if (!Data)
+    {
+        UE_LOG(LogGObject, Warning, TEXT("[NonfixedObject] Can not find matched object data!: %s"), *TID.ToString());
+        return nullptr;
+    }
+
+
     // 1. 오브젝트 풀에서 오브젝트 가져오기
     auto Target = GetFromPool();
 
@@ -129,7 +140,46 @@ AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
 
     if (Target)
     {
-        // 3. 위치 및 상태 초기화
+        // 3. 스폰 데이터 세팅
+        NfixedObjCnt++;
+
+        if (Data->DEC_MeshAssets.Num() != 0)
+        {
+            ReturnToPool(Target);
+
+            // 고정타입 템플릿이 존재하는 경우
+            auto* NewTarget = Cast<AGNonfixedObject>(GetWorld()->
+                SpawnActor(Data->DEC_MeshAssets[FMath::RandRange(0, Data->DEC_MeshAssets.Num() - 1)]));
+
+            if (!NewTarget)
+            {
+                NfixedObjCnt--;
+                return nullptr;
+            }
+
+            // 기존 타겟을 delete 처리 해줘야하는가?
+            Target = NewTarget;
+            Target->UpdateObjectData(NfixedObjCnt);
+        }
+        else
+        {
+            FGNonfixedObjData InitData = {
+               NfixedObjCnt,
+               TID,
+               Location,
+               Rotation,
+               SpawnState,
+               true
+            };
+
+            Target->SetObjectData(InitData);
+        }
+
+
+        NfixedObjects.Add(NfixedObjCnt, Target);
+
+
+        // 4. 위치 및 상태 초기화
         Target->SetActorLocationAndRotation(Location, Rotation);
 
         Target->SetActorHiddenInGame(false);
@@ -138,19 +188,12 @@ AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
         Target->AttachToActor(ActiveRoot, FAttachmentTransformRules::KeepWorldTransform);
 
 
-        // 4. 스폰 데이터 세팅
-        NfixedObjCnt++;
+        AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
 
-        FGNonfixedObjData InitData = {
-            NfixedObjCnt,
-            TID,
-            Location,
-            Rotation,
-            SpawnState,
-            true
-        };
-
-        Target->SetObjectData(InitData);
+        if (Data && GameState)
+        {
+            GameState->AddSpiritualGauge(Data->Pollution);
+        }
     }
 
     return Target;
@@ -189,6 +232,11 @@ void UGObjectManager::InitiateObjects()
 
 
     // finish obj load
+    AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+    if (GameState)
+    {
+        // GameState->ResetSpiritualAndRestGauge();
+    }
 }
 
 void UGObjectManager::FindAllNonfixedObjects()
@@ -235,6 +283,29 @@ bool UGObjectManager::DropNonfixedObject(int32 PickedObjectIID)
 
     CoreComp->ChangeState(ENonfixedObjState::E_Static);
     return true;
+}
+
+void UGObjectManager::OnDestoyed(AGNonfixedObject* DestroyedObj, const FGObjectDataRow* Data)
+{
+    if (!DestroyedObj) return;
+
+    if (!Data)
+    {
+        auto* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+
+        Data = DataManager ? DataManager->GetObjectData(DestroyedObj->GetNonfixedObjCoreComp()->TID) : nullptr;
+        if (!Data) return;
+    }
+
+    if (Data->Category == EGObjectCategory::E_Trash_B)
+    {
+        DestroyedObjs.Enqueue(DestroyedObj->GetNonfixedObjCoreComp()->IID);
+    }
+    else
+    {
+        NfixedObjects.Remove(DestroyedObj->GetNonfixedObjCoreComp()->IID);
+        ReturnToPool(DestroyedObj);
+    }
 }
 
 
@@ -438,6 +509,19 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
     }
     else
     {
+        if (EquipID == "Eq_Mop")
+        {
+            float MopPollution = EquipComp->GetMopPollution();
+            if (MopPollution >= 100.0f)
+            {
+                // UE_LOG(LogGObject, Log, "[SpawnDecal] ")
+            }
+        }
+        else if (EquipID == "Eq_AutoMop")
+        {
+
+        }
+
         UObject* Target = PlayerChar->GetInteractionComp()->GetCurrentTarget();
         if (Target)
         {
