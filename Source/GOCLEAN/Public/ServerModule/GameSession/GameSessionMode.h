@@ -71,4 +71,38 @@ private:
     // 접속 인원수 카운트
     int32 GetCurrentPlayerCount() const;
 
+public:
+    // 청소 중(또는 퇴마 중) -> 퇴마 시작
+    UFUNCTION(BlueprintCallable, Category = "Session|Exorcism")
+    bool StartExorcismPhase();
+
+    // 퇴마진 첫 인터랙션 시 호출 (조건 만족 시 퇴마 시작 -> 퇴마 중)
+    UFUNCTION(BlueprintCallable, Category = "Session|Exorcism")
+    bool TryEnterExorcismInProgress(/*AActor* ExorcismCircle*/);
+
+    // 퇴마 성공 (퇴마 중 -> 퇴마 종료 + 카운트다운 시작)
+    UFUNCTION(BlueprintCallable, Category = "Session|Exorcism")
+    bool FinishExorcismSuccess(float PostExorcismCountdownSeconds = 10.f);
+
+    // 퇴마 실패 (퇴마 중 -> 퇴마 시작 (퇴마진 위치 변경)
+    UFUNCTION(BlueprintCallable, Category = "Session|Exorcism")
+    bool FinishExorcismFail();
+
+    // 의뢰 성공/실패 결과창 띄우기
+    UFUNCTION(BlueprintCallable, Category = "Session|Contract")
+    void ContractSuccess();
+
+    UFUNCTION(BlueprintCallable, Category = "Session|Contract")
+    void ContractFail();
+
+protected:
+    // BP에서 결과 UI를 띄우게 이벤트
+    UFUNCTION(BlueprintImplementableEvent, Category = "Session|Contract")
+    void BP_OnContractSuccess();
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Session|Contract")
+    void BP_OnContractFail();
+
+private:
+    class AGameSessionState* GetSessionState() const;
 };

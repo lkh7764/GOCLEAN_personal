@@ -5,6 +5,10 @@
 #include <Net/UnrealNetwork.h>
 #include "ServerModule/GameSession/PlayerSessionState.h"
 
+#include <GObjectSystem/Server/GObjectManager.h>
+#include <GPlayerSystem/Server/GPlayerManager.h>
+#include <GMapSystem/Server/GMapManager.h>
+
 AGameSessionState::AGameSessionState()
 {
     ObjectManager = nullptr;
@@ -452,6 +456,27 @@ void AGameSessionState::OnRep_PurchasedVending()
 
 }
 
+void AGameSessionState::ResetSpiritualAndRestGauge(float SpiritualStartValue)
+{
+    if (!HasAuthority()) return;
 
+    // 영적=100(기본), 안식=0
+    SetSpiritualGauge_Internal(FMath::Max(0.f, SpiritualStartValue));
+    SetRestGauge_Internal(0.f);
+}
 
+void AGameSessionState::ApplySpiritualOrRestGauge( float Amount, float SpiritualMin, float SpiritualMax, float RestMin, float RestMax)
+{
+    if (!HasAuthority()) return;
 
+    if (Amount <= 0.f) return;
+
+    if (SpiritualGauge > SpiritualMin)
+    {
+        AddSpiritualGauge(-Amount, SpiritualMin, SpiritualMax);
+        return;
+    }
+
+    // 영적이 0(또는 Min)이라면 안식 증가
+    AddRestGauge(Amount, RestMin, RestMax);
+}

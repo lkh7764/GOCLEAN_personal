@@ -383,3 +383,112 @@ void AGameSessionMode::HandlePlayerLeft(int32 PlayerId)
         GSS->RemovePurchasedVending(PlayerId);
     }
 }
+
+
+AGameSessionState* AGameSessionMode::GetSessionState() const
+{
+    return GetWorld() ? GetWorld()->GetGameState<AGameSessionState>() : nullptr;
+}
+
+bool AGameSessionMode::StartExorcismPhase()
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return false;
+
+    const EInGamePhase Cur = SS->GetInGamePhase();
+
+    if (Cur != EInGamePhase::Cleaning && Cur != EInGamePhase::ExorcismInProgress)
+        return false;
+
+    SS->SetInGamePhase(EInGamePhase::ExorcismStart);
+
+    // 퇴마 시작 시 진행도/타이머 초기화
+    SS->SetExorcismProgress(0.f, 0.f, 100.f);
+    SS->StartPostExorcismTimer(0.f);
+
+    return true;
+}
+
+bool AGameSessionMode::TryEnterExorcismInProgress(/*AActor* ExorcismCircle*/)
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return false;
+
+    if (SS->GetInGamePhase() != EInGamePhase::ExorcismStart)
+        return false;
+
+    // =========
+    // 각 플레이어들이 퇴마진과 동일한 방에 존재하는지 체크
+    // =========
+    const bool bAllPlayersInSameRoom = true; // 체크 값으로 여기 바꿔주세요
+
+    if (!bAllPlayersInSameRoom)
+        return false;
+
+    SS->SetInGamePhase(EInGamePhase::ExorcismInProgress);
+    return true;
+}
+
+bool AGameSessionMode::FinishExorcismSuccess(float PostExorcismCountdownSeconds)
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return false;
+
+    if (SS->GetInGamePhase() != EInGamePhase::ExorcismInProgress)
+        return false;
+
+    SS->SetInGamePhase(EInGamePhase::ExorcismEnd);
+
+    // 진행도 완료 처리 + 종료 카운트다운
+    SS->SetExorcismProgress(100.f, 0.f, 100.f);
+    SS->StartPostExorcismTimer(PostExorcismCountdownSeconds);
+
+    return true;
+}
+
+bool AGameSessionMode::FinishExorcismFail()
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return false;
+
+    if (SS->GetInGamePhase() != EInGamePhase::ExorcismInProgress)
+        return false;
+
+    //============
+    // 퇴마진 위치 바꾸기
+    // ===========
+
+    SS->SetInGamePhase(EInGamePhase::ExorcismStart);
+
+    // 진행도 리셋
+    SS->SetExorcismProgress(0.f, 0.f, 100.f);
+    SS->StartPostExorcismTimer(0.f);
+
+    return true;
+}
+
+void AGameSessionMode::ContractSuccess()
+{
+    if (!HasAuthority()) return;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return;
+
+    SS->SetSessionPhase(ESessionPhase::Ending);
+    BP_OnContractSuccess();
+}
+
+void AGameSessionMode::ContractFail()
+{
+    if (!HasAuthority()) return;
+
+    BP_OnContractFail();
+}
