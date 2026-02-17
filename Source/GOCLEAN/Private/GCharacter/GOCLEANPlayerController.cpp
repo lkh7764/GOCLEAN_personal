@@ -47,12 +47,23 @@ void AGOCLEANPlayerController::ShowTitleUI()
 
 void AGOCLEANPlayerController::ShowLobbyUI()
 {
-    // 위젯 사용 추가 필요
 
     if (CurrentWidget)
     {
         CurrentWidget->RemoveFromParent();
         CurrentWidget = nullptr;
+    }
+
+    if (!LobbyWidgetClass) return;
+
+    CurrentWidget = CreateWidget<UUserWidget>(this, LobbyWidgetClass);
+    if (CurrentWidget)
+    {
+        CurrentWidget->AddToViewport();
+
+        bShowMouseCursor = true;
+        FInputModeUIOnly Mode;
+        SetInputMode(Mode);
     }
 }
 
