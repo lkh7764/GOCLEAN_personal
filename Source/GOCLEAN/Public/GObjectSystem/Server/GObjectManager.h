@@ -28,6 +28,8 @@ public:
 
 	bool ShouldCreateSubsystem(UObject* Outer) const;
 
+	AGFixedObject* GetIncineratorActor() { return Incinerator; }
+
 
 
 protected:

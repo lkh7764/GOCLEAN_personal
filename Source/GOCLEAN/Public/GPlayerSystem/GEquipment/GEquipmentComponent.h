@@ -48,11 +48,7 @@ private:
 
 	//		picked ID
 	UPROPERTY(VisibleAnywhere, Replicated)
-	int32 PickedObjectID;
-
-	UPROPERTY(VisibleAnywhere, Replicated)
-	int32 PickedItemID;
-
+	class AGNonfixedObject* CurrentHeldObject;
 
 
 	// functions - custom
@@ -62,10 +58,8 @@ public:
 	bool ChangeEuquipmentInCurrSlot(FName ChangedEquipID);
 	bool ChangeCurrentSlot(int32 ChangedSlotIndex);
 
-	int32 GetPickedObjectID() const { return PickedObjectID; }
-	void SetPickedObjectID(int32 IID) { PickedObjectID = IID; }
-	int32 GetPickedItemID() const { return PickedItemID; }
-	void SetPickedItemID(int32 IID) { PickedItemID = IID; }
+	AGNonfixedObject* GetCurrentHeldObject() const { return CurrentHeldObject; }
+	void SetCurrentHeldObject(AGNonfixedObject* NFixedObject) { CurrentHeldObject = NFixedObject; }
 
 
 private:

@@ -48,6 +48,14 @@ public:
 	void UpdateObjectData(int32 IID);
 
 	void UpdateVisualByState();
+	void UpdatePhysicsByState();
+
+	UStaticMeshComponent* GetStaticMeshComp() { return RootPrimitive; }
+
+
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OnPickedUp(class AGOCLEANCharacter* TargetCharacter);
 
 
 	// variables

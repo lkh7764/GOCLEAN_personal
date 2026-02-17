@@ -154,7 +154,7 @@ protected:
 
 	// custom functions
 	UFUNCTION()
-	void StartBurning();
+	void StartBurning(AGNonfixedObject* Owner);
 
 
 private:

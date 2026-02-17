@@ -7,6 +7,8 @@
 #include "GCharacter/GOCLEANCharacter.h"
 #include "GObjectSystem/Server/GObjectManager.h"
 #include "../../../GOCLEAN.h"
+#include "GObjectSystem/GNonfixedObject.h"
+#include "GObjectSystem/GNonfixedObjCoreComponent.h"
 
 
 // Sets default values for this component's properties
@@ -31,8 +33,7 @@ void UGEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(UGEquipmentComponent, CurrentSlotIndex);
 	DOREPLIFETIME(UGEquipmentComponent, MopPollution);
 	DOREPLIFETIME(UGEquipmentComponent, AutoMopPollution);
-	DOREPLIFETIME(UGEquipmentComponent, PickedObjectID);
-	DOREPLIFETIME(UGEquipmentComponent, PickedItemID);
+	DOREPLIFETIME(UGEquipmentComponent, CurrentHeldObject);
 }
 
 
@@ -88,20 +89,6 @@ bool UGEquipmentComponent::ChangeEquipment(int32 SlotIndex, FName EquipID)
 		return false;
 	}
 
-	// 나중에 유효한 equip id인지 검사하는 로직 추가 필요 -> UGDataManagerSubsystem::
-	FName PrevEquipID = EquipmentSlots[SlotIndex];
-	if (EquipID == "Eq_Hand")
-	{
-		if (SlotIndex == 0)
-		{
-			PickedObjectID = -1;
-		}
-		else if (SlotIndex == 3)
-		{
-			PickedItemID = -1;
-		}
-	}
-
 	EquipmentSlots[SlotIndex] = EquipID;
 	return true;
 }
@@ -125,8 +112,7 @@ bool UGEquipmentComponent::ChangeCurrentSlot_Interval(int32 From, int32 To)
 			return false;
 		}
 
-		Result = ObjectManager->DropNonfixedObject(PickedObjectID);
-		PickedObjectID = -1;
+		CurrentHeldObject->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
 	}
 
 	CurrentSlotIndex = To;

@@ -7,6 +7,7 @@
 #include "GTypes/DataTableRow/GObjectDataRow.h"
 #include "GObjectSystem/GNonfixedObjCoreComponent.h"
 #include "GObjectSystem/GNonfixedObject.h"
+#include "GObjectSystem/GFixedObject.h"
 #include "GCharacter/GOCLEANCharacter.h"
 #include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
 #include "GDataManagerSubsystem.h"
@@ -69,7 +70,7 @@ void UGPickComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
 
 void UGPickComponent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState)
 {
-	if (PrevState == ENonfixedObjState::E_Invisible && ChangedState == ENonfixedObjState::E_Static)
+	if (PrevState == ENonfixedObjState::E_Picked && ChangedState == ENonfixedObjState::E_Static)
 	{
 		DropObject();
 	}
@@ -85,7 +86,8 @@ void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
 		bIsPickedUp = true;
 		OwnerPlayer = Target;
 
-		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
+		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Picked);
+		Target->SetHeldObject(Owner);
 
 		UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 		const FGObjectDataRow* Data =
@@ -95,16 +97,9 @@ void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
 		{
 			FName PickedEquipID = Data->PickedEquipID;
 			Target->GetEquipComp()->ChangeEuquipmentInCurrSlot(PickedEquipID);
-
-			if (PickedEquipID == "Eq_OVariable")
-			{
-				Target->GetEquipComp()->SetPickedObjectID(Owner->GetNonfixedObjCoreComp()->IID);
-			}
-			else if (Data->Category == EGObjectCategory::E_Item_P)
-			{
-				Target->GetEquipComp()->SetPickedItemID(Owner->GetNonfixedObjCoreComp()->IID);
-			}
 		}
+
+		Owner->Multicast_OnPickedUp(Target);
 	}
 }
 
@@ -114,10 +109,6 @@ void UGPickComponent::DropObject()
 
 	AGNonfixedObject* OwnerActor = Cast<AGNonfixedObject>(GetOwner());
 	if (!OwnerActor) return;
-
-
-	// set owner player's
-	OwnerPlayer->GetEquipComp()->ChangeEuquipmentInCurrSlot("Eq_Hand");
 
 
 	// get spawn data from owner player
@@ -130,7 +121,10 @@ void UGPickComponent::DropObject()
 	// set owner actor's
 	OwnerActor->SetActorLocation(DropLocation);
 	OwnerActor->SetActorRotation(OwnerPlayer->GetActorRotation());
-	OwnerActor->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
+
+
+	// set owner player's
+	OwnerPlayer->DropHeldObject();
 
 
 	bIsPickedUp = false;
@@ -187,8 +181,6 @@ void UGRemovingComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
 
 void UGRemovingComponent::SetVisualByInteractionCnt(AGNonfixedObject* Owner)
 {
-	Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Invisible);
-
 	UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
 	const FGObjectDataRow* Data =
 		DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
@@ -252,11 +244,11 @@ void UGBurningCompopnent::BeginPlay()
 void UGBurningCompopnent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState)
 {
 	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
-	if (Owner) return;
+	if (!Owner) return;
 
-	if (PrevState == ENonfixedObjState::E_Invisible && ChangedState == ENonfixedObjState::E_Disintegrating)
+	if (PrevState == ENonfixedObjState::E_Picked && ChangedState == ENonfixedObjState::E_Disintegrating)
 	{
-		StartBurning();
+		StartBurning(Owner);
 	}
 
 	else if (PrevState == ENonfixedObjState::E_Disintegrating && ChangedState != ENonfixedObjState::E_Destroyed)
@@ -268,10 +260,37 @@ void UGBurningCompopnent::OnStateChangeTriggered(ENonfixedObjState PrevState, EN
 	}
 }
 
-void UGBurningCompopnent::StartBurning()
+void UGBurningCompopnent::StartBurning(AGNonfixedObject* Owner)
 {
-	if (!GetWorld()) return;
+	if (!Owner || !GetWorld()) return;
 
+
+	// set object's transform
+	auto ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
+	if (ObjectManager && ObjectManager->GetIncineratorActor())
+	{
+		AGFixedObject* Incinerator = ObjectManager->GetIncineratorActor();
+
+
+		FBox Bounds = Incinerator->GetComponentsBoundingBox();
+
+		FVector DropLocation = Incinerator->GetActorLocation();
+		DropLocation.Z = Bounds.Max.Z + 10.f;
+
+		
+		Owner->SetActorLocation(DropLocation);
+		Owner->SetActorRotation(FRotator::ZeroRotator);
+
+
+		Incinerator->OnCustomEvent_Bool(true);
+	}
+
+
+	FVector NewScale = Owner->GetActorScale3D() * 0.45f;
+	Owner->SetActorScale3D(NewScale);
+
+
+	// start timer
 	GetWorld()->GetTimerManager().SetTimer(
 		BurnTimerHandle,
 		this,
