@@ -65,11 +65,20 @@ private:
     // 게임 시작이 가능한지
     bool bGameStarted = false;
 
-    // PlayerState의 PlayerArray를 통해 빈 Index 찾기
+
+protected:
+    // 현재 접속(게임에 존재) 중인 플레이어 수: 2/3/4 
+    UFUNCTION(BlueprintCallable, Category = "Lobby|Seat")
+    int32 GetCurrentPlayerCount() const;
+
+    // 0~MaxPlayers-1 범위에서 비어있는 좌석 인덱스 찾기. 꽉 차면 INDEX_NONE
+    UFUNCTION(BlueprintCallable, Category = "Lobby|Seat")
     int32 FindNextAvailableSeatIndex() const;
 
-    // 접속 인원수 카운트
-    int32 GetCurrentPlayerCount() const;
+    // SeatIndex가 유효 범위(0~MaxPlayers-1)인지
+    UFUNCTION(BlueprintCallable, Category = "Lobby|Seat")
+    bool IsValidSeatIndex(int32 SeatIndex) const;
+
 
 public:
     // 청소 중(또는 퇴마 중) -> 퇴마 시작

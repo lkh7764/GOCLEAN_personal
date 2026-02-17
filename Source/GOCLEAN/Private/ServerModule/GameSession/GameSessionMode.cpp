@@ -20,35 +20,45 @@ AGameSessionMode::AGameSessionMode()
 }
 
 
-int32 AGameSessionMode::FindNextAvailableSeatIndex() const
-{
-	const AGameStateBase* GS = GameState;
-	if (!GS) return 0;
-	
-	return GS->PlayerArray.Num();
-}
-
 int32 AGameSessionMode::GetCurrentPlayerCount() const
 {
-    TSet<int32> Used;
-
     const AGameStateBase* GS = GameState;
-    if (GS)
+    return GS ? GS->PlayerArray.Num() : 0;
+}
+
+bool AGameSessionMode::IsValidSeatIndex(int32 SeatIndex) const
+{
+    return (SeatIndex >= 0 && SeatIndex < MaxPlayers);
+}
+
+int32 AGameSessionMode::FindNextAvailableSeatIndex() const
+{
+    const AGameStateBase* GS = GameState;
+    if (!GS) return INDEX_NONE;
+
+    // 현재 사용 중인 좌석
+    TSet<int32> UsedSeats;
+    UsedSeats.Reserve(MaxPlayers);
+
+    for (APlayerState* PS : GS->PlayerArray)
     {
-        for (APlayerState* PS : GS->PlayerArray)
+        const APlayerSessionState* PSS = Cast<APlayerSessionState>(PS);
+        if (!PSS) continue;
+
+        const int32 Seat = PSS->GetSeatIndex();
+        if (IsValidSeatIndex(Seat))
         {
-            const APlayerSessionState* PSS = Cast<APlayerSessionState>(PS);
-            if (PSS)
-            {
-                Used.Add(PSS->GetSeatIndex());
-            }
+            UsedSeats.Add(Seat);
         }
     }
 
+    // 0~MaxPlayers-1 중 빈 곳 반환
     for (int32 i = 0; i < MaxPlayers; ++i)
     {
-        if (!Used.Contains(i))
+        if (!UsedSeats.Contains(i))
+        {
             return i;
+        }
     }
     return INDEX_NONE;
 }
@@ -57,52 +67,44 @@ void AGameSessionMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-    if (!NewPlayer || !GameState)
-        return;
+    if (!HasAuthority() || !NewPlayer) return;
+    if (!GameState) return;
 
-    // 인원수 넘어가면 kick (나중에 PreLogin으로 옮기기)
-    const int32 CurrentCount = GetCurrentPlayerCount();
-    if (CurrentCount > MaxPlayers)
+    // 최대 인원 제한
+    const int32 CurrentPlayers = GetCurrentPlayerCount();
+    if (CurrentPlayers > MaxPlayers)
     {
         const FText Reason = FText::FromString(TEXT("방이 가득 찼습니다."));
-        
-         // 최소한 클라를 메인메뉴로 돌려보내고 연결을 끊는 처리
-         NewPlayer->ClientReturnToMainMenuWithTextReason(Reason);
-         NewPlayer->Destroy();
-        
+        NewPlayer->ClientReturnToMainMenuWithTextReason(Reason);
+        NewPlayer->Destroy();
         return;
     }
 
-    // 참여 Index 꽉 찬 경우 Kick
+    //  PlayerState 확보
     APlayerSessionState* PSS = Cast<APlayerSessionState>(NewPlayer->PlayerState);
     if (!PSS)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[Lobby] PlayerState cast failed"));
         return;
+    }
 
-    
-
+    // 빈 좌석 배정 (0~3)
     const int32 Seat = FindNextAvailableSeatIndex();
     if (Seat == INDEX_NONE)
     {
         const FText Reason = FText::FromString(TEXT("좌석 할당 실패 (방이 가득 찼습니다)."));
-
         NewPlayer->ClientReturnToMainMenuWithTextReason(Reason);
         NewPlayer->Destroy();
-        
         return;
     }
 
-    const bool bIsHost = NewPlayer->IsLocalController();
-
     PSS->SetSeatIndex(Seat);
-    PSS->SetEliminated(false);
-    PSS->SetNickname(TEXT("Player"));
-    PSS->SetReady(bIsHost); // 호스트면 true, 아니면 false
 
-    OnPlayerReadyChanged();
+    // 호스트는 Seat 0 / ready true 
+    const bool bIsHostSeat = (Seat == 0);
+    PSS->SetReady(bIsHostSeat);
 
-    // Online Subsystem Steam에서 닉네임 가져오기 로직 추가
-
-
+    PSS->SetNickname(PSS->GetPlayerName());
 }
 
 void AGameSessionMode::Logout(AController* Exiting)
