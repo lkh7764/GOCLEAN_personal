@@ -43,8 +43,58 @@ UGMapManager* UAmbientAudioManager::GetMapManager() const
     return World->GetSubsystem<UGMapManager>();
 }
 
-void UAmbientAudioManager::StartAmbient()
+//void UAmbientAudioManager::StartAmbient()
+//{
+//    if (bRunning) return;
+//
+//    bRunning = true;
+//    bIsOutdoor = false;
+//    CurrentZoneId = NAME_None;
+//
+//    UWorld* World = GetWorldSafe();
+//    if (!World) return;
+//
+//    // 컨텍스트 폴링 시작
+//    World->GetTimerManager().ClearTimer(ContextPollTimer);
+//    World->GetTimerManager().SetTimer(
+//        ContextPollTimer,
+//        this,
+//        &UAmbientAudioManager::TickContext,
+//        ContextPollInterval,
+//        true
+//    );
+//
+//    // 즉시 1회 갱신
+//    TickContext();
+//}
+
+void UAmbientAudioManager::StopAmbient()
 {
+    bRunning = false;
+
+    if (UWorld* World = GetWorldSafe())
+    {
+        World->GetTimerManager().ClearTimer(ContextPollTimer);
+        World->GetTimerManager().ClearTimer(EventSfxTimer);
+    }
+
+    // 2D 루프 정지
+    if (BaseLoopComp)
+    {
+        BaseLoopComp->Stop();
+        BaseLoopComp = nullptr;
+    }
+
+    bIsOutdoor = false;
+    CurrentZoneId = NAME_None;
+}
+
+void UAmbientAudioManager::StartAmbient(USoundBase* InIndoorLoop, USoundBase* InOutdoorLoop, UDataTable* InZoneTable)
+{
+    IndoorBaseLoop = InIndoorLoop;
+    OutdoorBaseLoop = InOutdoorLoop;
+    ZoneAudioTable = InZoneTable;
+
     if (bRunning) return;
 
     bRunning = true;
@@ -66,27 +116,6 @@ void UAmbientAudioManager::StartAmbient()
 
     // 즉시 1회 갱신
     TickContext();
-}
-
-void UAmbientAudioManager::StopAmbient()
-{
-    bRunning = false;
-
-    if (UWorld* World = GetWorldSafe())
-    {
-        World->GetTimerManager().ClearTimer(ContextPollTimer);
-        World->GetTimerManager().ClearTimer(EventSfxTimer);
-    }
-
-    // 2D 루프 정지
-    if (BaseLoopComp)
-    {
-        BaseLoopComp->Stop();
-        BaseLoopComp = nullptr;
-    }
-
-    bIsOutdoor = false;
-    CurrentZoneId = NAME_None;
 }
 
 void UAmbientAudioManager::TickContext()

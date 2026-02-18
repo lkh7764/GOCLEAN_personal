@@ -5,6 +5,9 @@
 #include "Net/RpcTypes.h"
 #include "ServerModule/GameSession/RPCRouterComponent.h"
 
+#include "ServerModule/Sound/AmbientAudioManager.h"
+#include "Kismet/GameplayStatics.h"
+
 AGOCLEANPlayerController::AGOCLEANPlayerController()
 {
 	RPCRouter = CreateDefaultSubobject<URPCRouterComponent>(TEXT("RPCRouter"));
@@ -21,6 +24,7 @@ void AGOCLEANPlayerController::BeginPlay()
 		// add the mapping context so we get controls
 		Subsystem->AddMappingContext(InputMappingContext, 0);
 	}
+
 }
 
 void AGOCLEANPlayerController::ShowTitleUI()

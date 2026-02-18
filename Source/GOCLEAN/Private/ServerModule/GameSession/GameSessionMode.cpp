@@ -17,6 +17,8 @@
 #include "GCharacter/GOCLEANPlayerController.h"
 #include "TimerManager.h"
 
+#include "Kismet/GameplayStatics.h"
+
 AGameSessionMode::AGameSessionMode()
 {
 	GameStateClass = AGameSessionState::StaticClass();
@@ -640,4 +642,91 @@ APawn* AGameSessionMode::SpawnAndPossessPawnFromGameState(APlayerController* PC)
     }
 
     return SpawnAndPossessPawnBySeatIndex(PC, SeatIndex);
+}
+
+
+void AGameSessionMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+    Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+
+    if (!HasAuthority() || !NewPlayer) return;
+    if (!IsInGameMap()) return;
+
+    EnsurePawnForController(NewPlayer);
+}
+
+void AGameSessionMode::PostSeamlessTravel()
+{
+    Super::PostSeamlessTravel();
+
+    if (!HasAuthority()) return;
+    if (!IsInGameMap()) return;
+
+    // 트래블 후 현재 접속자 전원 폰 보장
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        APlayerController* PC = It->Get();
+        EnsurePawnForController(PC);
+    }
+}
+
+bool AGameSessionMode::IsInGameMap() const
+{
+    const FString MapName = GetWorld() ? GetWorld()->GetMapName() : TEXT("FirstPersonMap");
+    return !MapName.Contains(TEXT("FirstPersonMap"));
+}
+
+bool AGameSessionMode::TryGetSeatIndex(APlayerController* PC, int32& OutSeatIndex) const
+{
+    OutSeatIndex = INDEX_NONE;
+    if (!PC || !PC->PlayerState) return false;
+
+    const AGameSessionState* GS = GetWorld() ? GetWorld()->GetGameState<AGameSessionState>() : nullptr;
+    if (!GS) return false;
+
+    OutSeatIndex = GS->GetSeatIndexOfPlayerState(PC->PlayerState);
+    return OutSeatIndex != INDEX_NONE;
+}
+
+void AGameSessionMode::EnsurePawnForController(APlayerController* PC)
+{
+    if (!HasAuthority() || !PC) return;
+
+    // 이미 폰이 있으면(정상 스폰) 그냥 끝
+    if (PC->GetPawn())
+        return;
+
+    // SeatIndex가 아직 준비 안 됐으면 재시도
+    int32 SeatIndex = INDEX_NONE;
+    if (!TryGetSeatIndex(PC, SeatIndex))
+    {
+        EnsurePawnRetry(PC, 20);
+        return;
+    }
+
+    SpawnAndPossessPawnBySeatIndex(PC, SeatIndex);
+}
+
+void AGameSessionMode::EnsurePawnRetry(APlayerController* PC, int32 RetryCount)
+{
+    if (!HasAuthority() || !PC) return;
+    if (PC->GetPawn()) return;
+    if (RetryCount <= 0) return;
+
+    FTimerHandle Handle;
+    GetWorldTimerManager().SetTimer(
+        Handle,
+        FTimerDelegate::CreateWeakLambda(this, [this, PC, RetryCount]()
+            {
+                EnsurePawnRetry(PC, RetryCount - 1);
+            }),
+        0.1f,
+        false
+    );
+
+    int32 SeatIndex = INDEX_NONE;
+    if (TryGetSeatIndex(PC, SeatIndex))
+    {
+        SpawnAndPossessPawnBySeatIndex(PC, SeatIndex);
+    }
 }

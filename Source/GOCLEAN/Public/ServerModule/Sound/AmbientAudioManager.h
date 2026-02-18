@@ -56,7 +56,10 @@ public:
 
     // ÄÑ°í/²ô±â
     UFUNCTION(BlueprintCallable, Category = "Ambient")
-    void StartAmbient();
+    void StartAmbient(USoundBase* InIndoorLoop, USoundBase* InOutdoorLoop, UDataTable* InZoneTable);
+
+    /*UFUNCTION(BlueprintCallable, Category = "Ambient")
+    void StartAmbient();*/
 
     UFUNCTION(BlueprintCallable, Category = "Ambient")
     void StopAmbient();

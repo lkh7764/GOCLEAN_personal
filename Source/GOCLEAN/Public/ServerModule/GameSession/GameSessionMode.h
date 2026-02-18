@@ -129,15 +129,26 @@ private:
 
 // 임시 커스터마이징
 public:
-    // SeatIndex(0~3) -> PawnClass 매핑
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Spawn|InGame")
-    TArray<TSubclassOf<APawn>> InGameSeatPawnClasses; // size 4 권장
+    virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+    virtual void PostSeamlessTravel() override; // SeamlessTravel 후 호출
 
-    // 특정 플레이어에게 SeatIndex에 맞는 Pawn을 스폰/포제스
-    UFUNCTION(BlueprintCallable, Category="Spawn|InGame")
+protected:
+    // 인게임에서만 실행하고 싶으면 true 반환하도록(맵 이름/플래그로 판단)
+    bool IsInGameMap() const;
+
+    void EnsurePawnForController(APlayerController* PC);
+    bool TryGetSeatIndex(APlayerController* PC, int32& OutSeatIndex) const;
+
+    // 재시도용
+    void EnsurePawnRetry(APlayerController* PC, int32 RetryCount);
+
+    UPROPERTY(EditDefaultsOnly, Category = "Spawn")
+    TArray<TSubclassOf<APawn>> InGameSeatPawnClasses;
+
+public:
+    UFUNCTION(BlueprintCallable, Category = "Spawn")
     APawn* SpawnAndPossessPawnBySeatIndex(APlayerController* PC, int32 SeatIndex);
 
-    // GameState에서 SeatIndex를 꺼내서 자동으로 스폰/포제스
-    UFUNCTION(BlueprintCallable, Category="Spawn|InGame")
+    UFUNCTION(BlueprintCallable, Category = "Spawn")
     APawn* SpawnAndPossessPawnFromGameState(APlayerController* PC);
 };
