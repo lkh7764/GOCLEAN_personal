@@ -54,11 +54,11 @@ void AGhostBase::CheckBehaviorEventCondition()
 {
 	if (GhostAIController == nullptr) return;
 
-	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 10 && bCanSetBehaviourEventCycleTimer) {
+	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 50 && bCanSetBehaviourEventCycleTimer) {
 		GetWorldTimerManager().SetTimer(GhostBehaviorCycleHandle, this, &AGhostBase::PerformBehaviorEvent, BehaviorEventCycleDelay, true);
 		bCanSetBehaviourEventCycleTimer = false;
 	}
-	else if (GhostAIController->GetPlayerSanityCorruptionRate() < 10 && !bCanSetBehaviourEventCycleTimer) {
+	else if (GhostAIController->GetPlayerSanityCorruptionRate() < 50 && !bCanSetBehaviourEventCycleTimer) {
 		GetWorldTimerManager().ClearTimer(GhostBehaviorCycleHandle);
 		bCanSetBehaviourEventCycleTimer = true;
 	}
@@ -100,4 +100,15 @@ void AGhostBase::PerformBehaviorEvent()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Stop]"));
 	}
+}
+
+
+// Server //
+void AGhostBase::Server_RequestSetVisible_Implementation(bool IsVisible)
+{
+	Multicast_SetVisible(IsVisible);
+}
+void AGhostBase::Multicast_SetVisible_Implementation(bool IsVisible)
+{
+	GetMesh()->SetHiddenInGame(!IsVisible);
 }

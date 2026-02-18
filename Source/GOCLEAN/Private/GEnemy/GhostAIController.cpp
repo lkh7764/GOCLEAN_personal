@@ -13,7 +13,7 @@ void AGhostAIController::UpdatePlayerList()
 	
 	AlivePlayers.Empty();
 
-	AGameSessionState* SessionState = GetWorld()->GetGameState<AGameSessionState>();
+	AGameSessionState* SessionState = Cast<AGameSessionState>(GetWorld()->GetGameState());
 	if (SessionState == nullptr) return;
 
 	UE_LOG(LogTemp, Warning, TEXT("AlivePlayers Num: %d"), AlivePlayers.Num());
@@ -97,6 +97,7 @@ void AGhostAIController::OnPossess(APawn* InPawn)
 void AGhostAIController::CheckPlayerSanityCorruptionRate()
 {
 	PlayersSanityCorruptionRate = CalculateAverageSanityCorruptionRate();
+	UpdatePlayerList();
 	// JSH Flag: Sanity
 	UE_LOG(LogTemp, Warning, TEXT("Player's current sanity corruption rate: %f"), (PlayersSanityCorruptionRate));
 
@@ -141,7 +142,7 @@ void AGhostAIController::CheckArrivalCurrentPatrolPoint()
 
 void AGhostAIController::CheckRageEventCondition()
 {
-	if (PlayersSanityCorruptionRate >= 30 && !bIsRageEvent) {
+	if (PlayersSanityCorruptionRate >= 150 && !bIsRageEvent) {
 		bIsRageEvent = true;
 		StartChase();
 	}
@@ -190,12 +191,12 @@ void AGhostAIController::PlayerHunt()
 	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPlayer->GetActorLocation());
 	if (Distance < ManifestRadius)
 	{
-		GhostCharacter->GetMesh()->SetHiddenInGame(false);
+		Server_RequestSetVisible(true);
 	}
 
 	if (Distance < HuntRadius)
 	{
-		GhostCharacter->GetMesh()->SetHiddenInGame(true);
+		Server_RequestSetVisible(false);
 		
 		Cast<AGOCLEANCharacter>(TargetPlayer)->Server_RequestOnHunted();
 
@@ -213,6 +214,22 @@ void AGhostAIController::PlayerHunt()
 		MoveToPatrolPoint();
 	}
 }
+void AGhostAIController::Server_RequestPlayerHunt_Implementation()
+{
+	Multicast_PlayerHunt();
+}
+void AGhostAIController::Multicast_PlayerHunt_Implementation()
+{
+	PlayerHunt();
+}
+void AGhostAIController::Server_RequestSetVisible_Implementation(bool IsVisible)
+{
+	Multicast_SetVisible(IsVisible);
+}
+void AGhostAIController::Multicast_SetVisible_Implementation(bool IsVisible)
+{
+	Cast<ACharacter>(GetPawn())->GetMesh()->SetHiddenInGame(!IsVisible);
+}
 
 void AGhostAIController::EndlessPlayerHunt()
 {
@@ -229,12 +246,12 @@ void AGhostAIController::EndlessPlayerHunt()
 	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPlayerCharacter->GetActorLocation());
 	if (Distance < ManifestRadius)
 	{
-		GhostCharacter->GetMesh()->SetHiddenInGame(true);
+		GhostCharacter->Server_RequestSetVisible(true);
 	}
 
 	if (Distance < HuntRadius)
 	{
-		GhostCharacter->GetMesh()->SetHiddenInGame(false);
+		GhostCharacter->Server_RequestSetVisible(false);
 
 		Cast<AGOCLEANCharacter>(TargetPlayerCharacter)->Server_RequestOnHunted();
 

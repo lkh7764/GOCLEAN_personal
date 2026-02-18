@@ -42,6 +42,12 @@ public:
 	int32 CurrentPatrolIndex;
 
 
+	// Server //
+	UFUNCTION(Server, Reliable)
+	void Server_RequestSetVisible(bool IsVisible);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetVisible(bool IsVisible);
+
 protected:
 	// Behaviors array //
 	UPROPERTY(VisibleAnywhere, Category = "Behaviors");
@@ -63,7 +69,6 @@ protected:
 	// Behavior event //
 	void CheckBehaviorEventCondition();
 	void PerformBehaviorEvent();
-
 
 
 	// Player sanity //

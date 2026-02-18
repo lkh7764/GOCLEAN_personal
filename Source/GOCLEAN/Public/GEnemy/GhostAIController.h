@@ -52,6 +52,16 @@ public:
 	float CalculateAverageSanityCorruptionRate();
 
 
+	// Server //
+	UFUNCTION(Server, Reliable)
+	void Server_RequestPlayerHunt();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayerHunt();
+
+	UFUNCTION(Server, Reliable)
+	void Server_RequestSetVisible(bool IsVisible);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetVisible(bool IsVisible);
 
 private:
 
@@ -82,9 +92,7 @@ private:
 	void EndlessPlayerHunt();
 
 	void FindTarget();
-
-
-
+	
 
 	// Check player sanity //
 	float PlayersSanityCorruptionRate;
