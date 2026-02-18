@@ -28,6 +28,10 @@ public:
 
 	bool ShouldCreateSubsystem(UObject* Outer) const;
 
+	AGFixedObject* GetIncineratorActor() { return Incinerator; }
+
+	void OnDestoyed(AGNonfixedObject* DestroyedObj, const struct FGObjectDataRow* Data);
+
 
 
 protected:
@@ -79,6 +83,10 @@ protected:
 	UPROPERTY()
 	TObjectPtr<AGFixedObject> VendingMachine;
 
+	//		3-1. 벤딩아이템 스포너
+	UPROPERTY()
+	TObjectPtr<AGFixedObject> VendingItemSpawner;
+
 	//		4. 캐비넷: 플레이어가 귀신을 피해 숨는 용도. 고정 위치 스폰.
 	UPROPERTY()
 	TArray<TObjectPtr<AGFixedObject>> Cabinets;
@@ -121,7 +129,9 @@ protected:
 
 	AGNonfixedObject* SpawnNewEmptyNonfixedObject();
 
-	void FindAllNonfixedObjects();
+	float FindAllNonfixedObjects();
+
+	AGNonfixedObject* SpawnNonfixedObjectAtPlayerSight(APlayerController* PC, class AGOCLEANCharacter* PlayerChar);
 
 
 public:

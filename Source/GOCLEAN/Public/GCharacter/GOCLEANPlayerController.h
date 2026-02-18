@@ -47,6 +47,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> TitleWidgetClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> LobbyWidgetClass;
 
 	// 현재 띄운 위젯 인스턴스
 	UPROPERTY()
@@ -61,6 +64,8 @@ public:
 
 
 	void TryDoInteraction();
+
+	void ChangeSlot(int32 SlotIndex);
 
 
 };

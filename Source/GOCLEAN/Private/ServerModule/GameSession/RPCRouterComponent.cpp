@@ -1,5 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+#pragma once
 
 #include "ServerModule/GameSession/RPCRouterComponent.h"
 #include <ServerModule/GameSession/GameSessionState.h>
@@ -11,8 +11,11 @@
 #include <Kismet/GameplayStatics.h>
 #include "GObjectSystem/GNonfixedObject.h"
 
+#include "GPlayerSystem/Server/GPlayerManager.h"
+
 
 #include "GCharacter/GOCLEANCharacter.h"
+
 
 // Sets default values for this component's properties
 URPCRouterComponent::URPCRouterComponent()

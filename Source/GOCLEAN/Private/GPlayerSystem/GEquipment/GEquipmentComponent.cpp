@@ -7,6 +7,8 @@
 #include "GCharacter/GOCLEANCharacter.h"
 #include "GObjectSystem/Server/GObjectManager.h"
 #include "../../../GOCLEAN.h"
+#include "GObjectSystem/GNonfixedObject.h"
+#include "GObjectSystem/GNonfixedObjCoreComponent.h"
 
 
 // Sets default values for this component's properties
@@ -31,8 +33,7 @@ void UGEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(UGEquipmentComponent, CurrentSlotIndex);
 	DOREPLIFETIME(UGEquipmentComponent, MopPollution);
 	DOREPLIFETIME(UGEquipmentComponent, AutoMopPollution);
-	DOREPLIFETIME(UGEquipmentComponent, PickedObjectID);
-	DOREPLIFETIME(UGEquipmentComponent, PickedItemID);
+	DOREPLIFETIME(UGEquipmentComponent, HeldObjects);
 }
 
 
@@ -55,7 +56,8 @@ void UGEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 
 
-FName UGEquipmentComponent::GetCurrentEquipmentID()
+// equip ID - public
+FName UGEquipmentComponent::GetCurrentEquipmentID() const
 {
 	return GetEquipmentID(CurrentSlotIndex);
 }
@@ -67,11 +69,14 @@ bool UGEquipmentComponent::ChangeEuquipmentInCurrSlot(FName ChangedEquipID)
 
 bool UGEquipmentComponent::ChangeCurrentSlot(int32 ChangedSlotIndex)
 {
+	if (!Owner || !Owner->HasAuthority()) return false;
+
 	return ChangeCurrentSlot_Interval(CurrentSlotIndex, ChangedSlotIndex);
 }
 
 
-FName UGEquipmentComponent::GetEquipmentID(int32 SlotIndex)
+// equip ID - private
+FName UGEquipmentComponent::GetEquipmentID(int32 SlotIndex) const
 {
 	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() <= SlotIndex || SlotIndex < 0)
 	{
@@ -88,50 +93,96 @@ bool UGEquipmentComponent::ChangeEquipment(int32 SlotIndex, FName EquipID)
 		return false;
 	}
 
-	// 나중에 유효한 equip id인지 검사하는 로직 추가 필요 -> UGDataManagerSubsystem::
-	FName PrevEquipID = EquipmentSlots[SlotIndex];
-	if (EquipID == "Eq_Hand")
-	{
-		if (SlotIndex == 0)
-		{
-			PickedObjectID = -1;
-		}
-		else if (SlotIndex == 3)
-		{
-			PickedItemID = -1;
-		}
-	}
-
 	EquipmentSlots[SlotIndex] = EquipID;
 	return true;
 }
 
 bool UGEquipmentComponent::ChangeCurrentSlot_Interval(int32 From, int32 To)
 {
+	auto* PlayerChar = Cast<AGOCLEANCharacter>(GetOwner());
+	if (!PlayerChar) return false;
+
 	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() <= To || To < 0)
 	{
 		return false;
 	}
 
-	bool Result = true;
-
-	if (From == 0 && GetCurrentEquipmentID() == "Eq_OVariable")
+	auto* ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
+	if (!ObjectManager)
 	{
-		// 오브젝트 매니저에서 PickedObjectID에 접근 후, 해당 오브젝트에 대하여 ChangeState 호출: Invisible -> Static
-		auto* ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
-		if (!ObjectManager)
-		{
-			UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] There's no object manager"));
-			return false;
-		}
+		UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] There's no object manager"));
+		return false;
+	}
 
-		Result = ObjectManager->DropNonfixedObject(PickedObjectID);
-		PickedObjectID = -1;
+
+	if (From == 0 && GetEquipmentID(From) == "Eq_OVariable")
+	{
+		AGNonfixedObject* HeldObj = HeldObjects[From];
+
+		PlayerChar->DropHeldObject(From);
+		HeldObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
+	}
+	if (To == 2 && GetEquipmentID(To) != "Eq_Hand")
+	{
+		AGNonfixedObject* HeldObj = HeldObjects[To];
+
+		PlayerChar->DropHeldObject(To);
+		HeldObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
 	}
 
 	CurrentSlotIndex = To;
+	OnRep_CurrentSlotIndex();
 
-	return Result;
+
+	// change anim - swap
+
+
+
+	return true;
+}
+
+
+// held Object
+AGNonfixedObject* UGEquipmentComponent::GetCurrentHeldObject() const
+{
+	return GetHeldObject(CurrentSlotIndex);
+}
+
+bool UGEquipmentComponent::SetCurrentHeldObject(AGNonfixedObject* NFixedObject)
+{
+	return ChangeHeldObject(CurrentSlotIndex, NFixedObject);
+}
+
+
+AGNonfixedObject* UGEquipmentComponent::GetHeldObject(int32 SlotIndex) const
+{
+	if (HeldObjects.Num() <= 0 || HeldObjects.Num() <= SlotIndex || SlotIndex < 0)
+	{
+		return nullptr;
+	}
+
+	return HeldObjects[SlotIndex];
+}
+
+bool UGEquipmentComponent::ChangeHeldObject(int32 SlotIndex, AGNonfixedObject* Obj)
+{
+	if (HeldObjects.Num() <= 0 || HeldObjects.Num() <= SlotIndex || SlotIndex < 0)
+	{
+		return false;
+	}
+	else if (SlotIndex == 1)
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[Equipment] Slot 2 can hold only mop!"));
+		return false;
+	}
+	else if (Obj && HeldObjects[SlotIndex])
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[Equipment] This slot already has other object!: SlotID - %d, BlockedObjName - %s"), SlotIndex, *Obj->GetName());
+		return false;
+	}
+
+	HeldObjects[SlotIndex] = Obj;
+	return true;
 }
 
 
@@ -139,11 +190,106 @@ bool UGEquipmentComponent::ChangeCurrentSlot_Interval(int32 From, int32 To)
 bool UGEquipmentComponent::InitiateEquipmentSlots()
 {
 	EquipmentSlots.Empty();
+	HeldObjects.Empty();
 
+	// slot 1
 	EquipmentSlots.Add("Eq_Hand");
+	HeldObjects.Add(nullptr);
+
+	// slot 2
 	EquipmentSlots.Add("Eq_Mop");
+	HeldObjects.Add(nullptr);
+
+	// slot 3
 	EquipmentSlots.Add("Eq_Hand");
+	HeldObjects.Add(nullptr);
+
+	// slot 4
 	EquipmentSlots.Add("Eq_Hand");
+	HeldObjects.Add(nullptr);
 
 	return true;
+}
+
+
+
+// mop pollution
+void UGEquipmentComponent::AddMopPollution(float Value)
+{
+	FName CurrEquipID = GetCurrentEquipmentID();
+	if (CurrEquipID == "Eq_Mop")
+	{
+		MopPollution += Value;
+		UE_LOG(LogGObject, Log, TEXT("[Equipment] Add Mop's pollution! : %f"), MopPollution);
+
+		OnRep_MopPollusion();
+	}
+	else if (CurrEquipID == "Eq_AutoMop")
+	{
+		AutoMopPollution += Value;
+		UE_LOG(LogGObject, Log, TEXT("[Equipment] Add AutoMop's pollution! : %f"), AutoMopPollution);
+	}
+	else
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[Equipment] this equipment can not add pollution! : %s"), *CurrEquipID.ToString());
+	}
+}
+
+void UGEquipmentComponent::CleanMopPollution()
+{
+	FName CurrEquipID = GetCurrentEquipmentID();
+	if (CurrEquipID == "Eq_Mop")
+	{
+		MopPollution = 0;
+		UE_LOG(LogGObject, Log, TEXT("[Equipment] Clean Mop's pollution! : %f"), MopPollution);
+
+		OnRep_MopPollusion();
+	}
+	else if (CurrEquipID == "Eq_AutoMop")
+	{
+		AutoMopPollution = 0;
+		UE_LOG(LogGObject, Log, TEXT("[Equipment] Clean AutoMop's pollution! : %f"), AutoMopPollution);
+	}
+	else
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[Equipment] this equipment can not clean pollution! : %s"), *CurrEquipID.ToString());
+	}
+}
+
+
+
+// OnRep
+void UGEquipmentComponent::OnRep_CurrentSlotIndex()
+{
+	AGNonfixedObject* HeldObj;
+
+	// update visual
+	for (int i = 0; i<HeldObjects.Num(); ++i)
+	{
+		HeldObj = HeldObjects[i];
+		if (!HeldObj) continue;
+
+		if (i == CurrentSlotIndex)
+		{
+			// show visual
+			HeldObj->SetActorHiddenInGame(false);
+
+			if (Owner)
+			{
+				// change character anim
+
+				// set actor's relative location
+			}
+		}
+		else
+		{
+			// hide visual
+			HeldObj->SetActorHiddenInGame(true);
+		}
+	}
+}
+
+void UGEquipmentComponent::OnRep_MopPollusion()
+{
+	// update mop's material
 }

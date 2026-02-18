@@ -65,10 +65,53 @@ private:
     // 게임 시작이 가능한지
     bool bGameStarted = false;
 
-    // PlayerState의 PlayerArray를 통해 빈 Index 찾기
-    int32 FindNextAvailableSeatIndex() const;
 
-    // 접속 인원수 카운트
+protected:
+    // 현재 접속(게임에 존재) 중인 플레이어 수: 2/3/4 
+    UFUNCTION(BlueprintCallable, Category = "Lobby|Seat")
     int32 GetCurrentPlayerCount() const;
 
+    // 0~MaxPlayers-1 범위에서 비어있는 좌석 인덱스 찾기. 꽉 차면 INDEX_NONE
+    UFUNCTION(BlueprintCallable, Category = "Lobby|Seat")
+    int32 FindNextAvailableSeatIndex() const;
+
+    // SeatIndex가 유효 범위(0~MaxPlayers-1)인지
+    UFUNCTION(BlueprintCallable, Category = "Lobby|Seat")
+    bool IsValidSeatIndex(int32 SeatIndex) const;
+
+
+public:
+    // 청소 중(또는 퇴마 중) -> 퇴마 시작
+    UFUNCTION(BlueprintCallable, Category = "Session|Exorcism")
+    bool StartExorcismPhase();
+
+    // 퇴마진 첫 인터랙션 시 호출 (조건 만족 시 퇴마 시작 -> 퇴마 중)
+    UFUNCTION(BlueprintCallable, Category = "Session|Exorcism")
+    bool TryEnterExorcismInProgress(/*AActor* ExorcismCircle*/);
+
+    // 퇴마 성공 (퇴마 중 -> 퇴마 종료 + 카운트다운 시작)
+    UFUNCTION(BlueprintCallable, Category = "Session|Exorcism")
+    bool FinishExorcismSuccess(float PostExorcismCountdownSeconds = 10.f);
+
+    // 퇴마 실패 (퇴마 중 -> 퇴마 시작 (퇴마진 위치 변경)
+    UFUNCTION(BlueprintCallable, Category = "Session|Exorcism")
+    bool FinishExorcismFail();
+
+    // 의뢰 성공/실패 결과창 띄우기
+    UFUNCTION(BlueprintCallable, Category = "Session|Contract")
+    void ContractSuccess();
+
+    UFUNCTION(BlueprintCallable, Category = "Session|Contract")
+    void ContractFail();
+
+protected:
+    // BP에서 결과 UI를 띄우게 이벤트
+    UFUNCTION(BlueprintImplementableEvent, Category = "Session|Contract")
+    void BP_OnContractSuccess();
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Session|Contract")
+    void BP_OnContractFail();
+
+private:
+    class AGameSessionState* GetSessionState() const;
 };

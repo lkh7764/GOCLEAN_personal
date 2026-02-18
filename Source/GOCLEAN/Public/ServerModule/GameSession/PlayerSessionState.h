@@ -51,6 +51,9 @@ public:
     UFUNCTION(Server, Reliable)
     void Server_SetLoadState(EPlayerLoadState NewState);
 
+    UFUNCTION(BlueprintCallable, Category = "Player|Ready")
+    void RequestSetReady(bool bNewReady);
+
 protected:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

@@ -246,9 +246,13 @@ private:
 	bool bIsSprinting;
 
 
-	// Equipments & Interaction //
-	UPROPERTY(VisibleAnywhere, Replicated)
+
+	// Anim ID //
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing="OnRep_AnimID")
 	int32 AnimID;
+
+	UFUNCTION()
+	void OnRep_AnimID();
 
 	UFUNCTION(BlueprintCallable)
 	void SetAnimID(int32 NewID) { AnimID = NewID; }
@@ -256,12 +260,16 @@ private:
 	UFUNCTION(BlueprintPure)
 	int32 GetAnimID() { return AnimID; }
 
+
+	// Equipment // 
 	UPROPERTY(VisibleAnywhere, Replicated)
 	TObjectPtr<UGEquipmentComponent> EquipComp;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
 	TObjectPtr<UInputAction> ChangeSlotAction;
 
+
+	// Interaction // 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UInteractionComponent> InteractionComp;
 
@@ -270,11 +278,18 @@ private:
 
 
 public:
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	void DoInteraction();
 
 	UGEquipmentComponent* GetEquipComp() const { return EquipComp; }
 	UInteractionComponent* GetInteractionComp() const { return InteractionComp; }
+
+	void DoInteraction();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	void SetHeldObject(class AGNonfixedObject* NewObj);
+	void DropHeldObject();
+	USceneComponent* GetHandMesh() const { return FirstPersonMeshComp; }
+
+	void SetHeldObjectRelativeTransform(class AGNonfixedObject* NewObj);
 	
 };

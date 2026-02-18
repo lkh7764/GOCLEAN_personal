@@ -32,7 +32,7 @@ public:
     TArray<TSoftObjectPtr<USkeletalMesh>> SK_MeshAssets;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-    TArray<TSoftClassPtr<AActor>> DEC_MeshAssets;
+    TArray<TSubclassOf<class AActor>> DEC_MeshAssets;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
     bool bUseBothHands;

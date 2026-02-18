@@ -46,7 +46,7 @@ public:
 	int32 IID;
 
 	// type ID - 현재 오브젝트가 어떤 오브젝트인지 식별하는 ID
-	UPROPERTY(EditAnywhere, Replicated, Category = "ID")
+	UPROPERTY(EditAnywhere, ReplicatedUsing="OnRep_TID", Category = "ID")
 	FName TID;
 
 
@@ -90,6 +90,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_State();
+
+	UFUNCTION()
+	void OnRep_TID();
 
 
 private:
