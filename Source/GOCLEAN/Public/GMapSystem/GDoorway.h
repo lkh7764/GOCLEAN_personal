@@ -113,6 +113,8 @@ class GOCLEAN_API AGDoor : public AActor, public IGInteractable
 public:
 	AGDoor() {};
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "Door")
 	void ReceiveOnDoorStateChanged(bool bClosed);
 
@@ -122,5 +124,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Door")
 	class AGDoorway* OwnerDoorway;
+
+
+	UPROPERTY(Replicated="ReceiveOnDoorStateChanged")
+	bool bIsClosed = true;
 
 };
