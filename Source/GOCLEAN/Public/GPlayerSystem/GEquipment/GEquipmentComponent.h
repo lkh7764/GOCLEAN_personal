@@ -9,6 +9,7 @@
 
 
 class AGOCLEANCharacter;
+class AGNonfixedObject;
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -17,20 +18,24 @@ class GOCLEAN_API UGEquipmentComponent : public UActorComponent
 	GENERATED_BODY()
 
 
-
 	// Variables
-private:
-	// only host
-
-
-
+protected:
 	// replicated
 	//		slot datas
-	UPROPERTY(Replicated)	
+	UPROPERTY(ReplicatedUsing="OnRep_CurrentSlotIndex")
 	int32 CurrentSlotIndex;
+
+	UFUNCTION()
+	void OnRep_CurrentSlotIndex();
+
 
 	UPROPERTY(Replicated)
 	TArray<FName> EquipmentSlots; // ¿Â∫Ò ΩΩ∑‘(size 4), element: equip ID
+
+
+	//		picked object
+	UPROPERTY(VisibleAnywhere, Replicated)
+	TArray<TObjectPtr<AGNonfixedObject>> HeldObjects;
 
 
 	//		pollution
@@ -47,20 +52,18 @@ private:
 	TObjectPtr<AGOCLEANCharacter> Owner;
 
 
-	//		picked ID
-	UPROPERTY(VisibleAnywhere, Replicated)
-	class AGNonfixedObject* CurrentHeldObject;
-
-
 	// functions - custom
 public:
 	// in-game
-	FName GetCurrentEquipmentID();
+	FName GetCurrentEquipmentID() const;
 	bool ChangeEuquipmentInCurrSlot(FName ChangedEquipID);
+
 	bool ChangeCurrentSlot(int32 ChangedSlotIndex);
 
-	AGNonfixedObject* GetCurrentHeldObject() const { return CurrentHeldObject; }
-	void SetCurrentHeldObject(AGNonfixedObject* NFixedObject) { CurrentHeldObject = NFixedObject; }
+	AGNonfixedObject* GetCurrentHeldObject() const;
+
+	bool SetCurrentHeldObject(AGNonfixedObject* NFixedObject);
+
 
 	UFUNCTION(BlueprintCallable)
 	void AddMopPollution(float Value);
@@ -76,18 +79,18 @@ public:
 
 
 
-private:
+protected:
 	// in-game
-	FName GetEquipmentID(int32 SlotIndex);
+	FName GetEquipmentID(int32 SlotIndex) const;
 	bool ChangeEquipment(int32 SlotIndex, FName EquipID);
 	bool ChangeCurrentSlot_Interval(int32 From, int32 To);
 
-	// in-construct 
+	AGNonfixedObject* GetHeldObject(int32 SlotIndex) const;
+	bool ChangeHeldObject(int32 SlotIndex, AGNonfixedObject* Obj);
 
 	// in-beginPlay
 	bool InitiateEquipmentSlots();
 	
-
 
 
 	// functions - default

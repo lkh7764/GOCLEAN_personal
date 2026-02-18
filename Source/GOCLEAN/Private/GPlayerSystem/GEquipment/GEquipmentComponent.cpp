@@ -56,7 +56,8 @@ void UGEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 
 
-FName UGEquipmentComponent::GetCurrentEquipmentID()
+// equip ID - public
+FName UGEquipmentComponent::GetCurrentEquipmentID() const
 {
 	return GetEquipmentID(CurrentSlotIndex);
 }
@@ -72,7 +73,8 @@ bool UGEquipmentComponent::ChangeCurrentSlot(int32 ChangedSlotIndex)
 }
 
 
-FName UGEquipmentComponent::GetEquipmentID(int32 SlotIndex)
+// equip ID - private
+FName UGEquipmentComponent::GetEquipmentID(int32 SlotIndex) const
 {
 	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() <= SlotIndex || SlotIndex < 0)
 	{
@@ -112,7 +114,7 @@ bool UGEquipmentComponent::ChangeCurrentSlot_Interval(int32 From, int32 To)
 			return false;
 		}
 
-		CurrentHeldObject->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
+		HeldObjects[From]->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
 	}
 
 	CurrentSlotIndex = To;
@@ -121,15 +123,71 @@ bool UGEquipmentComponent::ChangeCurrentSlot_Interval(int32 From, int32 To)
 }
 
 
+// held Object
+AGNonfixedObject* UGEquipmentComponent::GetCurrentHeldObject() const
+{
+	return GetHeldObject(CurrentSlotIndex);
+}
+
+bool UGEquipmentComponent::SetCurrentHeldObject(AGNonfixedObject* NFixedObject)
+{
+	return ChangeHeldObject(CurrentSlotIndex, NFixedObject);
+}
+
+
+AGNonfixedObject* UGEquipmentComponent::GetHeldObject(int32 SlotIndex) const
+{
+	if (HeldObjects.Num() <= 0 || HeldObjects.Num() <= SlotIndex || SlotIndex < 0)
+	{
+		return nullptr;
+	}
+
+	return HeldObjects[SlotIndex];
+}
+
+bool UGEquipmentComponent::ChangeHeldObject(int32 SlotIndex, AGNonfixedObject* Obj)
+{
+	if (HeldObjects.Num() <= 0 || HeldObjects.Num() <= SlotIndex || SlotIndex < 0)
+	{
+		return false;
+	}
+	else if (SlotIndex == 1)
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[Equipment] Slot 2 can hold only mop!"));
+		return false;
+	}
+	else if (Obj && HeldObjects[SlotIndex])
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[Equipment] This slot already has other object!: SlotID - %d, BlockedObjName - %s"), SlotIndex, Obj->GetName());
+		return false;
+	}
+
+	HeldObjects[SlotIndex] = Obj;
+	return true;
+}
+
+
 
 bool UGEquipmentComponent::InitiateEquipmentSlots()
 {
 	EquipmentSlots.Empty();
+	HeldObjects.Empty();
 
+	// slot 1
 	EquipmentSlots.Add("Eq_Hand");
+	HeldObjects.Add(nullptr);
+
+	// slot 2
 	EquipmentSlots.Add("Eq_Mop");
-	EquipmentSlots.Add("Eq_Axe");
+	HeldObjects.Add(nullptr);
+
+	// slot 3
 	EquipmentSlots.Add("Eq_Hand");
+	HeldObjects.Add(nullptr);
+
+	// slot 4
+	EquipmentSlots.Add("Eq_Hand");
+	HeldObjects.Add(nullptr);
 
 	return true;
 }
