@@ -20,35 +20,45 @@ AGameSessionMode::AGameSessionMode()
 }
 
 
-int32 AGameSessionMode::FindNextAvailableSeatIndex() const
-{
-	const AGameStateBase* GS = GameState;
-	if (!GS) return 0;
-	
-	return GS->PlayerArray.Num();
-}
-
 int32 AGameSessionMode::GetCurrentPlayerCount() const
 {
-    TSet<int32> Used;
-
     const AGameStateBase* GS = GameState;
-    if (GS)
+    return GS ? GS->PlayerArray.Num() : 0;
+}
+
+bool AGameSessionMode::IsValidSeatIndex(int32 SeatIndex) const
+{
+    return (SeatIndex >= 0 && SeatIndex < MaxPlayers);
+}
+
+int32 AGameSessionMode::FindNextAvailableSeatIndex() const
+{
+    const AGameStateBase* GS = GameState;
+    if (!GS) return INDEX_NONE;
+
+    // 현재 사용 중인 좌석
+    TSet<int32> UsedSeats;
+    UsedSeats.Reserve(MaxPlayers);
+
+    for (APlayerState* PS : GS->PlayerArray)
     {
-        for (APlayerState* PS : GS->PlayerArray)
+        const APlayerSessionState* PSS = Cast<APlayerSessionState>(PS);
+        if (!PSS) continue;
+
+        const int32 Seat = PSS->GetSeatIndex();
+        if (IsValidSeatIndex(Seat))
         {
-            const APlayerSessionState* PSS = Cast<APlayerSessionState>(PS);
-            if (PSS)
-            {
-                Used.Add(PSS->GetSeatIndex());
-            }
+            UsedSeats.Add(Seat);
         }
     }
 
+    // 0~MaxPlayers-1 중 빈 곳 반환
     for (int32 i = 0; i < MaxPlayers; ++i)
     {
-        if (!Used.Contains(i))
+        if (!UsedSeats.Contains(i))
+        {
             return i;
+        }
     }
     return INDEX_NONE;
 }
@@ -57,52 +67,44 @@ void AGameSessionMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-    if (!NewPlayer || !GameState)
-        return;
+    if (!HasAuthority() || !NewPlayer) return;
+    if (!GameState) return;
 
-    // 인원수 넘어가면 kick (나중에 PreLogin으로 옮기기)
-    const int32 CurrentCount = GetCurrentPlayerCount();
-    if (CurrentCount > MaxPlayers)
+    // 최대 인원 제한
+    const int32 CurrentPlayers = GetCurrentPlayerCount();
+    if (CurrentPlayers > MaxPlayers)
     {
         const FText Reason = FText::FromString(TEXT("방이 가득 찼습니다."));
-        
-         // 최소한 클라를 메인메뉴로 돌려보내고 연결을 끊는 처리
-         NewPlayer->ClientReturnToMainMenuWithTextReason(Reason);
-         NewPlayer->Destroy();
-        
+        NewPlayer->ClientReturnToMainMenuWithTextReason(Reason);
+        NewPlayer->Destroy();
         return;
     }
 
-    // 참여 Index 꽉 찬 경우 Kick
+    //  PlayerState 확보
     APlayerSessionState* PSS = Cast<APlayerSessionState>(NewPlayer->PlayerState);
     if (!PSS)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[Lobby] PlayerState cast failed"));
         return;
+    }
 
-    
-
+    // 빈 좌석 배정 (0~3)
     const int32 Seat = FindNextAvailableSeatIndex();
     if (Seat == INDEX_NONE)
     {
         const FText Reason = FText::FromString(TEXT("좌석 할당 실패 (방이 가득 찼습니다)."));
-
         NewPlayer->ClientReturnToMainMenuWithTextReason(Reason);
         NewPlayer->Destroy();
-        
         return;
     }
 
-    const bool bIsHost = NewPlayer->IsLocalController();
-
     PSS->SetSeatIndex(Seat);
-    PSS->SetEliminated(false);
-    PSS->SetNickname(TEXT("Player"));
-    PSS->SetReady(bIsHost); // 호스트면 true, 아니면 false
 
-    OnPlayerReadyChanged();
+    // 호스트는 Seat 0 / ready true 
+    const bool bIsHostSeat = (Seat == 0);
+    PSS->SetReady(bIsHostSeat);
 
-    // Online Subsystem Steam에서 닉네임 가져오기 로직 추가
-
-
+    PSS->SetNickname(PSS->GetPlayerName());
 }
 
 void AGameSessionMode::Logout(AController* Exiting)
@@ -382,4 +384,113 @@ void AGameSessionMode::HandlePlayerLeft(int32 PlayerId)
     {
         GSS->RemovePurchasedVending(PlayerId);
     }
+}
+
+
+AGameSessionState* AGameSessionMode::GetSessionState() const
+{
+    return GetWorld() ? GetWorld()->GetGameState<AGameSessionState>() : nullptr;
+}
+
+bool AGameSessionMode::StartExorcismPhase()
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return false;
+
+    const EInGamePhase Cur = SS->GetInGamePhase();
+
+    if (Cur != EInGamePhase::Cleaning && Cur != EInGamePhase::ExorcismInProgress)
+        return false;
+
+    SS->SetInGamePhase(EInGamePhase::ExorcismStart);
+
+    // 퇴마 시작 시 진행도/타이머 초기화
+    SS->SetExorcismProgress(0.f, 0.f, 100.f);
+    SS->StartPostExorcismTimer(0.f);
+
+    return true;
+}
+
+bool AGameSessionMode::TryEnterExorcismInProgress(/*AActor* ExorcismCircle*/)
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return false;
+
+    if (SS->GetInGamePhase() != EInGamePhase::ExorcismStart)
+        return false;
+
+    // =========
+    // 각 플레이어들이 퇴마진과 동일한 방에 존재하는지 체크
+    // =========
+    const bool bAllPlayersInSameRoom = true; // 체크 값으로 여기 바꿔주세요
+
+    if (!bAllPlayersInSameRoom)
+        return false;
+
+    SS->SetInGamePhase(EInGamePhase::ExorcismInProgress);
+    return true;
+}
+
+bool AGameSessionMode::FinishExorcismSuccess(float PostExorcismCountdownSeconds)
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return false;
+
+    if (SS->GetInGamePhase() != EInGamePhase::ExorcismInProgress)
+        return false;
+
+    SS->SetInGamePhase(EInGamePhase::ExorcismEnd);
+
+    // 진행도 완료 처리 + 종료 카운트다운
+    SS->SetExorcismProgress(100.f, 0.f, 100.f);
+    SS->StartPostExorcismTimer(PostExorcismCountdownSeconds);
+
+    return true;
+}
+
+bool AGameSessionMode::FinishExorcismFail()
+{
+    if (!HasAuthority()) return false;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return false;
+
+    if (SS->GetInGamePhase() != EInGamePhase::ExorcismInProgress)
+        return false;
+
+    //============
+    // 퇴마진 위치 바꾸기
+    // ===========
+
+    SS->SetInGamePhase(EInGamePhase::ExorcismStart);
+
+    // 진행도 리셋
+    SS->SetExorcismProgress(0.f, 0.f, 100.f);
+    SS->StartPostExorcismTimer(0.f);
+
+    return true;
+}
+
+void AGameSessionMode::ContractSuccess()
+{
+    if (!HasAuthority()) return;
+
+    AGameSessionState* SS = GetSessionState();
+    if (!SS) return;
+
+    SS->SetSessionPhase(ESessionPhase::Ending);
+    BP_OnContractSuccess();
+}
+
+void AGameSessionMode::ContractFail()
+{
+    if (!HasAuthority()) return;
+
+    BP_OnContractFail();
 }
