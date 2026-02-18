@@ -12,6 +12,10 @@
 #include "Net/UnrealNetwork.h"
 #include <ServerModule/GameSession/GameSessionInstance.h>
 
+#include "GMapSystem/Server/GMapManager.h"
+#include "GCharacter/StatsComponent/CharacterStatsComponent.h"
+#include "GCharacter/GOCLEANPlayerController.h"
+#include "TimerManager.h"
 
 AGameSessionMode::AGameSessionMode()
 {
@@ -493,4 +497,90 @@ void AGameSessionMode::ContractFail()
     if (!HasAuthority()) return;
 
     BP_OnContractFail();
+}
+
+void AGameSessionMode::BP_StartPostExorcismEscapeCountdown(float DurationSeconds)
+{
+    if (!HasAuthority()) return;
+
+    AGameSessionState* SessionState = GetGameState<AGameSessionState>();
+    if (!SessionState) return;
+
+    SessionState->StartPostExorcismTimer(DurationSeconds);
+
+    GetWorldTimerManager().ClearTimer(PostExorcismCountdownTimerHandle);
+    GetWorldTimerManager().SetTimer(
+        PostExorcismCountdownTimerHandle,
+        this,
+        &AGameSessionMode::TickPostExorcismEscapeCountdown,
+        1.0f,
+        true
+    );
+}
+
+void AGameSessionMode::TickPostExorcismEscapeCountdown()
+{
+    if (!HasAuthority())
+    {
+        GetWorldTimerManager().ClearTimer(PostExorcismCountdownTimerHandle);
+        return;
+    }
+
+    AGameSessionState* SessionState = GetGameState<AGameSessionState>();
+    if (!SessionState)
+    {
+        GetWorldTimerManager().ClearTimer(PostExorcismCountdownTimerHandle);
+        return;
+    }
+
+    SessionState->AddPostExorcismTimeRemaining(-1.f);
+
+    if (SessionState->BP_GetPostExorcismTimeRemaining() <= 0.f)
+    {
+        GetWorldTimerManager().ClearTimer(PostExorcismCountdownTimerHandle);
+        FinishPostExorcismEscapeCountdown();
+    }
+}
+
+void AGameSessionMode::FinishPostExorcismEscapeCountdown()
+{
+    if (!HasAuthority()) return;
+
+    AGameSessionState* SessionState = GetGameState<AGameSessionState>();
+    if (!SessionState) return;
+
+    UGMapManager* MapManager = SessionState->GetMapManager();
+
+    if (GameState)
+    {
+        for (APlayerState* PS : GameState->PlayerArray)
+        {
+            APlayerSessionState* PSS = Cast<APlayerSessionState>(PS);
+            if (!PSS) continue;
+
+            APawn* Pawn = SessionState->GetPawnBySeat(PSS->GetSeatIndex());
+            if (!Pawn) continue;
+
+            const bool bIsOutdoor = (MapManager) ? MapManager->IsActorInZoneType(Pawn, EGZoneType::E_Outdoor) : false;
+            if (!bIsOutdoor)
+            {
+                if (UCharacterStatsComponent* Stats = Pawn->FindComponentByClass<UCharacterStatsComponent>())
+                {
+                    const int32 CurLife = Stats->GetCurrentLife();
+                    if (CurLife > 0)
+                    {
+                        Stats->DecreaseLife(CurLife); // 0으로 바꾸기
+                    }
+                }
+            }
+        }
+    }
+
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        if (AGOCLEANPlayerController* PC = Cast<AGOCLEANPlayerController>(It->Get()))
+        {
+            PC->Client_ShowResultUI();
+        }
+    }
 }

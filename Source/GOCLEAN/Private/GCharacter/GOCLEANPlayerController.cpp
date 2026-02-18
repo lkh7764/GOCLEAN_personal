@@ -67,6 +67,33 @@ void AGOCLEANPlayerController::ShowLobbyUI()
     }
 }
 
+void AGOCLEANPlayerController::ShowResultUI()
+{
+    if (CurrentWidget)
+    {
+        CurrentWidget->RemoveFromParent();
+        CurrentWidget = nullptr;
+    }
+
+    if (!ResultWidgetClass) return;
+
+    CurrentWidget = CreateWidget<UUserWidget>(this, ResultWidgetClass);
+    if (CurrentWidget)
+    {
+        CurrentWidget->AddToViewport();
+
+        bShowMouseCursor = true;
+        FInputModeUIOnly Mode;
+        SetInputMode(Mode);
+    }
+}
+
+
+void AGOCLEANPlayerController::Client_ShowResultUI_Implementation()
+{
+    ShowResultUI();
+}
+
 
 void AGOCLEANPlayerController::TryDoInteraction()
 {

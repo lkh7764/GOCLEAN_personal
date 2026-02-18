@@ -43,4 +43,13 @@ protected:
 	UPROPERTY()
 	TMap<FName, FGZoneData> ZoneDatas;
 
+public:
+	// 특정 Actor가 현재 어떤 ZoneType에 포함되어 있는지
+	UFUNCTION(BlueprintCallable)
+	bool IsActorInZoneType(const AActor* Actor, EGZoneType ZoneType) const;
+
+	// 현재 Actor가 포함된 ZoneID 목록
+	UFUNCTION(BlueprintCallable)
+	TArray<FName> GetActorZoneIds(const AActor* Actor) const;
+
 };
