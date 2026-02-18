@@ -493,9 +493,9 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_VItemSpawner")
     {
-        if (CCTV)
+        if (VendingItemSpawner)
         {
-            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] CCTV can not spawned over two"));
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] VendingItemSpawner-+ can not spawned over two"));
             return;
         }
 

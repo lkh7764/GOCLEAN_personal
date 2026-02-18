@@ -244,7 +244,8 @@ void UGRemovingComponent::SetVisualByInteractionCnt_Implementation(AGNonfixedObj
 			UMaterialInstanceDynamic* DynMat = Decal->CreateDynamicMaterialInstance();
 			if (DynMat)
 			{
-				DynMat->SetScalarParameterValue(TEXT("Opacity"), CleaningRatio);
+				DynMat->SetScalarParameterValue(TEXT("Opacity"), CleaningRatio); 
+				DynMat->SetScalarParameterValue(TEXT("Opacity Intensity"), CleaningRatio);
 			}
 		}
 	}

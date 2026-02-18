@@ -13,7 +13,7 @@
 
 
 UCLASS()
-class GOCLEAN_API AGFixedObject : public AActor
+class GOCLEAN_API AGFixedObject : public AActor, public IGInteractable
 {
 	GENERATED_BODY()
 	
@@ -44,6 +44,19 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnCustomEvent_Bool(bool Param);
 
+	// interact
+	virtual bool CanInteract(FName EquipID, AGOCLEANCharacter* Target) const {
+		return true;
+	}
+
+	virtual void ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target) override
+	{
+		ExecuteInteraction_Internal();
+	}
+
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ExecuteInteraction_Internal();
 
 
 
