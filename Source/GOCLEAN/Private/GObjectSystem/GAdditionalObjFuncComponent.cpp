@@ -165,7 +165,17 @@ void UGPickComponent::DropObject()
 
 UGRemovingComponent::UGRemovingComponent()
 {
+	SetIsReplicatedByDefault(true);
+}
 
+void UGRemovingComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// 속한 데이터 중 일부를 '나'에게만 복제하고 싶을 때
+	// DOREPLIFETIME_CONDITION(UGEquipmentComponent, CurrentSlotIndex, COND_OwnerOnly);
+	DOREPLIFETIME(UGRemovingComponent, Decals);
+	DOREPLIFETIME(UGRemovingComponent, CleaningRatio);
 }
 
 void UGRemovingComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
@@ -234,20 +244,9 @@ void UGRemovingComponent::SetVisualByInteractionCnt_Implementation(AGNonfixedObj
 		// 데칼타입의 경우, 메시의 알파값을 감소
 		if (InteractionMaxCnt <= 0) return;
 
-		float CleaningRatio = 1.0f - (Owner->GetNonfixedObjCoreComp()->InteractionCnt / (float)InteractionMaxCnt);
-		CleaningRatio = FMath::Clamp(CleaningRatio, 0.0f, 1.0f);
-
-		for (auto Decal : Decals)
-		{
-			if (!Decal) continue;
-
-			UMaterialInstanceDynamic* DynMat = Decal->CreateDynamicMaterialInstance();
-			if (DynMat)
-			{
-				DynMat->SetScalarParameterValue(TEXT("Opacity"), CleaningRatio); 
-				DynMat->SetScalarParameterValue(TEXT("Opacity Intensity"), CleaningRatio);
-			}
-		}
+		float _CleaningRatio = 1.0f - (Owner->GetNonfixedObjCoreComp()->InteractionCnt / (float)InteractionMaxCnt);
+		CleaningRatio = FMath::Clamp(_CleaningRatio, 0.0f, 1.0f);
+		OnRep_CleaningRatio();
 	}
 	else if (ObjData.Category == EGObjectCategory::E_Trash_B && BrokenMesh)
 	{
@@ -255,6 +254,21 @@ void UGRemovingComponent::SetVisualByInteractionCnt_Implementation(AGNonfixedObj
 		if (Owner->GetNonfixedObjCoreComp()->InteractionCnt * 2 >= InteractionMaxCnt)
 		{
 			Owner->GetStaticMeshComp()->SetStaticMesh(BrokenMesh);
+		}
+	}
+}
+
+void UGRemovingComponent::OnRep_CleaningRatio() {
+
+	for (auto Decal : Decals)
+	{
+		if (!Decal) continue;
+
+		UMaterialInstanceDynamic* DynMat = Decal->CreateDynamicMaterialInstance();
+		if (DynMat)
+		{
+			DynMat->SetScalarParameterValue(TEXT("Opacity"), CleaningRatio);
+			DynMat->SetScalarParameterValue(TEXT("Opacity Intensity"), CleaningRatio);
 		}
 	}
 }

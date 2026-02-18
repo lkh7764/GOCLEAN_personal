@@ -88,6 +88,8 @@ public:
 
 	virtual void InitializeAdditionalData(const FGNonfixedObjData& Data) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -109,7 +111,7 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	int32 InteractionMaxCnt;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	TArray<TObjectPtr<UDecalComponent>> Decals;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -117,6 +119,13 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AActor> DestroyedActor;
+
+
+	UPROPERTY(ReplicatedUsing="OnRep_CleaningRatio")
+	float CleaningRatio;
+
+	UFUNCTION()
+	void OnRep_CleaningRatio();
 
 };
 
