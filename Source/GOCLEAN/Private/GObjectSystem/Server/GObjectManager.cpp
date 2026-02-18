@@ -218,9 +218,11 @@ void UGObjectManager::InitiateObjects()
     FreeObjsStack.Empty();
     NfixedObjects.Empty();
 
+    float InitialSpiritualGuage;
+
 #if PROTOTYPE_2026_02
     // 맵에 배치된 오브젝트 중 NonfixedObj 타입의 오브젝트를 로드해옴
-    FindAllNonfixedObjects();
+    InitialSpiritualGuage = FindAllNonfixedObjects();
 
     // 예비 오브젝트 풀을 생성
     CreateNonfixedObjPool(50);
@@ -228,6 +230,9 @@ void UGObjectManager::InitiateObjects()
 #else
     // 1. 오브젝트풀 생성
     CreateNonfixedObjPool(PoolSize);
+
+    // 2. 랜덤 오브젝트 스포닝
+    // InitialSpiritualGuage = func()
 #endif
 
 
@@ -235,13 +240,25 @@ void UGObjectManager::InitiateObjects()
     AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
     if (GameState)
     {
-        // GameState->ResetSpiritualAndRestGauge();
+        // 청소 90% 진행하면 청소 완료한 것으로 간주
+        GameState->ResetSpiritualAndRestGauge(InitialSpiritualGuage * 0.9f);
     }
 }
 
-void UGObjectManager::FindAllNonfixedObjects()
+float UGObjectManager::FindAllNonfixedObjects()
 {
     UE_LOG(LogObjectPool, Warning, TEXT("[Prototype] Find spawned NonfixedObjects"));
+
+    float TotalPollution = 0.0f;
+    auto* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+    if (!DataManager)
+    {
+        UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] Could not find DataManager!"));
+        return TotalPollution;
+    }
+
+    const FGObjectDataRow* Data;
+    FName TID;
 
     int32 FoundCnt = 0;
     for (TActorIterator<AGNonfixedObject> It(GetWorld()); It; ++It)
@@ -256,6 +273,19 @@ void UGObjectManager::FindAllNonfixedObjects()
 
             PlacedObj->AttachToActor(ActiveRoot, FAttachmentTransformRules::KeepWorldTransform);
             PlacedObj->UpdateObjectData(FoundCnt);
+
+
+            // calculate pollution
+            TID = PlacedObj->GetNonfixedObjCoreComp()->TID;
+            Data = DataManager->GetObjectData(TID);
+            if (!Data)
+            {
+                UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] Could not find matched data!: %s"), *TID.ToString());
+            }
+            else
+            {
+                TotalPollution += Data->Pollution;
+            }
         }
     }
 
@@ -263,6 +293,9 @@ void UGObjectManager::FindAllNonfixedObjects()
     UE_LOG(LogObjectPool, Log, TEXT("[Prototype] Found %d number of NonfixedObjects!"), FoundCnt);
 
     NfixedObjCnt += FoundCnt;
+
+
+    return TotalPollution;
 }
 
 bool UGObjectManager::DropNonfixedObject(int32 PickedObjectIID)

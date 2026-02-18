@@ -126,7 +126,7 @@ bool UGEquipmentComponent::InitiateEquipmentSlots()
 {
 	EquipmentSlots.Empty();
 
-	EquipmentSlots.Add("Eq_Axe");
+	EquipmentSlots.Add("Eq_Hand");
 	EquipmentSlots.Add("Eq_Mop");
 	EquipmentSlots.Add("Eq_Axe");
 	EquipmentSlots.Add("Eq_Hand");
