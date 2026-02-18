@@ -62,7 +62,7 @@ void AGDoorway::BeginPlay()
 	{
 		TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AGDoorway::OnOverlapEnd);
 
-		TEST_OpenAllDoors();
+		// TEST_OpenAllDoors();
 	}
 	else
 	{
