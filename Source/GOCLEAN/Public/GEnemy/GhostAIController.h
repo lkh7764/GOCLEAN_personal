@@ -109,13 +109,19 @@ public:
 	FTimerHandle CheckArrivalToCurrentPointHandle;
 
 	// Chase
-	UPROPERTY(Replicated, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_IsChasing, BlueprintReadOnly)
 	bool bIsChasing;
-	UPROPERTY(Replicated, BlueprintReadOnly)
+	UPROPERTY(Replicated=OnRep_IsRageEvent, BlueprintReadOnly)
 	bool bIsRageEvent;
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bIsUnendingRageEvent;
 	FTimerHandle ChasingPlayerHandle;
+
+	UFUNCTION()
+	void OnRep_IsRageEvent();
+
+	UFUNCTION()
+	void OnRep_IsChasing();
 
 private:
 	// Hunt

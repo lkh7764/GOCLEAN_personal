@@ -142,7 +142,8 @@ void AGhostAIController::CheckArrivalCurrentPatrolPoint()
 
 void AGhostAIController::CheckRageEventCondition()
 {
-	if (PlayersSanityCorruptionRate >= 150 && !bIsRageEvent) {
+	if (PlayersSanityCorruptionRate >= 500 && !bIsRageEvent) {
+		Cast<AGhostBase>(GetPawn())->Multicast_PlayRageSound();
 		bIsRageEvent = true;
 		StartChase();
 	}
@@ -191,11 +192,15 @@ void AGhostAIController::PlayerHunt()
 	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPlayer->GetActorLocation());
 	if (Distance < ManifestRadius)
 	{
+		Cast<AGhostBase>(GetPawn())->Multicast_PlayChaseSound();
 		GhostCharacter->Server_RequestSetVisible(true);
 	}
 
 	if (Distance < HuntRadius)
 	{
+		Cast<AGhostBase>(GetPawn())->Multicast_StopChaseSound();
+		Cast<AGhostBase>(GetPawn())->Multicast_StopRageSound();
+		Cast<AGhostBase>(GetPawn())->Multicast_PlayOnHuntedSound();
 		GhostCharacter->Server_RequestSetVisible(false);
 		
 		Cast<AGOCLEANCharacter>(TargetPlayer)->Server_RequestOnHunted();
@@ -266,6 +271,28 @@ void AGhostAIController::EndlessPlayerHunt()
 
 		if (bIsUnendingRageEvent) EndlessPlayerHunt();
 	}
+}
+
+void AGhostAIController::OnRep_IsChasing()
+{
+	AGhostBase* Ghost = Cast<AGhostBase>(GetPawn());
+	if (!Ghost) return;
+
+	if (bIsChasing)
+		Ghost->Multicast_PlayChaseSound();
+	else
+		Ghost->Multicast_StopChaseSound();
+}
+
+void AGhostAIController::OnRep_IsRageEvent()
+{
+	AGhostBase* Ghost = Cast<AGhostBase>(GetPawn());
+	if (!Ghost) return;
+
+	if (bIsRageEvent)
+		Ghost->Multicast_PlayRageSound();
+	else
+		Ghost->Multicast_StopRageSound();
 }
 
 void AGhostAIController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
