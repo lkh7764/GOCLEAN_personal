@@ -14,7 +14,7 @@ AGhostBase::AGhostBase()
 	StatsComp = CreateDefaultSubobject<UGhostStatsComponent>(TEXT("GhostStats"));
 
 	// Default variables
-	BehaviorEventCycleDelay = 3.0f;
+	BehaviorEventCycleDelay = 12.0f;
 	bCanSetBehaviourEventCycleTimer = true;
 	CurrentPatrolIndex = 0;
 
@@ -145,11 +145,11 @@ void AGhostBase::CheckBehaviorEventCondition()
 {
 	if (GhostAIController == nullptr) return;
 
-	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 50 && bCanSetBehaviourEventCycleTimer) {
+	if (GhostAIController->GetPlayerSanityCorruptionRate() >= 500 && bCanSetBehaviourEventCycleTimer) {
 		GetWorldTimerManager().SetTimer(GhostBehaviorCycleHandle, this, &AGhostBase::PerformBehaviorEvent, BehaviorEventCycleDelay, true);
 		bCanSetBehaviourEventCycleTimer = false;
 	}
-	else if (GhostAIController->GetPlayerSanityCorruptionRate() < 50 && !bCanSetBehaviourEventCycleTimer) {
+	else if (GhostAIController->GetPlayerSanityCorruptionRate() < 500 && !bCanSetBehaviourEventCycleTimer) {
 		GetWorldTimerManager().ClearTimer(GhostBehaviorCycleHandle);
 		bCanSetBehaviourEventCycleTimer = true;
 	}
