@@ -137,7 +137,6 @@ bool UGEquipmentComponent::ChangeCurrentSlot_Interval(int32 From, int32 To)
 	// change anim - swap
 
 
-
 	return true;
 }
 
