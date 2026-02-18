@@ -491,6 +491,16 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
 
         CCTV = Target;
     }
+    else if (TID == "Obj_VItemSpawner")
+    {
+        if (CCTV)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] CCTV can not spawned over two"));
+            return;
+        }
+
+        CCTV = Target;
+    }
     else
     {
         UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] Could not found atched variable: %s"), *Target->GetName());
@@ -536,6 +546,21 @@ void UGObjectManager::UpdateExocismCircleStates(AGFixedObject* ActiveCircle)
 
     ActiveCircle->ChangeState(EGFixedObjState::E_Static);
 }
+
+
+
+void UGObjectManager::SetSelectedVendingItem(FName TID)
+{
+    if (!VendingItemSpawner || !VendingItemSpawner->GetComponentByClass<UGFixedObjInteractionComponent>())
+    {
+        UE_LOG(LogGObject, Warning, TEXT("VendingItem Spawner was not Setting!")); 
+        return;
+    }
+
+    VendingItemSpawner->GetComponentByClass<UGFixedObjInteractionComponent>()->SetSpawnObjTID(TID);
+}
+
+
 
 
 
