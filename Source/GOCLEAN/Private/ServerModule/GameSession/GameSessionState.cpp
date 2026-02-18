@@ -74,6 +74,9 @@ void AGameSessionState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(AGameSessionState, SelectedContractId);
     DOREPLIFETIME(AGameSessionState, SessionJoinCode);
     DOREPLIFETIME(AGameSessionState, PurchasedVending);
+
+
+    DOREPLIFETIME(AGameSessionState, VendingRemaining);
 }
 
 
@@ -525,4 +528,59 @@ int32 AGameSessionState::GetLocalCurrentLife() const
     if (LocalSeat < 0) return -1;
 
     return GetCurrentLifeBySeat(LocalSeat);
+}
+
+
+
+void AGameSessionState::ResetVendingStock()
+{
+    if (!HasAuthority()) return;
+
+    VendingRemaining.SetNum(4);
+    VendingRemaining[0] = 1;
+    VendingRemaining[1] = 3;
+    VendingRemaining[2] = -1; // 무제한
+    VendingRemaining[3] = 4;
+
+}
+
+int32 AGameSessionState::GetVendingRemainingByIndex(int32 ItemIndex) const
+{
+    if (!VendingRemaining.IsValidIndex(ItemIndex)) return 0;
+    return VendingRemaining[ItemIndex];
+}
+
+bool AGameSessionState::TryPurchaseVendingByIndex(int32 ItemIndex)
+{
+    if (!HasAuthority()) return false;
+    if (!VendingRemaining.IsValidIndex(ItemIndex)) return false;
+
+    const int32 Remaining = VendingRemaining[ItemIndex];
+
+    // 무제한
+    if (Remaining < 0)
+    {
+        return true;
+    }
+
+    // 품절
+    if (Remaining == 0)
+    {
+        return false;
+    }
+
+    // 재고 차감
+    VendingRemaining[ItemIndex] = Remaining - 1;
+
+    return true;
+}
+
+int32 AGameSessionState::GetItemStockByIndex(int32 ItemIndex) const
+{
+    if (VendingRemaining.IsValidIndex(ItemIndex))
+    {
+        return VendingRemaining[ItemIndex];
+    }
+
+    return 0;
 }

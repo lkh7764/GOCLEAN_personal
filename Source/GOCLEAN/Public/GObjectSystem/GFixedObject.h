@@ -26,6 +26,7 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
+	UFUNCTION(BlueprintCallable)
 	virtual void BeginPlay() override;
 
 public:	
@@ -94,6 +95,9 @@ public:
 	// Sets default values for this component's properties
 	UGFixedObjInteractionComponent();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bChangeStateAfterExecuteInteraction = false;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -113,6 +117,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName SpawnObjTID;
+
+
+	UFUNCTION(BlueprintCallable)
+	FName GetSpawnObjTID() const { return SpawnObjTID; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetSpawnObjTID(FName TID);
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<class UBoxComponent> InteractionVolume;
