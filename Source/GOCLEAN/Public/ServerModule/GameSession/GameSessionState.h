@@ -321,4 +321,28 @@ public:
     // 로컬 플레이어 현재 목숨
     UFUNCTION(BlueprintCallable, Category="Session|Stats")
     int32 GetLocalCurrentLife() const;
+
+
+
+    // 밴딩 아이템 재고 관리
+public:
+    // 무제한은 -1로 약속
+    UFUNCTION(BlueprintCallable)
+    void ResetVendingStock();
+
+    UFUNCTION(BlueprintCallable)
+    int32 GetVendingRemainingByIndex(int32 ItemIndex) const;
+
+    // 구매 시도
+    UFUNCTION(BlueprintCallable)
+    bool TryPurchaseVendingByIndex(int32 ItemIndex);
+
+    // 인덱스로 남은 재고 조회
+    UFUNCTION(BlueprintCallable)
+    int32 GetItemStockByIndex(int32 ItemIndex) const;
+
+protected:
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    TArray<int32> VendingRemaining;
+
 };

@@ -69,6 +69,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ShowResultUI();
 
+
 	// Server -> owning client
 	UFUNCTION(Client, Reliable)
 	void Client_ShowResultUI();
@@ -77,5 +78,30 @@ public:
 
 	void ChangeSlot(int32 SlotIndex);
 
+
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> VendingWidgetClass;
+
+protected:
+	UPROPERTY()
+	TObjectPtr<UUserWidget> VendingWidget;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "UI|Vending")
+	void OpenVendingUI();
+
+	UFUNCTION(BlueprintCallable, Category = "UI|Vending")
+	void CloseVendingUI();
+
+	UFUNCTION(BlueprintCallable, Category = "UI|Vending")
+	void ToggleVendingUI();
+
+	UFUNCTION(BlueprintPure, Category = "UI|Vending")
+	bool IsVendingUIOpen() const;
+
+protected:
+	void EnsureVendingWidget();
 
 };
