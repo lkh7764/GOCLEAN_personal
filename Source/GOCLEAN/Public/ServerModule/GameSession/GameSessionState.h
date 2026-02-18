@@ -113,8 +113,10 @@ private:
     UPROPERTY()
     UGMapManager* MapManager = nullptr;
 
+public:
     // Getters (Client/Server)
     float GetSpiritualGauge() const { return SpiritualGauge; }
+    UFUNCTION(BlueprintCallable)
     float GetRestGauge() const { return RestGauge; }
     float GetExorcismProgress() const { return ExorcismProgress; }
     float GetPostExorcismTimeRemaining() const { return PostExorcismTimeRemaining; }
@@ -310,7 +312,6 @@ public:
     // 영적 / 안식 게이지 값 증감
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
     void ApplySpiritualOrRestGauge(float Amount, float SpiritualMin = 0.f, float SpiritualMax = 100.f, float RestMin = 0.f, float RestMax = 100.f);
-
 
 public:
     // SeatIndex로 해당 플레이어의 현재 목숨(Life) 가져오기 (클라 UI에서도 사용 가능)
