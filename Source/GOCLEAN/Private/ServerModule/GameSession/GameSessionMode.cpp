@@ -110,6 +110,8 @@ void AGameSessionMode::PostLogin(APlayerController* NewPlayer)
     // 호스트는 Seat 0 / ready true 
     const bool bIsHostSeat = (Seat == 0);
     PSS->SetReady(bIsHostSeat);
+    // 테스트용
+    PSS->SetReady(true);
 
     PSS->SetNickname(PSS->GetPlayerName());
 }
