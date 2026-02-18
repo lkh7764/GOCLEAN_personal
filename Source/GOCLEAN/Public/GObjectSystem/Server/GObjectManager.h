@@ -131,6 +131,8 @@ protected:
 
 	float FindAllNonfixedObjects();
 
+	AGNonfixedObject* SpawnNonfixedObjectAtPlayerSight(APlayerController* PC, class AGOCLEANCharacter* PlayerChar);
+
 
 public:
 	// Nonfixed Object

@@ -6,6 +6,7 @@
 #include "Components/DecalComponent.h"
 
 #include "GTypes/IGInteractable.h"
+#include "GTypes/DataTableRow/GEquipmentDataRow.h"
 #include "GObjectSystem/GNonfixedObjCoreComponent.h"
 #include "GObjectSystem/GNonfixedObject.h"
 #include "GObjectSystem/GFixedObject.h"
@@ -66,7 +67,66 @@ void UGPickComponent::BeginPlay()
 
 void UGPickComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
 {
+	if (Target->GetEquipComp()->GetCurrentEquipmentID() != "Eq_Hand") return;
+
 	PickUpObject(Target);
+}
+
+void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
+{
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (!Owner) return;
+
+	UGNonfixedObjCoreComponent* CoreComp = Owner->GetNonfixedObjCoreComp();
+	if (!CoreComp) return;
+
+	UGEquipmentComponent* EquipComp = Target->GetEquipComp();
+	if (!EquipComp) return;
+
+	UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
+	const FGObjectDataRow* ObjData =
+		DataManager ? DataManager->GetObjectData(CoreComp->TID) : nullptr;
+	if (!ObjData)
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[NonfixedObject] Can not found matched object data!: TID - %s"), *CoreComp->TID.ToString());
+		return;
+	}
+
+	FName PickedEquipID = ObjData->PickedEquipID;
+	const FGEquipmentDataRow* EquipData = DataManager->GetEquipmentData(PickedEquipID);
+	if (!EquipData)
+	{
+		UE_LOG(LogGObject, Warning, TEXT("[NonfixedObject] Can not found picked equipment data!: TID - %s"), *CoreComp->TID.ToString());
+		return;
+	}
+
+
+	// set target
+	int32 MatchedSlotIndex = EquipData->MatchedSlotIndex;
+	if (MatchedSlotIndex != EquipComp->GetCurrentSlotIndex())
+	{
+		if (!EquipComp->ChangeCurrentSlot(MatchedSlotIndex))
+		{
+			UE_LOG(LogGObject, Warning, TEXT("[NonfixedObject] Error in change current slot"));
+			return;
+		}
+	}
+
+	Target->SetHeldObject(Owner);
+	EquipComp->ChangeEuquipmentInCurrSlot(PickedEquipID);
+
+
+	// set owner
+	Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Picked);
+
+
+	// set my variables
+	bIsPickedUp = true;
+	OwnerPlayer = Target;
+
+
+	// sync force server-client
+	Owner->Multicast_OnPickedUp(Target);
 }
 
 void UGPickComponent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState)
@@ -74,33 +134,6 @@ void UGPickComponent::OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfi
 	if (PrevState == ENonfixedObjState::E_Picked && ChangedState == ENonfixedObjState::E_Static)
 	{
 		DropObject();
-	}
-}
-
-void UGPickComponent::PickUpObject(AGOCLEANCharacter* Target)
-{
-	if (Target->GetEquipComp()->GetCurrentEquipmentID() != "Eq_Hand") return;
-
-	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
-	if (Owner && Owner->GetNonfixedObjCoreComp() && GetWorld())
-	{
-		bIsPickedUp = true;
-		OwnerPlayer = Target;
-
-		Owner->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Picked);
-		Target->SetHeldObject(Owner);
-
-		UGDataManagerSubsystem* DataManager = UGDataManagerSubsystem::Get(GetWorld());
-		const FGObjectDataRow* Data =
-			DataManager ? DataManager->GetObjectData(Owner->GetNonfixedObjCoreComp()->TID) : nullptr;
-
-		if (Data)
-		{
-			FName PickedEquipID = Data->PickedEquipID;
-			Target->GetEquipComp()->ChangeEuquipmentInCurrSlot(PickedEquipID);
-		}
-
-		Owner->Multicast_OnPickedUp(Target);
 	}
 }
 
@@ -122,10 +155,6 @@ void UGPickComponent::DropObject()
 	// set owner actor's
 	OwnerActor->SetActorLocation(DropLocation);
 	OwnerActor->SetActorRotation(OwnerPlayer->GetActorRotation());
-
-
-	// set owner player's
-	OwnerPlayer->DropHeldObject();
 
 
 	bIsPickedUp = false;
@@ -329,10 +358,6 @@ void UGBurningCompopnent::StartBurning(AGNonfixedObject* Owner)
 
 		Incinerator->OnCustomEvent_Bool(true);
 	}
-
-
-	FVector NewScale = Owner->GetActorScale3D() * 0.45f;
-	Owner->SetActorScale3D(NewScale);
 
 
 	// start timer

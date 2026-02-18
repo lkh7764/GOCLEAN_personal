@@ -65,5 +65,7 @@ public:
 
 	void TryDoInteraction();
 
+	void ChangeSlot(int32 SlotIndex);
+
 
 };

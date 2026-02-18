@@ -39,8 +39,11 @@ protected:
 
 
 	//		pollution
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = "OnRep_MopPollusion")
 	float MopPollution;
+
+	UFUNCTION()
+	void OnRep_MopPollusion();
 	
 	UPROPERTY(Replicated)
 	float AutoMopPollution;
@@ -55,14 +58,28 @@ protected:
 	// functions - custom
 public:
 	// in-game
+	int32 GetCurrentSlotIndex() const { return CurrentSlotIndex; }
+
 	FName GetCurrentEquipmentID() const;
+
+
 	bool ChangeEuquipmentInCurrSlot(FName ChangedEquipID);
+
+	bool ChangeEquipment(int32 SlotIndex, FName EquipID);
+
 
 	bool ChangeCurrentSlot(int32 ChangedSlotIndex);
 
+
 	AGNonfixedObject* GetCurrentHeldObject() const;
 
+	AGNonfixedObject* GetHeldObject(int32 SlotIndex) const;
+
+
 	bool SetCurrentHeldObject(AGNonfixedObject* NFixedObject);
+
+	bool ChangeHeldObject(int32 SlotIndex, AGNonfixedObject* Obj);
+
 
 
 	UFUNCTION(BlueprintCallable)
@@ -82,11 +99,7 @@ public:
 protected:
 	// in-game
 	FName GetEquipmentID(int32 SlotIndex) const;
-	bool ChangeEquipment(int32 SlotIndex, FName EquipID);
 	bool ChangeCurrentSlot_Interval(int32 From, int32 To);
-
-	AGNonfixedObject* GetHeldObject(int32 SlotIndex) const;
-	bool ChangeHeldObject(int32 SlotIndex, AGNonfixedObject* Obj);
 
 	// in-beginPlay
 	bool InitiateEquipmentSlots();

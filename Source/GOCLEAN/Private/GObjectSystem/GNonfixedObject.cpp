@@ -113,7 +113,10 @@ void AGNonfixedObject::UpdateVisualByState()
 
 	case ENonfixedObjState::E_Disintegrating:
 
-		SetActorHiddenInGame(false);
+		SetActorHiddenInGame(false);	
+		
+		FVector NewScale = GetActorScale3D() * 0.45f;
+		SetActorScale3D(NewScale);
 
 		break;
 

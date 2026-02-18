@@ -245,6 +245,7 @@ enum class EPlayerEvent_C2S : uint8
     RequestSetAnimState,         // 클라 입력에 따라 애니 상태 변경 요청    
     RequestSetHeldItem,          // 클라 입력에 따라 소지 아이템 변경 요청
     RequestPlayOneShot,          // 던지기/청소/아이템 사용 등 한 번 재생 요청
+    RequestChangeCurrentSlotIndex,  // 선택한 슬롯 변경 요청
 };
 
 UENUM(BlueprintType)

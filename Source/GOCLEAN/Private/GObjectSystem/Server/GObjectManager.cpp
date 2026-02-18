@@ -342,6 +342,51 @@ void UGObjectManager::OnDestoyed(AGNonfixedObject* DestroyedObj, const FGObjectD
 }
 
 
+AGNonfixedObject* UGObjectManager::SpawnNonfixedObjectAtPlayerSight(
+    APlayerController* PC, 
+    AGOCLEANCharacter* PlayerChar
+)
+{
+    AGNonfixedObject* NewObj = nullptr;
+
+
+    // set data for raycast
+    FVector CameraLocation;
+    FRotator CameraRotation;
+    PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+    FVector Start = CameraLocation;
+    FVector End = Start + (CameraRotation.Vector() * PlayerChar->GetInteractionComp()->InteractionRange);
+
+    FHitResult HitResult;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(PlayerChar);
+
+
+    // shoot ray
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
+    {
+        FVector SpawnLocation = HitResult.Location;
+
+        FQuat SurfaceQuat = FRotationMatrix::MakeFromZ(HitResult.ImpactNormal).ToQuat();
+        FRotator SpawnRotation = SurfaceQuat.Rotator();
+
+        SpawnLocation += HitResult.ImpactNormal * 0.5f;
+
+        NewObj = SpawnNonfixedObject(
+            "Obj_DerivedBlood",
+            ENonfixedObjState::E_Static,
+            SpawnLocation,
+            SpawnRotation
+        );
+    }
+
+
+    return NewObj;
+}
+
+
+
 
 ////////////////////////////////////////////
 // Fixed Object
@@ -514,47 +559,107 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
     AGOCLEANCharacter* PlayerChar = Cast<AGOCLEANCharacter>(Pawn);
     if (!PlayerChar) return;
 
+    UInteractionComponent* InteractionComp = PlayerChar->GetInteractionComp();
     UGEquipmentComponent* EquipComp = PlayerChar->GetEquipComp();
-    if (!PlayerChar->GetInteractionComp() || !EquipComp) return;
+    if (!InteractionComp || !EquipComp) return;
+
 
     // get equip id
     FName EquipID = EquipComp->GetCurrentEquipmentID();
+
+    // check equipment id error
     if (EquipID == "Error")
     {
         UE_LOG(LogGObject, Warning, TEXT("[GObject] Equip Error!"));
     }
+
+    // type1. object
     else if (EquipID == "Eq_OVariable")
     {
-        TArray<UGBurningCompopnent*> BurningEquip;
-        EquipComp->GetCurrentHeldObject()->GetComponents<UGBurningCompopnent>(BurningEquip);
-
-        if (PlayerChar->GetInteractionComp()->IsCheckingIncineratorZone() && BurningEquip.Num() > 0)
+        // check error
+        int32 CurrSlotIndex = EquipComp->GetCurrentSlotIndex();
+        AGNonfixedObject* HeldObj = EquipComp->GetCurrentHeldObject();
+        if (!HeldObj)
         {
-            EquipComp->GetCurrentHeldObject()->
-                GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Disintegrating);
-            PlayerChar->DropHeldObject();
+            UE_LOG(LogGObject, Warning, TEXT("[GObject] Equipment is object, but there are no matched object!"));
+            return;
         }
+
+        // type1-1. burning type: interaction with incinerator
+        TArray<UGBurningCompopnent*> BurningEquip;
+        HeldObj->GetComponents<UGBurningCompopnent>(BurningEquip);
+        if (BurningEquip.Num() > 0 && InteractionComp->IsCheckingIncineratorZone())
+        {
+            // set empty - current held obj
+            PlayerChar->DropHeldObject(CurrSlotIndex);
+
+            // change object state -> distinegrating
+            HeldObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Disintegrating);
+        }
+
+        // type1-2. pick type: drop object
         else
         {
-            EquipComp->GetCurrentHeldObject()->
-                GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
+            // set empty - current held obj
+            PlayerChar->DropHeldObject(CurrSlotIndex);
+
+            // change object state -> static
+            HeldObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
         }
     }
+
+    // type2. equip / item / hand
     else
     {
+        // type2-1. use mop: check mop's pollution and spawn filth
         if (EquipID == "Eq_Mop")
         {
             float MopPollution = EquipComp->GetMopPollution();
+
+            // try spawn filth when mop is dirty
             if (MopPollution >= 100.0f)
             {
-                // UE_LOG(LogGObject, Log, "[SpawnDecal] ")
+                UE_LOG(LogGObject, Log, TEXT("[Equipment] Using dirty mop! spawn a filth object..."));
+
+                auto* NewObj = SpawnNonfixedObjectAtPlayerSight(PC, PlayerChar);
+                if (NewObj)
+                {
+                    UE_LOG(LogGObject, Log, TEXT("[Equipment] Filth object spawned successly!: Name - %s"), *NewObj->GetName());
+                }
+                else
+                {
+                    UE_LOG(LogGObject, Log, TEXT("[Equipment] Filth object spawned failed!: Distance was short"));
+                }
+
+                return;
             }
         }
+
+        // type2-2. use auto mop: check auto mop's pollution and spawn filth
         else if (EquipID == "Eq_AutoMop")
         {
+            float AutoMopPollution = EquipComp->GetAutoMopPollution();
 
+            // try spawn filth when mop is dirty
+            if (AutoMopPollution >= 100.0f)
+            {
+                UE_LOG(LogGObject, Log, TEXT("[Equipment] Using dirty auto mop! spawn a filth object..."));
+
+                auto* NewObj = SpawnNonfixedObjectAtPlayerSight(PC, PlayerChar);
+                if (NewObj)
+                {
+                    UE_LOG(LogGObject, Log, TEXT("[Equipment] Filth object spawned successly!: Name - %s"), *NewObj->GetName());
+                }
+                else
+                {
+                    UE_LOG(LogGObject, Log, TEXT("[Equipment] Filth object spawned failed!: Distance was short"));
+                }
+
+                return;
+            }
         }
 
+        // type2-3. normal case: do interaction and check each condition of function components
         UObject* Target = PlayerChar->GetInteractionComp()->GetCurrentTarget();
         if (Target)
         {
@@ -564,6 +669,7 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
                 if (Interactable->CanInteract(EquipID, PlayerChar))
                 {
                     Interactable->ExecuteInteraction(EquipID, PlayerChar);
+
                     UE_LOG(LogGObject, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetName());
                 }
             }

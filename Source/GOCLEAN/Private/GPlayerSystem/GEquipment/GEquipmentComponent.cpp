@@ -33,7 +33,7 @@ void UGEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(UGEquipmentComponent, CurrentSlotIndex);
 	DOREPLIFETIME(UGEquipmentComponent, MopPollution);
 	DOREPLIFETIME(UGEquipmentComponent, AutoMopPollution);
-	DOREPLIFETIME(UGEquipmentComponent, CurrentHeldObject);
+	DOREPLIFETIME(UGEquipmentComponent, HeldObjects);
 }
 
 
@@ -69,6 +69,8 @@ bool UGEquipmentComponent::ChangeEuquipmentInCurrSlot(FName ChangedEquipID)
 
 bool UGEquipmentComponent::ChangeCurrentSlot(int32 ChangedSlotIndex)
 {
+	if (!Owner || !Owner->HasAuthority()) return false;
+
 	return ChangeCurrentSlot_Interval(CurrentSlotIndex, ChangedSlotIndex);
 }
 
@@ -97,29 +99,46 @@ bool UGEquipmentComponent::ChangeEquipment(int32 SlotIndex, FName EquipID)
 
 bool UGEquipmentComponent::ChangeCurrentSlot_Interval(int32 From, int32 To)
 {
+	auto* PlayerChar = Cast<AGOCLEANCharacter>(GetOwner());
+	if (!PlayerChar) return false;
+
 	if (EquipmentSlots.Num() <= 0 || EquipmentSlots.Num() <= To || To < 0)
 	{
 		return false;
 	}
 
-	bool Result = true;
-
-	if (From == 0 && GetCurrentEquipmentID() == "Eq_OVariable")
+	auto* ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
+	if (!ObjectManager)
 	{
-		// 오브젝트 매니저에서 PickedObjectID에 접근 후, 해당 오브젝트에 대하여 ChangeState 호출: Invisible -> Static
-		auto* ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
-		if (!ObjectManager)
-		{
-			UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] There's no object manager"));
-			return false;
-		}
+		UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] There's no object manager"));
+		return false;
+	}
 
-		HeldObjects[From]->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
+
+	if (From == 0 && GetEquipmentID(From) == "Eq_OVariable")
+	{
+		AGNonfixedObject* HeldObj = HeldObjects[From];
+
+		PlayerChar->DropHeldObject(From);
+		HeldObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
+	}
+	if (To == 2 && GetEquipmentID(To) != "Eq_Hand")
+	{
+		AGNonfixedObject* HeldObj = HeldObjects[To];
+
+		PlayerChar->DropHeldObject(To);
+		HeldObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
 	}
 
 	CurrentSlotIndex = To;
+	OnRep_CurrentSlotIndex();
 
-	return Result;
+
+	// change anim - swap
+
+
+
+	return true;
 }
 
 
@@ -158,7 +177,7 @@ bool UGEquipmentComponent::ChangeHeldObject(int32 SlotIndex, AGNonfixedObject* O
 	}
 	else if (Obj && HeldObjects[SlotIndex])
 	{
-		UE_LOG(LogGObject, Warning, TEXT("[Equipment] This slot already has other object!: SlotID - %d, BlockedObjName - %s"), SlotIndex, Obj->GetName());
+		UE_LOG(LogGObject, Warning, TEXT("[Equipment] This slot already has other object!: SlotID - %d, BlockedObjName - %s"), SlotIndex, *Obj->GetName());
 		return false;
 	}
 
@@ -202,6 +221,8 @@ void UGEquipmentComponent::AddMopPollution(float Value)
 	{
 		MopPollution += Value;
 		UE_LOG(LogGObject, Log, TEXT("[Equipment] Add Mop's pollution! : %f"), MopPollution);
+
+		OnRep_MopPollusion();
 	}
 	else if (CurrEquipID == "Eq_AutoMop")
 	{
@@ -221,6 +242,8 @@ void UGEquipmentComponent::CleanMopPollution()
 	{
 		MopPollution = 0;
 		UE_LOG(LogGObject, Log, TEXT("[Equipment] Clean Mop's pollution! : %f"), MopPollution);
+
+		OnRep_MopPollusion();
 	}
 	else if (CurrEquipID == "Eq_AutoMop")
 	{
@@ -231,4 +254,42 @@ void UGEquipmentComponent::CleanMopPollution()
 	{
 		UE_LOG(LogGObject, Warning, TEXT("[Equipment] this equipment can not clean pollution! : %s"), *CurrEquipID.ToString());
 	}
+}
+
+
+
+// OnRep
+void UGEquipmentComponent::OnRep_CurrentSlotIndex()
+{
+	AGNonfixedObject* HeldObj;
+
+	// update visual
+	for (int i = 0; i<HeldObjects.Num(); ++i)
+	{
+		HeldObj = HeldObjects[i];
+		if (!HeldObj) continue;
+
+		if (i == CurrentSlotIndex)
+		{
+			// show visual
+			HeldObj->SetActorHiddenInGame(false);
+
+			if (Owner)
+			{
+				// change character anim
+
+				// set actor's relative location
+			}
+		}
+		else
+		{
+			// hide visual
+			HeldObj->SetActorHiddenInGame(true);
+		}
+	}
+}
+
+void UGEquipmentComponent::OnRep_MopPollusion()
+{
+	// update mop's material
 }
