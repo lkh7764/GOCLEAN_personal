@@ -79,7 +79,29 @@ void UGNonfixedObjCoreComponent::OnRep_State()
 	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
 	if (Owner)
 	{
+		Owner->UpdatePhysicsByState();
 		Owner->UpdateVisualByState();
+	}
+}
+
+void UGNonfixedObjCoreComponent::OnRep_TID()
+{
+	// update visual
+	UE_LOG(LogGObject, Log, TEXT("Object State was change!: %s"), *TID.ToString());
+
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner)
+	{
+		FGNonfixedObjData TempData{
+			IID,
+			TID,
+			Owner->GetActorLocation(),
+			Owner->GetActorRotation(),
+			ENonfixedObjState::E_Static,
+			true
+		};
+
+		Owner->SetObjectData(TempData);
 	}
 }
 

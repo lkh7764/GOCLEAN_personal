@@ -73,3 +73,11 @@ void AGOCLEANPlayerController::TryDoInteraction()
     FObjectPayload_C2S Temp;
     RPCRouter->Server_ObjectEvent(EObjectEvent_C2S::Object_TryInteract, Temp);
 }
+
+void AGOCLEANPlayerController::ChangeSlot(int32 SlotIndex)
+{
+    FPlayerPayload_C2S Temp;
+    Temp.ParamInt = SlotIndex;
+
+    RPCRouter->Server_PlayerEvent(EPlayerEvent_C2S::RequestChangeCurrentSlotIndex, Temp);
+}
