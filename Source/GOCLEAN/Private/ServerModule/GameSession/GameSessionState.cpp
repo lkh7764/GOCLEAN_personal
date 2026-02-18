@@ -431,7 +431,7 @@ void AGameSessionState::OnRep_SpiritualGauge()
 
 void AGameSessionState::OnRep_RestGauge()
 {
-
+    
 }
 
 void AGameSessionState::OnRep_ExorcismProgress()
