@@ -32,6 +32,8 @@ public:
 
 	void OnDestoyed(AGNonfixedObject* DestroyedObj, const struct FGObjectDataRow* Data);
 
+	UFUNCTION(BlueprintCallable)
+	void SetSelectedVendingItem(FName TID);
 
 
 protected:
