@@ -142,7 +142,7 @@ void AGhostAIController::CheckArrivalCurrentPatrolPoint()
 
 void AGhostAIController::CheckRageEventCondition()
 {
-	if (PlayersSanityCorruptionRate >= 500 && !bIsRageEvent) {
+	if (PlayersSanityCorruptionRate >= 1000 && !bIsRageEvent) {
 		Cast<AGhostBase>(GetPawn())->Multicast_PlayRageSound();
 		bIsRageEvent = true;
 		StartChase();
