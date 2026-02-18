@@ -88,6 +88,14 @@ bool UGFixedObjInteractionComponent::CanInteract(FName EquipID, AGOCLEANCharacte
 	return true;
 }
 
+void UGFixedObjInteractionComponent::SetSpawnObjTID(FName TID)
+{
+	SpawnObjTID = TID;
+
+	AGFixedObject* Owner = Cast<AGFixedObject>(GetOwner());
+	if (Owner) Owner->ChangeState(EGFixedObjState::E_Static);
+}
+
 void UGFixedObjInteractionComponent::ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target)
 {
 	UGEquipmentComponent* EquipComp = Target->GetEquipComp();
@@ -116,11 +124,20 @@ void UGFixedObjInteractionComponent::ExecuteInteraction(FName EquipID, AGOCLEANC
 	if (!NewObj) return;
 
 	EquipComp->ChangeEquipment(EquipData->MatchedSlotIndex, ObjData->PickedEquipID);
+	Target->SetHeldObject(NewObj);
 	NewObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Picked);
+	NewObj->Multicast_OnPickedUp(Target);
 
 
 	MaxCount--;
 
 	if (MaxCount >= 0) Meshs[MaxCount]->SetVisibility(false);
 	if (MaxCount == 0) InteractionVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+
+	if (bChangeStateAfterExecuteInteraction)
+	{
+		AGFixedObject* Owner = Cast<AGFixedObject>(GetOwner());
+		if (Owner) Owner->ChangeState(EGFixedObjState::E_Invisible);
+	}
 }

@@ -138,6 +138,12 @@ void AGOCLEANCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// Interact
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AGOCLEANCharacter::DoInteraction);
+
+
+		EnhancedInputComponent->BindAction(ChangeSlotAction_Slot1, ETriggerEvent::Started, this, &AGOCLEANCharacter::TryChangeCurrentEquipmentSlot0);
+		EnhancedInputComponent->BindAction(ChangeSlotAction_Slot2, ETriggerEvent::Started, this, &AGOCLEANCharacter::TryChangeCurrentEquipmentSlot1);
+		EnhancedInputComponent->BindAction(ChangeSlotAction_Slot3, ETriggerEvent::Started, this, &AGOCLEANCharacter::TryChangeCurrentEquipmentSlot2);
+		EnhancedInputComponent->BindAction(ChangeSlotAction_Slot4, ETriggerEvent::Started, this, &AGOCLEANCharacter::TryChangeCurrentEquipmentSlot3);
 	}
 	else
 	{
@@ -552,14 +558,6 @@ void AGOCLEANCharacter::SetHeldObject(AGNonfixedObject* NewObj)
 {
 	if (!NewObj) return;
 
-	FAttachmentTransformRules AttachmentRules(
-		EAttachmentRule::SnapToTarget,
-		EAttachmentRule::SnapToTarget,
-		EAttachmentRule::SnapToTarget,
-		false
-	);
-
-	NewObj->AttachToComponent(GetHandMesh(), AttachmentRules, TEXT("Charater001_Bip001-R-HandSocket"));
 	SetHeldObjectRelativeTransform(NewObj);
 	EquipComp->SetCurrentHeldObject(NewObj);
 }
@@ -575,30 +573,48 @@ void AGOCLEANCharacter::SetHeldObjectRelativeTransform(AGNonfixedObject* NewObj)
 	auto EquipData = DataManager->GetEquipmentData(ObjData->PickedEquipID);
 	if (!EquipData) return;
 
-	SetAnimID(EquipData->IdleAnimID_First);
-	OnRep_AnimID();
+
+	FAttachmentTransformRules AttachmentRules(
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		false
+	);
 
 	if (EquipData->EquipID == "Eq_OVariable")
 	{
-		NewObj->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		NewObj->AttachToComponent(GetHandMesh(), AttachmentRules, TEXT("ForwardSocket"));
 
-		FVector CenterLocation = FVector(0.0f, 30.0f, 90.0f);
+		// 1. 오브젝트의 바운드 정보 가져오기 (메시 크기 측정)
+		FVector Origin, Extent;
+		// bOnlyCollidingComponents=false로 설정하여 시각적 메시를 포함한 전체 크기를 측정합니다.
+		NewObj->GetActorBounds(false, Origin, Extent);
+
+		// 2. 현재 월드 좌표계에서 피벗(Pivot)부터 최상단(Top)까지의 수직 거리 계산
+		float PivotWorldZ = NewObj->GetActorLocation().Z;
+		float TopWorldZ = Origin.Z + Extent.Z;
+		float PivotToTopHeight = TopWorldZ - PivotWorldZ;
+
+		// 3. 목표로 하는 '최상단' 위치 (소켓 기준 140.0f)
+		const float TargetTopZ = 140.0f;
+
+		// 4. 피벗이 위치해야 할 상대 Z값 계산
+		// (목표 높이에서 물체의 실제 높이만큼 아래로 내려줘야 최상단이 목표 지점에 딱 걸립니다.)
+		float AdjustedZ = TargetTopZ - PivotToTopHeight;
+
+		// X, Y는 기존 값을 유지하고 Z만 보정된 값을 사용합니다.
+		FVector CenterLocation = FVector(0.0f, 45.0f, AdjustedZ + 15.0f);
 		FRotator CenterRotation = FRotator::ZeroRotator;
 
-		NewObj->GetRootComponent()->SetRelativeTransform(FTransform(CenterRotation, CenterLocation));
-
-
-		FAttachmentTransformRules AttachmentRules(
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::SnapToTarget,
-			false
-		);
-
-		NewObj->AttachToComponent(GetHandMesh(), AttachmentRules, TEXT("Charater001_Bip001-R-HandSocket"));
+		if (NewObj->GetRootComponent())
+		{
+			NewObj->GetRootComponent()->SetRelativeTransform(FTransform(CenterRotation, CenterLocation));
+		}
 	}
 	else
 	{
+		NewObj->AttachToComponent(GetHandMesh(), AttachmentRules, TEXT("Charater001_Bip001-R-HandSocket"));
+
 		FRotator AnimRotation = EquipData->RelativeRotation_FirstPerson;
 		FVector AnimLocation = EquipData->RelativeLocation_FirstPerson;
 
@@ -614,6 +630,10 @@ void AGOCLEANCharacter::SetHeldObjectRelativeTransform(AGNonfixedObject* NewObj)
 			NewObj->GetRootComponent()->SetRelativeTransform(FinalRelativeTransform);
 		}
 	}
+
+	SetAnimID(EquipData->IdleAnimID_First);
+	OnRep_AnimID();
+	AnimState = EPlayerAnimState::Idle;
 }
 void AGOCLEANCharacter::DropHeldObject(int32 Index)
 {
@@ -627,6 +647,17 @@ void AGOCLEANCharacter::DropHeldObject(int32 Index)
 
 	// set equip id - default
 	EquipComp->ChangeEquipment(Index, "Eq_Hand");
+
+
+	auto DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	if (!DataManager) return;
+
+	auto EquipData = DataManager->GetEquipmentData("Eq_Hand");
+	if (!EquipData) return;
+
+	SetAnimID(EquipData->IdleAnimID_First);
+	OnRep_AnimID();
+	AnimState = EPlayerAnimState::Stand;
 }
 
 void AGOCLEANCharacter::OnRep_AnimID()
