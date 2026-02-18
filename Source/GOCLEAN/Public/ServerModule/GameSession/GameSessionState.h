@@ -341,6 +341,9 @@ public:
     UFUNCTION(BlueprintCallable)
     int32 GetItemStockByIndex(int32 ItemIndex) const;
 
+    UFUNCTION(BlueprintCallable)
+    void SetBuyVendingItem(FName TID);
+
 protected:
     UPROPERTY(Replicated, BlueprintReadOnly)
     TArray<int32> VendingRemaining;
