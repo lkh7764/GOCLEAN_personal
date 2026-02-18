@@ -10,6 +10,7 @@
 #include <GMapSystem/Server/GMapManager.h>
 
 #include "GCharacter/StatsComponent/CharacterStatsComponent.h"
+#include <ServerModule/GameSession/GameSessionMode.h>
 
 AGameSessionState::AGameSessionState()
 {
@@ -77,6 +78,7 @@ void AGameSessionState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 
     DOREPLIFETIME(AGameSessionState, VendingRemaining);
+    DOREPLIFETIME(AGameSessionState, ExorcismPhase);
 }
 
 
@@ -245,6 +247,21 @@ void AGameSessionState::SetSpiritualGauge_Internal(float NewValue)
     SpiritualGauge = NewValue;
     
     OnRep_SpiritualGauge();
+
+    // 영적 게이지 20% 이하 -> 퇴마 시작 단계 진입 트리거
+    if (HasAuthority())
+    {
+        if (SpiritualGauge <= 20.f) // 0~100 기준
+        {
+            if (AGameSessionMode* GM = GetWorld()->GetAuthGameMode<AGameSessionMode>())
+            {
+                if (GetInGamePhase() == EInGamePhase::Cleaning)
+                {
+                    GM->StartExorcismPhase();
+                }
+            }
+        }
+    }
 }
 
 void AGameSessionState::SetRestGauge_Internal(float NewValue)
@@ -583,4 +600,20 @@ int32 AGameSessionState::GetItemStockByIndex(int32 ItemIndex) const
     }
 
     return 0;
+}
+
+
+// 퇴마 관련 로직
+void AGameSessionState::SetExorcismPhase_ServerOnly(EInGamePhase NewPhase)
+{
+    if (!HasAuthority()) return;
+    if (ExorcismPhase == NewPhase) return;
+
+    ExorcismPhase = NewPhase;
+    OnRep_ExorcismPhase();
+}
+
+void AGameSessionState::OnRep_ExorcismPhase()
+{
+    // UI 갱신 트리거용
 }
