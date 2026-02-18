@@ -85,7 +85,7 @@ void AGhostAIController::OnPossess(APawn* InPawn)
 	bIsPatrolling = true;
 
 	ManifestRadius = 500.0f;
-	HuntRadius = 100.0f;
+	HuntRadius = 150.0f;
 	
 	UpdatePlayerList();
 
@@ -191,12 +191,12 @@ void AGhostAIController::PlayerHunt()
 	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPlayer->GetActorLocation());
 	if (Distance < ManifestRadius)
 	{
-		Server_RequestSetVisible(true);
+		GhostCharacter->Server_RequestSetVisible(true);
 	}
 
 	if (Distance < HuntRadius)
 	{
-		Server_RequestSetVisible(false);
+		GhostCharacter->Server_RequestSetVisible(false);
 		
 		Cast<AGOCLEANCharacter>(TargetPlayer)->Server_RequestOnHunted();
 
@@ -246,12 +246,12 @@ void AGhostAIController::EndlessPlayerHunt()
 	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPlayerCharacter->GetActorLocation());
 	if (Distance < ManifestRadius)
 	{
-		GhostCharacter->Server_RequestSetVisible(true);
+		GhostCharacter->Multicast_SetVisible(true);
 	}
 
 	if (Distance < HuntRadius)
 	{
-		GhostCharacter->Server_RequestSetVisible(false);
+		GhostCharacter->Multicast_SetVisible(false);
 
 		Cast<AGOCLEANCharacter>(TargetPlayerCharacter)->Server_RequestOnHunted();
 
@@ -266,4 +266,13 @@ void AGhostAIController::EndlessPlayerHunt()
 
 		if (bIsUnendingRageEvent) EndlessPlayerHunt();
 	}
+}
+
+void AGhostAIController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGhostAIController, bIsPatrolling);
+	DOREPLIFETIME(AGhostAIController, bIsChasing);
+	DOREPLIFETIME(AGhostAIController, bIsRageEvent);
 }
