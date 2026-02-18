@@ -92,6 +92,10 @@ void AGOCLEANPlayerController::ShowResultUI()
     }
 }
 
+void AGOCLEANPlayerController::Client_ShowLobbyUI_Implementation()
+{
+    ShowLobbyUI();
+}
 
 void AGOCLEANPlayerController::Client_ShowResultUI_Implementation()
 {

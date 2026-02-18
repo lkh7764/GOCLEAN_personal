@@ -69,6 +69,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ShowResultUI();
 
+	UFUNCTION(BlueprintCallable, Client, Reliable)
+	void Client_ShowLobbyUI();
 
 	// Server -> owning client
 	UFUNCTION(Client, Reliable)
