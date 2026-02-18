@@ -602,6 +602,20 @@ int32 AGameSessionState::GetItemStockByIndex(int32 ItemIndex) const
     return 0;
 }
 
+void AGameSessionState::SetBuyVendingItem(FName TID)
+{
+    UE_LOG(LogTemp, Warning, TEXT("[SetBuyVendingItem] NetMode=%d HasAuthority=%d TID=%s ObjMgr=%s"),
+        (int32)GetNetMode(), HasAuthority(), *TID.ToString(), ObjectManager ? TEXT("Valid") : TEXT("NULL"));
+
+    if (!HasAuthority())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Called on CLIENT. This won't affect server."));
+    }
+
+    if (!ObjectManager) return;
+    ObjectManager->SetSelectedVendingItem(TID);
+}
+
 
 // 퇴마 관련 로직
 void AGameSessionState::SetExorcismPhase_ServerOnly(EInGamePhase NewPhase)
