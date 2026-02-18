@@ -5,10 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
 
-#include <GObjectSystem/Server/GObjectManager.h>
-#include <GPlayerSystem/Server/GPlayerManager.h>
-#include <GMapSystem/Server/GMapManager.h>
-
 #include "GameSessionState.generated.h"
 
 class APlayerSessionState;
@@ -45,6 +41,11 @@ struct FPurchasedVendingEntry
     UPROPERTY(BlueprintReadOnly)
     int32 ItemId = -1;
 };
+
+
+class UGObjectManager;
+class UGPlayerManager;
+class UGMapManager;
 
 
 /**
@@ -266,6 +267,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Session|Vending")
     bool HasPurchasedVendingByPlayerId(int32 PlayerId) const;
 
+    // 아이템 토글
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Session|Vending")
+    bool TogglePurchasedVending(int32 PlayerId, int32 ItemId);
+
     // 구매 아이템 조회
     UFUNCTION(BlueprintCallable, Category = "Session|Vending")
     bool GetPurchasedVendingItemId(int32 PlayerId, int32& OutItemId) const;
@@ -289,5 +294,14 @@ protected:
 
     UFUNCTION()
     void OnRep_PurchasedVending();
+
+public:
+    // 영적/안식 게이지 초기화
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+    void ResetSpiritualAndRestGauge(float SpiritualStartValue = 100.f);
+
+    // 영적 / 안식 게이지 값 증감
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+    void ApplySpiritualOrRestGauge(float Amount, float SpiritualMin = 0.f, float SpiritualMax = 100.f, float RestMin = 0.f, float RestMax = 100.f);
 
 };

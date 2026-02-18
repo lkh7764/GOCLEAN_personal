@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 
 #include "GTypes/GObjectTypes.h"
+#include "GTypes/DataTableRow/GObjectDataRow.h"
 
 #include "GAdditionalObjFuncComponent.generated.h"
 
@@ -97,15 +98,25 @@ protected:
 
 
 	// custom functions
-	UFUNCTION()
-	void SetVisualByInteractionCnt(AGNonfixedObject* Owner);
+	UFUNCTION(NetMulticast, Reliable)
+	void SetVisualByInteractionCnt(AGNonfixedObject* Owner, class UGEquipmentComponent* EquipComp, const FGObjectDataRow& ObjData);
 
 	UFUNCTION()
 	void SetDestroyThisObject(AGNonfixedObject* Owner);
 
 
-private:
+protected:
+	UPROPERTY(VisibleAnywhere)
 	int32 InteractionMaxCnt;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TObjectPtr<UDecalComponent>> Decals;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UStaticMesh> BrokenMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AActor> DestroyedActor;
 
 };
 
@@ -125,9 +136,23 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	virtual void OnInteractionTriggered(AGOCLEANCharacter* Target) override {};
+	virtual void OnInteractionTriggered(AGOCLEANCharacter* Target) override 
+	{ 
+		OnInteractionEvent(); 
+	}
 
-	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) override {};
+	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) override 
+	{
+		OnStateChangeEvent();
+	}
+
+
+protected:
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnInteractionEvent();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnStateChangeEvent();
 
 };
 
@@ -154,7 +179,7 @@ protected:
 
 	// custom functions
 	UFUNCTION()
-	void StartBurning();
+	void StartBurning(AGNonfixedObject* Owner);
 
 
 private:

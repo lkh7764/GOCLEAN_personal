@@ -14,6 +14,9 @@
 #include "GDataManagerSubsystem.h"
 #include "GTypes/IGInteractable.h"
 
+#include "ServerModule/GameSession/GameSessionState.h"
+#include "GTypes/DataTableRow/GObjectDataRow.h"
+
 #include "EngineUtils.h"
 
 
@@ -94,8 +97,7 @@ void UGObjectManager::ReturnToPool(AGNonfixedObject* Actor)
 {
     if (!Actor) return;
 
-    Actor->SetActorHiddenInGame(true);
-    Actor->SetActorEnableCollision(false);
+    Actor->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_None);
 
     Actor->AttachToActor(PoolRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
@@ -118,6 +120,15 @@ AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
     const FVector& Location,
     const FRotator& Rotation)
 {
+    auto* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+    auto* Data = DataManager ? DataManager->GetObjectData(TID) : nullptr;
+    if (!Data)
+    {
+        UE_LOG(LogGObject, Warning, TEXT("[NonfixedObject] Can not find matched object data!: %s"), *TID.ToString());
+        return nullptr;
+    }
+
+
     // 1. 오브젝트 풀에서 오브젝트 가져오기
     auto Target = GetFromPool();
 
@@ -129,7 +140,46 @@ AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
 
     if (Target)
     {
-        // 3. 위치 및 상태 초기화
+        // 3. 스폰 데이터 세팅
+        NfixedObjCnt++;
+
+        if (Data->DEC_MeshAssets.Num() != 0)
+        {
+            ReturnToPool(Target);
+
+            // 고정타입 템플릿이 존재하는 경우
+            auto* NewTarget = Cast<AGNonfixedObject>(GetWorld()->
+                SpawnActor(Data->DEC_MeshAssets[FMath::RandRange(0, Data->DEC_MeshAssets.Num() - 1)]));
+
+            if (!NewTarget)
+            {
+                NfixedObjCnt--;
+                return nullptr;
+            }
+
+            // 기존 타겟을 delete 처리 해줘야하는가?
+            Target = NewTarget;
+            Target->UpdateObjectData(NfixedObjCnt);
+        }
+        else
+        {
+            FGNonfixedObjData InitData = {
+               NfixedObjCnt,
+               TID,
+               Location,
+               Rotation,
+               SpawnState,
+               true
+            };
+
+            Target->SetObjectData(InitData);
+        }
+
+
+        NfixedObjects.Add(NfixedObjCnt, Target);
+
+
+        // 4. 위치 및 상태 초기화
         Target->SetActorLocationAndRotation(Location, Rotation);
 
         Target->SetActorHiddenInGame(false);
@@ -138,19 +188,12 @@ AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
         Target->AttachToActor(ActiveRoot, FAttachmentTransformRules::KeepWorldTransform);
 
 
-        // 4. 스폰 데이터 세팅
-        NfixedObjCnt++;
+        AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
 
-        FGNonfixedObjData InitData = {
-            NfixedObjCnt,
-            TID,
-            Location,
-            Rotation,
-            SpawnState,
-            true
-        };
-
-        Target->SetObjectData(InitData);
+        if (Data && GameState)
+        {
+            GameState->AddSpiritualGauge(Data->Pollution);
+        }
     }
 
     return Target;
@@ -175,9 +218,11 @@ void UGObjectManager::InitiateObjects()
     FreeObjsStack.Empty();
     NfixedObjects.Empty();
 
+    float InitialSpiritualGuage;
+
 #if PROTOTYPE_2026_02
     // 맵에 배치된 오브젝트 중 NonfixedObj 타입의 오브젝트를 로드해옴
-    FindAllNonfixedObjects();
+    InitialSpiritualGuage = FindAllNonfixedObjects();
 
     // 예비 오브젝트 풀을 생성
     CreateNonfixedObjPool(50);
@@ -185,15 +230,35 @@ void UGObjectManager::InitiateObjects()
 #else
     // 1. 오브젝트풀 생성
     CreateNonfixedObjPool(PoolSize);
+
+    // 2. 랜덤 오브젝트 스포닝
+    // InitialSpiritualGuage = func()
 #endif
 
 
     // finish obj load
+    AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+    if (GameState)
+    {
+        // 청소 90% 진행하면 청소 완료한 것으로 간주
+        GameState->ResetSpiritualAndRestGauge(InitialSpiritualGuage * 0.9f);
+    }
 }
 
-void UGObjectManager::FindAllNonfixedObjects()
+float UGObjectManager::FindAllNonfixedObjects()
 {
     UE_LOG(LogObjectPool, Warning, TEXT("[Prototype] Find spawned NonfixedObjects"));
+
+    float TotalPollution = 0.0f;
+    auto* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+    if (!DataManager)
+    {
+        UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] Could not find DataManager!"));
+        return TotalPollution;
+    }
+
+    const FGObjectDataRow* Data;
+    FName TID;
 
     int32 FoundCnt = 0;
     for (TActorIterator<AGNonfixedObject> It(GetWorld()); It; ++It)
@@ -208,6 +273,19 @@ void UGObjectManager::FindAllNonfixedObjects()
 
             PlacedObj->AttachToActor(ActiveRoot, FAttachmentTransformRules::KeepWorldTransform);
             PlacedObj->UpdateObjectData(FoundCnt);
+
+
+            // calculate pollution
+            TID = PlacedObj->GetNonfixedObjCoreComp()->TID;
+            Data = DataManager->GetObjectData(TID);
+            if (!Data)
+            {
+                UE_LOG(LogGObject, Warning, TEXT("[ObjectManager] Could not find matched data!: %s"), *TID.ToString());
+            }
+            else
+            {
+                TotalPollution += Data->Pollution;
+            }
         }
     }
 
@@ -215,6 +293,9 @@ void UGObjectManager::FindAllNonfixedObjects()
     UE_LOG(LogObjectPool, Log, TEXT("[Prototype] Found %d number of NonfixedObjects!"), FoundCnt);
 
     NfixedObjCnt += FoundCnt;
+
+
+    return TotalPollution;
 }
 
 bool UGObjectManager::DropNonfixedObject(int32 PickedObjectIID)
@@ -237,6 +318,74 @@ bool UGObjectManager::DropNonfixedObject(int32 PickedObjectIID)
     return true;
 }
 
+void UGObjectManager::OnDestoyed(AGNonfixedObject* DestroyedObj, const FGObjectDataRow* Data)
+{
+    if (!DestroyedObj) return;
+
+    if (!Data)
+    {
+        auto* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+
+        Data = DataManager ? DataManager->GetObjectData(DestroyedObj->GetNonfixedObjCoreComp()->TID) : nullptr;
+        if (!Data) return;
+    }
+
+    if (Data->Category == EGObjectCategory::E_Trash_B)
+    {
+        DestroyedObjs.Enqueue(DestroyedObj->GetNonfixedObjCoreComp()->IID);
+    }
+    else
+    {
+        NfixedObjects.Remove(DestroyedObj->GetNonfixedObjCoreComp()->IID);
+        ReturnToPool(DestroyedObj);
+    }
+}
+
+
+AGNonfixedObject* UGObjectManager::SpawnNonfixedObjectAtPlayerSight(
+    APlayerController* PC, 
+    AGOCLEANCharacter* PlayerChar
+)
+{
+    AGNonfixedObject* NewObj = nullptr;
+
+
+    // set data for raycast
+    FVector CameraLocation;
+    FRotator CameraRotation;
+    PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+    FVector Start = CameraLocation;
+    FVector End = Start + (CameraRotation.Vector() * PlayerChar->GetInteractionComp()->InteractionRange);
+
+    FHitResult HitResult;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(PlayerChar);
+
+
+    // shoot ray
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
+    {
+        FVector SpawnLocation = HitResult.Location;
+
+        FQuat SurfaceQuat = FRotationMatrix::MakeFromZ(HitResult.ImpactNormal).ToQuat();
+        FRotator SpawnRotation = SurfaceQuat.Rotator();
+
+        SpawnLocation += HitResult.ImpactNormal * 0.5f;
+
+        NewObj = SpawnNonfixedObject(
+            "Obj_DerivedBlood",
+            ENonfixedObjState::E_Static,
+            SpawnLocation,
+            SpawnRotation
+        );
+    }
+
+
+    return NewObj;
+}
+
+
 
 
 ////////////////////////////////////////////
@@ -246,7 +395,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
 {
     if (TID == "Obj_Incinerator")
     {
-        if (!Incinerator)
+        if (Incinerator)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] Incinerator can not spawned over two"));
             return;
@@ -256,7 +405,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_WaterTank")
     {
-        if (!WaterTank)
+        if (WaterTank)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] WaterTank can not spawned over two"));
             return;
@@ -270,7 +419,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_CBasketSpawner")
     {
-        if (!BasketSpawner)
+        if (BasketSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] BasketSpawner can not spawned over two"));
             return;
@@ -280,7 +429,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_CBucketSpawner")
     {
-        if (!BucketSpawner)
+        if (BucketSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] BucketSpawner can not spawned over two"));
             return;
@@ -290,7 +439,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_VendingMachine")
     {
-        if (!VendingMachine)
+        if (VendingMachine)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] VendingMachine can not spawned over two"));
             return;
@@ -300,7 +449,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_TBowlSpawner")
     {
-        if (!TBowlSpawner)
+        if (TBowlSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] TBowlSpawner can not spawned over two"));
             return;
@@ -310,7 +459,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_TAmuletSpawner")
     {
-        if (!TAmuletSpawner)
+        if (TAmuletSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] TAmuletSpawner can not spawned over two"));
             return;
@@ -320,7 +469,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_TPileSpawner")
     {
-        if (!TPileSpawner)
+        if (TPileSpawner)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] TPileSpawner can not spawned over two"));
             return;
@@ -334,7 +483,7 @@ void UGObjectManager::RegisterFixedObject(FName TID, AGFixedObject* Target)
     }
     else if (TID == "Obj_CCTV")
     {
-        if (!CCTV)
+        if (CCTV)
         {
             UE_LOG(LogGObject, Warning, TEXT("[GFixedObject] CCTV can not spawned over two"));
             return;
@@ -410,23 +559,107 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
     AGOCLEANCharacter* PlayerChar = Cast<AGOCLEANCharacter>(Pawn);
     if (!PlayerChar) return;
 
+    UInteractionComponent* InteractionComp = PlayerChar->GetInteractionComp();
     UGEquipmentComponent* EquipComp = PlayerChar->GetEquipComp();
-    if (!PlayerChar->GetInteractionComp() || !EquipComp) return;
+    if (!InteractionComp || !EquipComp) return;
+
 
     // get equip id
     FName EquipID = EquipComp->GetCurrentEquipmentID();
+
+    // check equipment id error
     if (EquipID == "Error")
     {
         UE_LOG(LogGObject, Warning, TEXT("[GObject] Equip Error!"));
     }
+
+    // type1. object
     else if (EquipID == "Eq_OVariable")
     {
-        int32 PickedObjectIID = PlayerChar->GetEquipComp()->GetPickedObjectID();
+        // check error
+        int32 CurrSlotIndex = EquipComp->GetCurrentSlotIndex();
+        AGNonfixedObject* HeldObj = EquipComp->GetCurrentHeldObject();
+        if (!HeldObj)
+        {
+            UE_LOG(LogGObject, Warning, TEXT("[GObject] Equipment is object, but there are no matched object!"));
+            return;
+        }
 
-        DropNonfixedObject(PickedObjectIID);
+        // type1-1. burning type: interaction with incinerator
+        TArray<UGBurningCompopnent*> BurningEquip;
+        HeldObj->GetComponents<UGBurningCompopnent>(BurningEquip);
+        if (BurningEquip.Num() > 0 && InteractionComp->IsCheckingIncineratorZone())
+        {
+            // set empty - current held obj
+            PlayerChar->DropHeldObject(CurrSlotIndex);
+
+            // change object state -> distinegrating
+            HeldObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Disintegrating);
+        }
+
+        // type1-2. pick type: drop object
+        else
+        {
+            // set empty - current held obj
+            PlayerChar->DropHeldObject(CurrSlotIndex);
+
+            // change object state -> static
+            HeldObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Static);
+        }
     }
+
+    // type2. equip / item / hand
     else
     {
+        // type2-1. use mop: check mop's pollution and spawn filth
+        if (EquipID == "Eq_Mop")
+        {
+            float MopPollution = EquipComp->GetMopPollution();
+
+            // try spawn filth when mop is dirty
+            if (MopPollution >= 100.0f)
+            {
+                UE_LOG(LogGObject, Log, TEXT("[Equipment] Using dirty mop! spawn a filth object..."));
+
+                auto* NewObj = SpawnNonfixedObjectAtPlayerSight(PC, PlayerChar);
+                if (NewObj)
+                {
+                    UE_LOG(LogGObject, Log, TEXT("[Equipment] Filth object spawned successly!: Name - %s"), *NewObj->GetName());
+                }
+                else
+                {
+                    UE_LOG(LogGObject, Log, TEXT("[Equipment] Filth object spawned failed!: Distance was short"));
+                }
+
+                return;
+            }
+        }
+
+        // type2-2. use auto mop: check auto mop's pollution and spawn filth
+        else if (EquipID == "Eq_AutoMop")
+        {
+            float AutoMopPollution = EquipComp->GetAutoMopPollution();
+
+            // try spawn filth when mop is dirty
+            if (AutoMopPollution >= 100.0f)
+            {
+                UE_LOG(LogGObject, Log, TEXT("[Equipment] Using dirty auto mop! spawn a filth object..."));
+
+                auto* NewObj = SpawnNonfixedObjectAtPlayerSight(PC, PlayerChar);
+                if (NewObj)
+                {
+                    UE_LOG(LogGObject, Log, TEXT("[Equipment] Filth object spawned successly!: Name - %s"), *NewObj->GetName());
+                }
+                else
+                {
+                    UE_LOG(LogGObject, Log, TEXT("[Equipment] Filth object spawned failed!: Distance was short"));
+                }
+
+                return;
+            }
+        }
+
+        // type2-3. normal case: do interaction and check each condition of function components
         UObject* Target = PlayerChar->GetInteractionComp()->GetCurrentTarget();
         if (Target)
         {
@@ -436,6 +669,7 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
                 if (Interactable->CanInteract(EquipID, PlayerChar))
                 {
                     Interactable->ExecuteInteraction(EquipID, PlayerChar);
+
                     UE_LOG(LogGObject, Log, TEXT("[GCharacter] Interaction Executed on %s"), *Target->GetName());
                 }
             }

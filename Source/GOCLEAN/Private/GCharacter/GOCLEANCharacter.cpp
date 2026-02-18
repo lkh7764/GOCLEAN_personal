@@ -22,7 +22,10 @@
 #include "Net/UnrealNetwork.h"
 #include "GDataManagerSubsystem.h"
 #include "GTypes/DataTableRow/GEquipmentDataRow.h"
+#include "GTypes/DataTableRow/GObjectDataRow.h"
 #include "GCharacter/GOCLEANPlayerController.h"
+#include "GObjectSystem/GNonfixedObject.h"
+#include "GObjectSystem/GNonfixedObjCoreComponent.h"
 #include "../../GOCLEAN.h"
 
 
@@ -508,3 +511,67 @@ void AGOCLEANCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AGOCLEANCharacter, StatsComp);
 }
 
+void AGOCLEANCharacter::SetHeldObject(AGNonfixedObject* NewObj)
+{
+	if (!NewObj) return;
+
+	FAttachmentTransformRules AttachmentRules(
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::KeepWorld,
+		false
+	);
+	NewObj->AttachToComponent(GetHandMesh(), AttachmentRules, TEXT("Charater001_Bip001-R-HandSocket"));
+	SetHeldObjectRelativeTransform(NewObj);
+	EquipComp->SetCurrentHeldObject(NewObj);
+}
+void AGOCLEANCharacter::SetHeldObjectRelativeTransform(AGNonfixedObject* NewObj)
+{
+	auto DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
+	if (!DataManager) return;
+
+	auto ObjData = DataManager->GetObjectData(NewObj->GetNonfixedObjCoreComp()->TID);
+	if (!ObjData) return;
+
+	auto EquipData = DataManager->GetEquipmentData(ObjData->PickedEquipID);
+	if (!EquipData) return;
+
+	SetAnimID(EquipData->IdleAnimID_First);
+	OnRep_AnimID();
+
+	if (EquipData->EquipID == "Eq_OVariable")
+	{
+		NewObj->GetRootComponent()->SetRelativeTransform(FTransform::Identity);
+	}
+	else
+	{
+		FRotator AnimRotation = EquipData->RelativeRotation_FirstPerson;
+		FVector AnimLocation = EquipData->RelativeLocation_FirstPerson;
+
+		FTransform AnimatorDesiredTransform(AnimRotation, AnimLocation);
+
+		FTransform ActualSocketTransform = GetHandMesh()->
+			GetSocketTransform(TEXT("Charater001_Bip001-R-HandSocket"), ERelativeTransformSpace::RTS_ParentBoneSpace);
+
+		FTransform FinalRelativeTransform = ActualSocketTransform.GetRelativeTransform(AnimatorDesiredTransform);
+
+		if (NewObj->GetRootComponent())
+		{
+			NewObj->GetRootComponent()->SetRelativeTransform(FinalRelativeTransform);
+		}
+	}
+}
+void AGOCLEANCharacter::DropHeldObject()
+{
+	if (EquipComp)
+	{
+		EquipComp->GetCurrentHeldObject()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		EquipComp->SetCurrentHeldObject(nullptr);
+		EquipComp->ChangeEuquipmentInCurrSlot("Eq_Hand");
+	}
+}
+
+void AGOCLEANCharacter::OnRep_AnimID()
+{
+	PlayerInteractionAnim();
+}

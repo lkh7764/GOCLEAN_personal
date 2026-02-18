@@ -5,6 +5,10 @@
 #include <Net/UnrealNetwork.h>
 #include "ServerModule/GameSession/PlayerSessionState.h"
 
+#include <GObjectSystem/Server/GObjectManager.h>
+#include <GPlayerSystem/Server/GPlayerManager.h>
+#include <GMapSystem/Server/GMapManager.h>
+
 AGameSessionState::AGameSessionState()
 {
     ObjectManager = nullptr;
@@ -329,6 +333,31 @@ bool AGameSessionState::HasPurchasedVendingByPlayerId(int32 PlayerId) const
     return false;
 }
 
+bool AGameSessionState::TogglePurchasedVending(int32 PlayerId, int32 ItemId)
+{
+    if (!HasAuthority()) return false;
+    if (PlayerId < 0) return false;
+
+    int32 OwnedItemId = -1;
+    const bool bHas = GetPurchasedVendingItemId(PlayerId, OwnedItemId);
+
+    if (!bHas)
+    {
+        // 구매한 적 없으면 추가
+        return TryAddPurchasedVending(PlayerId, ItemId);
+    }
+
+    // 이미 구매한 게 있음
+    if (OwnedItemId == ItemId)
+    {
+        // 같은 걸 다시 누르면 해제
+        return RemovePurchasedVending(PlayerId);
+    }
+
+    // 다른 아이템은 구매 불가
+    return false;
+}
+
 bool AGameSessionState::GetPurchasedVendingItemId(int32 PlayerId, int32& OutItemId) const
 {
     for (const FPurchasedVendingEntry& E : PurchasedVending)
@@ -452,6 +481,27 @@ void AGameSessionState::OnRep_PurchasedVending()
 
 }
 
+void AGameSessionState::ResetSpiritualAndRestGauge(float SpiritualStartValue)
+{
+    if (!HasAuthority()) return;
 
+    // 영적=100(기본), 안식=0
+    SetSpiritualGauge_Internal(FMath::Max(0.f, SpiritualStartValue));
+    SetRestGauge_Internal(0.f);
+}
 
+void AGameSessionState::ApplySpiritualOrRestGauge( float Amount, float SpiritualMin, float SpiritualMax, float RestMin, float RestMax)
+{
+    if (!HasAuthority()) return;
 
+    if (Amount <= 0.f) return;
+
+    if (SpiritualGauge > SpiritualMin)
+    {
+        AddSpiritualGauge(-Amount, SpiritualMin, SpiritualMax);
+        return;
+    }
+
+    // 영적이 0(또는 Min)이라면 안식 증가
+    AddRestGauge(Amount, RestMin, RestMax);
+}
