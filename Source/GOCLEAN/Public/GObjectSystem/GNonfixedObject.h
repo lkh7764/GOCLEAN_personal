@@ -6,12 +6,12 @@
 #include "GameFramework/Actor.h"
 
 #include "GTypes/GObjectTypes.h"
+#include "GObjectSystem/GNonfixedObjCoreComponent.h"
 
 #include "GNonfixedObject.generated.h"
 
 
 class UGAdditionalObjFuncComponent;
-class UGNonfixedObjCoreComponent;
 class UBoxComponent;
 class UStaticMeshComponent;
 
@@ -36,6 +36,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UGNonfixedObjCoreComponent* GetNonfixedObjCoreComp() const { return CoreComp; }
+
+	FName GetTID() { return CoreComp ? CoreComp->TID : ""; }
+	ENonfixedObjState GetState() { return CoreComp ? CoreComp->GetState() : ENonfixedObjState::E_None; }
+
 
 
 	// init

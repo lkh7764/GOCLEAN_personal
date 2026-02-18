@@ -6,8 +6,10 @@
 #include "GameFramework/Actor.h"
 
 #include "GTypes/GObjectTypes.h"
+#include "GTypes/IGInteractable.h"
 
 #include "GFixedObject.generated.h"
+
 
 
 UCLASS()
@@ -15,6 +17,7 @@ class GOCLEAN_API AGFixedObject : public AActor
 {
 	GENERATED_BODY()
 	
+
 public:	
 	// Sets default values for this actor's properties
 	AGFixedObject();
@@ -34,6 +37,7 @@ public:
 	FName GetLocatedZoneID() { return LocatedZoneID; }
 	EGFixedObjState GetState() { return State; }
 
+	UFUNCTION(BlueprintCallable)
 	void ChangeState(EGFixedObjState ChangedState);
 
 	UFUNCTION(BlueprintImplementableEvent)
@@ -75,5 +79,42 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnStateChanged_Visual();
+
+};
+
+
+
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
+class GOCLEAN_API UGFixedObjInteractionComponent : public UActorComponent, public IGInteractable
+{
+	GENERATED_BODY()
+
+
+public:
+	// Sets default values for this component's properties
+	UGFixedObjInteractionComponent();
+
+protected:
+	// Called when the game starts
+	virtual void BeginPlay() override;
+
+public:
+	// interact
+	virtual bool CanInteract(FName EquipID, AGOCLEANCharacter* Target) const override;
+
+	virtual void ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target) override;
+
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TObjectPtr<UStaticMeshComponent>> Meshs;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MaxCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName SpawnObjTID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class UBoxComponent> InteractionVolume;
 
 };

@@ -60,6 +60,9 @@ public:
 	virtual bool CanInteract(FName EquipID, AGOCLEANCharacter* Target) const override;
 	virtual void ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target) override;
 
+	ENonfixedObjState GetState() { return State; }
+
+
 
 	// state
 	bool ChangeState(ENonfixedObjState ChangedState);
