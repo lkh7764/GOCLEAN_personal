@@ -125,4 +125,19 @@ public:
 
 private:
     FTimerHandle PostExorcismCountdownTimerHandle;
+
+
+// 임시 커스터마이징
+public:
+    // SeatIndex(0~3) -> PawnClass 매핑
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Spawn|InGame")
+    TArray<TSubclassOf<APawn>> InGameSeatPawnClasses; // size 4 권장
+
+    // 특정 플레이어에게 SeatIndex에 맞는 Pawn을 스폰/포제스
+    UFUNCTION(BlueprintCallable, Category="Spawn|InGame")
+    APawn* SpawnAndPossessPawnBySeatIndex(APlayerController* PC, int32 SeatIndex);
+
+    // GameState에서 SeatIndex를 꺼내서 자동으로 스폰/포제스
+    UFUNCTION(BlueprintCallable, Category="Spawn|InGame")
+    APawn* SpawnAndPossessPawnFromGameState(APlayerController* PC);
 };

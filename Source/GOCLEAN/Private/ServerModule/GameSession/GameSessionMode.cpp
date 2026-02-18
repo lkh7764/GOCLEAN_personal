@@ -584,3 +584,60 @@ void AGameSessionMode::FinishPostExorcismEscapeCountdown()
         }
     }
 }
+
+APawn* AGameSessionMode::SpawnAndPossessPawnBySeatIndex(APlayerController* PC, int32 SeatIndex)
+{
+    if (!HasAuthority() || !PC) return nullptr;
+
+    if (!InGameSeatPawnClasses.IsValidIndex(SeatIndex) || !InGameSeatPawnClasses[SeatIndex])
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Invalid SeatIndex or PawnClass. SeatIndex=%d"), SeatIndex);
+        return nullptr;
+    }
+
+    AActor* StartSpot = FindPlayerStart(PC);
+    FTransform SpawnTM = StartSpot ? StartSpot->GetActorTransform() : FTransform::Identity;
+
+    if (APawn* OldPawn = PC->GetPawn())
+    {
+        PC->UnPossess();
+        OldPawn->Destroy();
+    }
+
+    FActorSpawnParameters Params;
+    Params.Owner = PC;
+    Params.Instigator = nullptr;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    APawn* NewPawn = GetWorld()->SpawnActor<APawn>(InGameSeatPawnClasses[SeatIndex], SpawnTM, Params);
+    if (!NewPawn)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to spawn pawn for SeatIndex=%d"), SeatIndex);
+        return nullptr;
+    }
+
+    PC->Possess(NewPawn);
+    return NewPawn;
+}
+
+APawn* AGameSessionMode::SpawnAndPossessPawnFromGameState(APlayerController* PC)
+{
+    if (!HasAuthority() || !PC) return nullptr;
+
+    AGameSessionState* GS = GetWorld() ? GetWorld()->GetGameState<AGameSessionState>() : nullptr;
+    if (!GS)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GameState not found"));
+        return nullptr;
+    }
+
+    const int32 SeatIndex = GS->GetSeatIndexOfPlayerState(PC->PlayerState);
+
+    if (SeatIndex < 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SeatIndex not assigned yet"));
+        return nullptr;
+    }
+
+    return SpawnAndPossessPawnBySeatIndex(PC, SeatIndex);
+}
