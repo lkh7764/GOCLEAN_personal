@@ -115,11 +115,7 @@ void UGFixedObjInteractionComponent::ExecuteInteraction(FName EquipID, AGOCLEANC
 
 	if (!NewObj) return;
 
-	Target->SetHeldObject()
-
-	EquipComp->ChangeHeldObject(EquipData->MatchedSlotIndex, NewObj);
 	EquipComp->ChangeEquipment(EquipData->MatchedSlotIndex, ObjData->PickedEquipID);
-
 	NewObj->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Picked);
 
 

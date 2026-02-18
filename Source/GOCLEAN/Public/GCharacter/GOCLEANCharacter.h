@@ -248,7 +248,7 @@ private:
 
 
 	// Anim ID //
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing="OnRep_AnimID")
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = "OnRep_AnimID")
 	int32 AnimID;
 
 	UFUNCTION()
@@ -266,7 +266,16 @@ private:
 	TObjectPtr<UGEquipmentComponent> EquipComp;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
-	TObjectPtr<UInputAction> ChangeSlotAction;
+	TObjectPtr<UInputAction> ChangeSlotAction_Slot1;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> ChangeSlotAction_Slot2;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> ChangeSlotAction_Slot3;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	TObjectPtr<UInputAction> ChangeSlotAction_Slot4;
 
 
 	// Interaction // 
@@ -283,11 +292,15 @@ public:
 	UInteractionComponent* GetInteractionComp() const { return InteractionComp; }
 
 	void DoInteraction();
+	void TryChangeCurrentEquipmentSlot0();
+	void TryChangeCurrentEquipmentSlot1();
+	void TryChangeCurrentEquipmentSlot2();
+	void TryChangeCurrentEquipmentSlot3();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void SetHeldObject(class AGNonfixedObject* NewObj);
-	void DropHeldObject();
+	void DropHeldObject(int32 Index);
 	USceneComponent* GetHandMesh() const { return FirstPersonMeshComp; }
 
 	void SetHeldObjectRelativeTransform(class AGNonfixedObject* NewObj);

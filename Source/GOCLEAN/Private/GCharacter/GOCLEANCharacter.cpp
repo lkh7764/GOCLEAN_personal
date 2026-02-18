@@ -501,6 +501,43 @@ void AGOCLEANCharacter::DoInteraction()
 	}
 }
 
+void AGOCLEANCharacter::TryChangeCurrentEquipmentSlot0()
+{
+	AGOCLEANPlayerController* GController = Cast<AGOCLEANPlayerController>(GetController());
+	if (GController)
+	{
+		GController->ChangeSlot(0);
+	}
+}
+
+void AGOCLEANCharacter::TryChangeCurrentEquipmentSlot1()
+{
+	AGOCLEANPlayerController* GController = Cast<AGOCLEANPlayerController>(GetController());
+	if (GController)
+	{
+		GController->ChangeSlot(1);
+	}
+}
+
+void AGOCLEANCharacter::TryChangeCurrentEquipmentSlot2()
+{
+	AGOCLEANPlayerController* GController = Cast<AGOCLEANPlayerController>(GetController());
+	if (GController)
+	{
+		GController->ChangeSlot(2);
+	}
+}
+
+void AGOCLEANCharacter::TryChangeCurrentEquipmentSlot3()
+{
+	AGOCLEANPlayerController* GController = Cast<AGOCLEANPlayerController>(GetController());
+	if (GController)
+	{
+		GController->ChangeSlot(3);
+	}
+}
+
+
 void AGOCLEANCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -518,13 +555,15 @@ void AGOCLEANCharacter::SetHeldObject(AGNonfixedObject* NewObj)
 	FAttachmentTransformRules AttachmentRules(
 		EAttachmentRule::SnapToTarget,
 		EAttachmentRule::SnapToTarget,
-		EAttachmentRule::KeepWorld,
+		EAttachmentRule::SnapToTarget,
 		false
 	);
+
 	NewObj->AttachToComponent(GetHandMesh(), AttachmentRules, TEXT("Charater001_Bip001-R-HandSocket"));
 	SetHeldObjectRelativeTransform(NewObj);
 	EquipComp->SetCurrentHeldObject(NewObj);
 }
+
 void AGOCLEANCharacter::SetHeldObjectRelativeTransform(AGNonfixedObject* NewObj)
 {
 	auto DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
@@ -541,7 +580,22 @@ void AGOCLEANCharacter::SetHeldObjectRelativeTransform(AGNonfixedObject* NewObj)
 
 	if (EquipData->EquipID == "Eq_OVariable")
 	{
-		NewObj->GetRootComponent()->SetRelativeTransform(FTransform::Identity);
+		NewObj->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+		FVector CenterLocation = FVector(0.0f, 30.0f, 90.0f);
+		FRotator CenterRotation = FRotator::ZeroRotator;
+
+		NewObj->GetRootComponent()->SetRelativeTransform(FTransform(CenterRotation, CenterLocation));
+
+
+		FAttachmentTransformRules AttachmentRules(
+			EAttachmentRule::SnapToTarget,
+			EAttachmentRule::SnapToTarget,
+			EAttachmentRule::SnapToTarget,
+			false
+		);
+
+		NewObj->AttachToComponent(GetHandMesh(), AttachmentRules, TEXT("Charater001_Bip001-R-HandSocket"));
 	}
 	else
 	{
@@ -561,14 +615,18 @@ void AGOCLEANCharacter::SetHeldObjectRelativeTransform(AGNonfixedObject* NewObj)
 		}
 	}
 }
-void AGOCLEANCharacter::DropHeldObject()
+void AGOCLEANCharacter::DropHeldObject(int32 Index)
 {
-	if (EquipComp)
-	{
-		EquipComp->GetCurrentHeldObject()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		EquipComp->SetCurrentHeldObject(nullptr);
-		EquipComp->ChangeEuquipmentInCurrSlot("Eq_Hand");
-	}
+	if (!EquipComp) return;
+
+	// detach actor hierarchy
+	EquipComp->GetHeldObject(Index)->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+	// set empty current held obj ptr
+	EquipComp->ChangeHeldObject(Index, nullptr);
+
+	// set equip id - default
+	EquipComp->ChangeEquipment(Index, "Eq_Hand");
 }
 
 void AGOCLEANCharacter::OnRep_AnimID()
