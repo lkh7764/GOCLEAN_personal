@@ -36,6 +36,10 @@ public:
 
 	void ChangeState(EGFixedObjState ChangedState);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnCustomEvent_Bool(bool Param);
+
+
 
 
 protected:
