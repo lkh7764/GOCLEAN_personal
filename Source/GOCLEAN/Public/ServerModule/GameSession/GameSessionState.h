@@ -345,4 +345,18 @@ protected:
     UPROPERTY(Replicated, BlueprintReadOnly)
     TArray<int32> VendingRemaining;
 
+
+    // 퇴마 연결 로직
+public:
+    UPROPERTY(ReplicatedUsing = OnRep_ExorcismPhase, BlueprintReadOnly, Category = "Session|Exorcism")
+    EInGamePhase ExorcismPhase = EInGamePhase::Cleaning;
+
+    UFUNCTION()
+    void OnRep_ExorcismPhase();
+
+    UFUNCTION(BlueprintPure, Category = "Session|Exorcism")
+    EInGamePhase BP_GetExorcismPhase() const { return ExorcismPhase; }
+
+    // 서버에서만 바꾸도록(Mode에서만 호출)
+    void SetExorcismPhase_ServerOnly(EInGamePhase NewPhase);
 };
