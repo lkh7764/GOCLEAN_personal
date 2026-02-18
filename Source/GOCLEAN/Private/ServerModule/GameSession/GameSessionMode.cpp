@@ -114,6 +114,12 @@ void AGameSessionMode::PostLogin(APlayerController* NewPlayer)
     PSS->SetReady(true);
 
     PSS->SetNickname(PSS->GetPlayerName());
+
+    // 로비 유아이 뜨도록
+    if (AGOCLEANPlayerController* PC = Cast<AGOCLEANPlayerController>(NewPlayer))
+    {
+        PC->Client_ShowLobbyUI(); // 서버에서 호출
+    }
 }
 
 void AGameSessionMode::Logout(AController* Exiting)
@@ -282,12 +288,15 @@ bool AGameSessionMode::CanStartGame() const
         }
     }
 
-    // 최소 인원 체크(호스트 포함)
-    if (ActivePlayerCount < MinPlayersToStart)
-        return false;
+    // 디버깅
+    return true;
 
-    // 호스트 제외 나머지 플레이어 레디 체크
-    return (NonHostReadyCount == NonHostCount);
+    //// 최소 인원 체크(호스트 포함)
+    //if (ActivePlayerCount < MinPlayersToStart)
+    //    return false;
+
+    //// 호스트 제외 나머지 플레이어 레디 체크
+    //return (NonHostReadyCount == NonHostCount);
 }
 
 void AGameSessionMode::StartGameIfPossible()
