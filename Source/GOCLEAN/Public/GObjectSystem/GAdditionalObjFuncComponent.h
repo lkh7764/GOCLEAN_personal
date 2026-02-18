@@ -246,3 +246,34 @@ protected:
 	TObjectPtr<USoundBase> CachedInteractSound;
 
 };
+
+
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
+class GOCLEAN_API UGBucketComponent : public UGAdditionalObjFuncComponent
+{
+	GENERATED_BODY()
+
+public:
+	UGBucketComponent();
+
+protected:
+	virtual void BeginPlay() override;
+	// 매 프레임 기울기를 체크하기 위해 Tick을 켭니다.
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	// 상호작용 트리거 (걸레 세척용)
+	virtual void OnInteractionTriggered(class AGOCLEANCharacter* Target) override;
+
+private:
+	// 엎어짐 체크 및 처리
+	void CheckSpill();
+	void SpillFilth();
+
+	UPROPERTY(EditAnywhere, Category = "Bucket")
+	float SpillThreshold = 0.7f; // UpVector.Z가 이보다 낮으면 엎어진 것으로 판단
+
+	UPROPERTY(EditAnywhere, Category = "Bucket")
+	FName FilthTID = "Obj_DerivedBlood"; // 엎어졌을 때 스폰할 Filth의 TID
+
+	bool bIsSpilled = false; // 이미 엎어졌는지 확인 (중복 스폰 방지)
+};

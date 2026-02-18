@@ -18,6 +18,7 @@
 #include "TimerManager.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "GTypes/GMapTypes.h"
 
 AGameSessionMode::AGameSessionMode()
 {
@@ -210,6 +211,9 @@ void AGameSessionMode::BeginPlay()
     {
         GSS->SetSelectedContractId(GI->GetPendingContractId());
     }
+
+    FTimerHandle T;
+    GetWorldTimerManager().SetTimer(T, this, &AGameSessionMode::EnsureAllPlayersPawn, 0.2f, false);
 }
 
 void AGameSessionMode::OnPlayerReadyChanged()
@@ -432,7 +436,8 @@ bool AGameSessionMode::TryEnterExorcismInProgress(/*AActor* ExorcismCircle*/)
     // =========
     // 각 플레이어들이 퇴마진과 동일한 방에 존재하는지 체크
     // =========
-    const bool bAllPlayersInSameRoom = true; // 체크 값으로 여기 바꿔주세요
+
+    const bool bAllPlayersInSameRoom = true; // MapManager로 방 체크 붙이기
 
     if (!bAllPlayersInSameRoom)
         return false;
@@ -453,9 +458,10 @@ bool AGameSessionMode::FinishExorcismSuccess(float PostExorcismCountdownSeconds)
 
     SS->SetInGamePhase(EInGamePhase::ExorcismEnd);
 
-    // 진행도 완료 처리 + 종료 카운트다운
     SS->SetExorcismProgress(100.f, 0.f, 100.f);
-    SS->StartPostExorcismTimer(PostExorcismCountdownSeconds);
+
+    // 성공 후 카운트다운 시작
+    BP_StartPostExorcismEscapeCountdown(PostExorcismCountdownSeconds);
 
     return true;
 }
@@ -587,86 +593,38 @@ void AGameSessionMode::FinishPostExorcismEscapeCountdown()
     }
 }
 
-APawn* AGameSessionMode::SpawnAndPossessPawnBySeatIndex(APlayerController* PC, int32 SeatIndex)
+
+UClass* AGameSessionMode::GetDefaultPawnClassForController_Implementation(AController* InController)
 {
-    if (!HasAuthority() || !PC) return nullptr;
+    const APlayerController* PC = Cast<APlayerController>(InController);
+    const APlayerSessionState* PSS = PC ? Cast<APlayerSessionState>(PC->PlayerState) : nullptr;
 
-    if (!InGameSeatPawnClasses.IsValidIndex(SeatIndex) || !InGameSeatPawnClasses[SeatIndex])
+    if (PSS && InGameSeatPawnClasses.IsValidIndex(PSS->GetSeatIndex()) && InGameSeatPawnClasses[PSS->GetSeatIndex()])
     {
-        UE_LOG(LogTemp, Warning, TEXT("Invalid SeatIndex or PawnClass. SeatIndex=%d"), SeatIndex);
-        return nullptr;
+        return InGameSeatPawnClasses[PSS->GetSeatIndex()];
     }
 
-    AActor* StartSpot = FindPlayerStart(PC);
-    FTransform SpawnTM = StartSpot ? StartSpot->GetActorTransform() : FTransform::Identity;
-
-    if (APawn* OldPawn = PC->GetPawn())
-    {
-        PC->UnPossess();
-        OldPawn->Destroy();
-    }
-
-    FActorSpawnParameters Params;
-    Params.Owner = PC;
-    Params.Instigator = nullptr;
-    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-    APawn* NewPawn = GetWorld()->SpawnActor<APawn>(InGameSeatPawnClasses[SeatIndex], SpawnTM, Params);
-    if (!NewPawn)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Failed to spawn pawn for SeatIndex=%d"), SeatIndex);
-        return nullptr;
-    }
-
-    PC->Possess(NewPawn);
-    return NewPawn;
-}
-
-APawn* AGameSessionMode::SpawnAndPossessPawnFromGameState(APlayerController* PC)
-{
-    if (!HasAuthority() || !PC) return nullptr;
-
-    AGameSessionState* GS = GetWorld() ? GetWorld()->GetGameState<AGameSessionState>() : nullptr;
-    if (!GS)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("GameState not found"));
-        return nullptr;
-    }
-
-    const int32 SeatIndex = GS->GetSeatIndexOfPlayerState(PC->PlayerState);
-
-    if (SeatIndex < 0)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("SeatIndex not assigned yet"));
-        return nullptr;
-    }
-
-    return SpawnAndPossessPawnBySeatIndex(PC, SeatIndex);
-}
-
-
-void AGameSessionMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
-{
-    Super::HandleStartingNewPlayer_Implementation(NewPlayer);
-
-    if (!HasAuthority() || !NewPlayer) return;
-    if (!IsInGameMap()) return;
-
-    EnsurePawnForController(NewPlayer);
+    return Super::GetDefaultPawnClassForController_Implementation(InController);
 }
 
 void AGameSessionMode::PostSeamlessTravel()
 {
     Super::PostSeamlessTravel();
-
+    UE_LOG(LogTemp, Warning, TEXT("[InGameGM] PostSeamlessTravel called. HasAuthority=%d"), HasAuthority());
     if (!HasAuthority()) return;
-    if (!IsInGameMap()) return;
 
-    // 트래블 후 현재 접속자 전원 폰 보장
     for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
-        APlayerController* PC = It->Get();
-        EnsurePawnForController(PC);
+        if (APlayerController* PC = It->Get())
+        {
+            if (APawn* OldPawn = PC->GetPawn())
+            {
+                PC->UnPossess();
+                OldPawn->Destroy();
+            }
+
+            RestartPlayer(PC);
+        }
     }
 }
 
@@ -676,57 +634,17 @@ bool AGameSessionMode::IsInGameMap() const
     return !MapName.Contains(TEXT("FirstPersonMap"));
 }
 
-bool AGameSessionMode::TryGetSeatIndex(APlayerController* PC, int32& OutSeatIndex) const
+void AGameSessionMode::EnsureAllPlayersPawn()
 {
-    OutSeatIndex = INDEX_NONE;
-    if (!PC || !PC->PlayerState) return false;
-
-    const AGameSessionState* GS = GetWorld() ? GetWorld()->GetGameState<AGameSessionState>() : nullptr;
-    if (!GS) return false;
-
-    OutSeatIndex = GS->GetSeatIndexOfPlayerState(PC->PlayerState);
-    return OutSeatIndex != INDEX_NONE;
-}
-
-void AGameSessionMode::EnsurePawnForController(APlayerController* PC)
-{
-    if (!HasAuthority() || !PC) return;
-
-    // 이미 폰이 있으면(정상 스폰) 그냥 끝
-    if (PC->GetPawn())
-        return;
-
-    // SeatIndex가 아직 준비 안 됐으면 재시도
-    int32 SeatIndex = INDEX_NONE;
-    if (!TryGetSeatIndex(PC, SeatIndex))
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
-        EnsurePawnRetry(PC, 20);
-        return;
-    }
+        APlayerController* PC = It->Get();
+        if (!PC) continue;
 
-    SpawnAndPossessPawnBySeatIndex(PC, SeatIndex);
-}
-
-void AGameSessionMode::EnsurePawnRetry(APlayerController* PC, int32 RetryCount)
-{
-    if (!HasAuthority() || !PC) return;
-    if (PC->GetPawn()) return;
-    if (RetryCount <= 0) return;
-
-    FTimerHandle Handle;
-    GetWorldTimerManager().SetTimer(
-        Handle,
-        FTimerDelegate::CreateWeakLambda(this, [this, PC, RetryCount]()
-            {
-                EnsurePawnRetry(PC, RetryCount - 1);
-            }),
-        0.1f,
-        false
-    );
-
-    int32 SeatIndex = INDEX_NONE;
-    if (TryGetSeatIndex(PC, SeatIndex))
-    {
-        SpawnAndPossessPawnBySeatIndex(PC, SeatIndex);
+        if (PC->GetPawn() == nullptr)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("RestartPlayer for %s"), *GetNameSafe(PC));
+            RestartPlayer(PC);
+        }
     }
 }

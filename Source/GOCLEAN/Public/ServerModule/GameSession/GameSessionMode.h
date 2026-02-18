@@ -128,27 +128,20 @@ private:
 
 
 // 임시 커스터마이징
+
 public:
-    virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+    virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
+
     virtual void PostSeamlessTravel() override; // SeamlessTravel 후 호출
 
 protected:
     // 인게임에서만 실행하고 싶으면 true 반환하도록(맵 이름/플래그로 판단)
     bool IsInGameMap() const;
 
-    void EnsurePawnForController(APlayerController* PC);
-    bool TryGetSeatIndex(APlayerController* PC, int32& OutSeatIndex) const;
-
-    // 재시도용
-    void EnsurePawnRetry(APlayerController* PC, int32 RetryCount);
+    void EnsureAllPlayersPawn();
 
     UPROPERTY(EditDefaultsOnly, Category = "Spawn")
     TArray<TSubclassOf<APawn>> InGameSeatPawnClasses;
 
-public:
-    UFUNCTION(BlueprintCallable, Category = "Spawn")
-    APawn* SpawnAndPossessPawnBySeatIndex(APlayerController* PC, int32 SeatIndex);
 
-    UFUNCTION(BlueprintCallable, Category = "Spawn")
-    APawn* SpawnAndPossessPawnFromGameState(APlayerController* PC);
 };
