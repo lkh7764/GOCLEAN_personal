@@ -102,6 +102,10 @@ public:
 	void Server_RequestOnHunted();
 	UFUNCTION(Server, Reliable)
 	void Server_RequestSetVisible(bool IsVisible);
+	UFUNCTION(Server, Reliable)
+	void Server_RequestPlayHuntCameraSequence();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestRespawn();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_Crouch();
@@ -117,6 +121,17 @@ public:
 	void Multicast_PlayerInteractionAnim();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SetVisible(bool IsVisible);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayHuntCameraSequence();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Respawn();
+
+	UFUNCTION(Client, Reliable)
+	void Client_PlayHuntCameraSequence();
+	UFUNCTION(Client, Reliable)
+	void Client_Respawn();
+	UFUNCTION(Client, Reliable)
+	void Client_DisableInput(bool bIsDisable);
 
 	// OnHunted //
 	void OnHunted();

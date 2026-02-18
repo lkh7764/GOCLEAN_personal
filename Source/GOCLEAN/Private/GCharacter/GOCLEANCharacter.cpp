@@ -189,11 +189,21 @@ void AGOCLEANCharacter::Server_RequestPlayerInteractionAnim_Implementation()
 }
 void AGOCLEANCharacter::Server_RequestOnHunted_Implementation()
 {
-	Multicast_OnHunted();
+	if (HasAuthority()) OnHunted();
+	else Multicast_OnHunted();
 }
 void AGOCLEANCharacter::Server_RequestSetVisible_Implementation(bool IsVisible)
 {
 	Multicast_SetVisible(IsVisible);
+}
+void AGOCLEANCharacter::Server_RequestPlayHuntCameraSequence_Implementation()
+{
+	Multicast_PlayHuntCameraSequence();
+}
+void AGOCLEANCharacter::Server_RequestRespawn_Implementation()
+{
+	if (HasAuthority()) Respawn();
+	else Multicast_Respawn();
 }
 
 void AGOCLEANCharacter::Multicast_ToggleFlashlight_Implementation()
@@ -224,6 +234,42 @@ void AGOCLEANCharacter::Multicast_SetVisible_Implementation(bool IsVisible)
 {
 	ThirdPersonMeshComp->SetHiddenInGame(!IsVisible);
 }
+void AGOCLEANCharacter::Multicast_PlayHuntCameraSequence_Implementation()
+{
+	PlayHuntCameraSequence();
+}
+void AGOCLEANCharacter::Multicast_Respawn_Implementation()
+{
+	Respawn();
+}
+
+void AGOCLEANCharacter::Client_PlayHuntCameraSequence_Implementation()
+{
+	PlayHuntCameraSequence();
+}
+void AGOCLEANCharacter::Client_Respawn_Implementation()
+{
+	Respawn();
+}
+void AGOCLEANCharacter::Client_DisableInput_Implementation(bool bIsDisable)
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+
+	if (bIsDisable)
+	{
+		PlayerController->SetIgnoreLookInput(true);
+		PlayerController->SetIgnoreMoveInput(true);
+		CameraComp->bUsePawnControlRotation = false;
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	else
+	{
+		PlayerController->SetIgnoreLookInput(false);
+		PlayerController->SetIgnoreMoveInput(false);
+		CameraComp->bUsePawnControlRotation = true;
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+}
 
 
 // OnHunted //
@@ -247,13 +293,9 @@ void AGOCLEANCharacter::OnHunted()
 		AnimationDuration = AnimAsset->GetPlayLength();
 	}
 
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	PlayerController->SetIgnoreLookInput(true);
-	PlayerController->SetIgnoreMoveInput(true);
-	CameraComp->bUsePawnControlRotation = false;
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Client_DisableInput(true);
 	
-	GetWorldTimerManager().SetTimer(DelayHandle, this, &AGOCLEANCharacter::PlayHuntCameraSequence, AnimationDuration - 1.3f, false);
+	GetWorldTimerManager().SetTimer(DelayHandle, this, &AGOCLEANCharacter::Client_PlayHuntCameraSequence, AnimationDuration - 1.3f, false);
 	GetWorldTimerManager().SetTimer(SpawnDummyDelayHandle, this, &AGOCLEANCharacter::SpawnDummyCharacter, AnimationDuration - 1.5f, false);
 	GetWorldTimerManager().SetTimer(DestroyHandle, [SpawnedDummyActor]() { SpawnedDummyActor->Destroy(); }, AnimationDuration + 0.5f, false);
 	
@@ -264,12 +306,8 @@ void AGOCLEANCharacter::Respawn()
 {
 	Server_RequestSetVisible(true);
 	FirstPersonMeshComp->SetHiddenInGame(false);
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	PlayerController->SetIgnoreLookInput(false);
-	PlayerController->SetIgnoreMoveInput(false);
-	CameraComp->bUsePawnControlRotation = true;
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
+	
+	Client_DisableInput(false);
 
 	SetActorLocationAndRotation(RespawnTransform.GetLocation(), RespawnTransform.GetRotation());
 
@@ -305,7 +343,7 @@ void AGOCLEANCharacter::PlayHuntCameraSequence()
 	SequencePlayer->Play();
 	
 
-	SequencePlayer->OnFinished.AddDynamic(this, &AGOCLEANCharacter::Respawn);
+	SequencePlayer->OnFinished.AddDynamic(this, &AGOCLEANCharacter::Server_RequestRespawn);
 }
 
 void AGOCLEANCharacter::SpawnDummyCharacter()

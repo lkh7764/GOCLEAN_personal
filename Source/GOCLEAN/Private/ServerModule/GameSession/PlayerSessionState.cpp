@@ -11,6 +11,18 @@ APlayerSessionState::APlayerSessionState()
 }
 
 
+void APlayerSessionState::RequestSetReady(bool bNewReady)
+{
+	if (HasAuthority())
+	{
+		SetReady(bNewReady);
+	}
+	else
+	{
+		Server_SetReady(bNewReady);
+	}
+}
+
 void APlayerSessionState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
