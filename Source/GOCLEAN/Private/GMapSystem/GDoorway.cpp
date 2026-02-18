@@ -264,14 +264,27 @@ int32 AGDoorway::FindPlayerSessionIndex(AActor* PlayerActor)
 
 bool AGDoor::CanInteract(FName EquipID, AGOCLEANCharacter* Target) const
 {
-	if (!OwnerDoorway) return false;
+	if (!OwnerDoorway) return true;
 
 	return OwnerDoorway->CanClose();
 }
 
 void AGDoor::ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target)
 {
-	if (!OwnerDoorway) return;
+	if (!OwnerDoorway)
+	{
+		bIsClosed = !bIsClosed;
+		ReceiveOnDoorStateChanged(bIsClosed);
+		return;
+	}
 
 	OwnerDoorway->IsClosed() ? OwnerDoorway->OpenDoor() : OwnerDoorway->CloseDoor();
 }
+
+void AGDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGDoor, bIsClosed);
+}
+

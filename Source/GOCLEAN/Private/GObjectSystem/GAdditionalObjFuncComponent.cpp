@@ -216,7 +216,7 @@ void UGRemovingComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
 			SetVisualByInteractionCnt(Owner, EquipComp, *Data);
 
 			// 물걸레의 오염도를 증가
-			EquipComp->AddMopPollution(20.0f);
+			// EquipComp->AddMopPollution(20.0f);
 		}
 		else
 		{
@@ -493,3 +493,83 @@ void UGInteractSoundCompopnent::OnInteractionTriggered(AGOCLEANCharacter* Target
 		);
 	}
 }
+
+
+
+
+UGBucketComponent::UGBucketComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true; // 기울기 체크를 위해 활성화
+}
+
+void UGBucketComponent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UGBucketComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// 손에 들려있는 상태가 아닐 때만 엎어짐 체크 (들고 있을 땐 손 각도에 따라다니므로 제외 가능)
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+	if (Owner && Owner->GetNonfixedObjCoreComp()->GetState() != ENonfixedObjState::E_Picked)
+	{
+		CheckSpill();
+	}
+}
+
+void UGBucketComponent::OnInteractionTriggered(AGOCLEANCharacter* Target)
+{
+	if (!Target) return;
+
+	FName EquipID = Target->GetEquipComp()->GetCurrentEquipmentID();
+
+	if (EquipID == "Eq_Mop")
+	{
+		UE_LOG(LogGObject, Log, TEXT("[Bucket] Cleaning the mop..."));
+		Target->GetEquipComp()->AddMopPollution(-100.0f);
+
+		// 여기에 물 출렁이는 사운드나 파티클을 추가하면 금상첨화!
+	}
+}
+
+void UGBucketComponent::CheckSpill()
+{
+	if (bIsSpilled) return;
+
+	// 액터의 UpVector.Z가 1.0이면 정방향, 0.0이면 90도 누운 상태입니다.
+	float UpZ = GetOwner()->GetActorUpVector().Z;
+
+	if (UpZ < SpillThreshold)
+	{
+		SpillFilth();
+	}
+}
+
+void UGBucketComponent::SpillFilth()
+{
+	bIsSpilled = true;
+	UE_LOG(LogGObject, Warning, TEXT("[Bucket] OOPS! Spilled!"));
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	auto* ObjectManager = World->GetSubsystem<UGObjectManager>();
+	if (ObjectManager)
+	{
+		// 양동이 위치 바닥에 Filth 스폰
+		FVector SpawnLocation = GetOwner()->GetActorLocation();
+		FRotator SpawnRotation = FRotator::ZeroRotator;
+
+		ObjectManager->SpawnNonfixedObject(
+			FilthTID,
+			ENonfixedObjState::E_Static,
+			SpawnLocation,
+			SpawnRotation);
+	}
+
+	// 필요하다면 여기서 양동이의 상태를 'Empty'로 바꾸는 로직을 추가할 수 있습니다.
+}
+
+
