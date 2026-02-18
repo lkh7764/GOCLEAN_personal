@@ -47,6 +47,8 @@ class UGObjectManager;
 class UGPlayerManager;
 class UGMapManager;
 
+class UCharacterStatsComponent;
+
 
 /**
  * 
@@ -94,6 +96,11 @@ public:
     // SeatIndex -> PlayerController
     UFUNCTION(BlueprintCallable, Category = "Session")
     APlayerController* GetPlayerControllerBySeat(int32 SeatIndex) const;
+
+
+    // 타이머
+    UFUNCTION(BlueprintPure, Category = "Session")
+    float BP_GetPostExorcismTimeRemaining() const { return PostExorcismTimeRemaining; }
 
 private:
     UPROPERTY()
@@ -304,4 +311,13 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
     void ApplySpiritualOrRestGauge(float Amount, float SpiritualMin = 0.f, float SpiritualMax = 100.f, float RestMin = 0.f, float RestMax = 100.f);
 
+
+public:
+    // SeatIndex로 해당 플레이어의 현재 목숨(Life) 가져오기 (클라 UI에서도 사용 가능)
+    UFUNCTION(BlueprintCallable, Category="Session|Stats")
+    int32 GetCurrentLifeBySeat(int32 SeatIndex) const;
+
+    // 로컬 플레이어 현재 목숨
+    UFUNCTION(BlueprintCallable, Category="Session|Stats")
+    int32 GetLocalCurrentLife() const;
 };

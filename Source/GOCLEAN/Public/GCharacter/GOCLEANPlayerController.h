@@ -51,6 +51,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> LobbyWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> ResultWidgetClass;
+
+
 	// 현재 띄운 위젯 인스턴스
 	UPROPERTY()
 	TObjectPtr<UUserWidget> CurrentWidget;
@@ -62,6 +66,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ShowLobbyUI();
 
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ShowResultUI();
+
+	// Server -> owning client
+	UFUNCTION(Client, Reliable)
+	void Client_ShowResultUI();
 
 	void TryDoInteraction();
 

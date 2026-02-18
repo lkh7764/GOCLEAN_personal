@@ -96,3 +96,38 @@ const FGZoneData* UGMapManager::GetZoneData(FName ZoneName) const
 {
 	return ZoneDatas.Find(ZoneName);
 }
+
+
+
+bool UGMapManager::IsActorInZoneType(const AActor* Actor, EGZoneType ZoneType) const
+{
+	if (!Actor) return false;
+
+	for (const TPair<FName, FGZoneData>& Pair : ZoneDatas)
+	{
+		const FGZoneData& Data = Pair.Value;
+		if (Data.Type != ZoneType) continue;
+
+		if (Data.IncludedPlayerList.Contains(const_cast<AActor*>(Actor)))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+TArray<FName> UGMapManager::GetActorZoneIds(const AActor* Actor) const
+{
+	TArray<FName> Out;
+	if (!Actor) return Out;
+
+	for (const TPair<FName, FGZoneData>& Pair : ZoneDatas)
+	{
+		const FGZoneData& Data = Pair.Value;
+		if (Data.IncludedPlayerList.Contains(const_cast<AActor*>(Actor)))
+		{
+			Out.Add(Pair.Key);
+		}
+	}
+	return Out;
+}

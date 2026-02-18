@@ -114,4 +114,15 @@ protected:
 
 private:
     class AGameSessionState* GetSessionState() const;
+
+public:
+    UFUNCTION(BlueprintCallable, Category = "InGame|Exorcism")
+    void BP_StartPostExorcismEscapeCountdown(float DurationSeconds = 30.f);
+
+    // countdown tick / finish
+    void TickPostExorcismEscapeCountdown();
+    void FinishPostExorcismEscapeCountdown();
+
+private:
+    FTimerHandle PostExorcismCountdownTimerHandle;
 };

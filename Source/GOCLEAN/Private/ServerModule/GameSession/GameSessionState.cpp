@@ -9,6 +9,8 @@
 #include <GPlayerSystem/Server/GPlayerManager.h>
 #include <GMapSystem/Server/GMapManager.h>
 
+#include "GCharacter/StatsComponent/CharacterStatsComponent.h"
+
 AGameSessionState::AGameSessionState()
 {
     ObjectManager = nullptr;
@@ -504,4 +506,23 @@ void AGameSessionState::ApplySpiritualOrRestGauge( float Amount, float Spiritual
 
     // 영적이 0(또는 Min)이라면 안식 증가
     AddRestGauge(Amount, RestMin, RestMax);
+}
+
+int32 AGameSessionState::GetCurrentLifeBySeat(int32 SeatIndex) const
+{
+    APawn* Pawn = GetPawnBySeat(SeatIndex);
+    if (!Pawn) return -1;
+
+    UCharacterStatsComponent* Stats = Pawn->FindComponentByClass<UCharacterStatsComponent>();
+    if (!Stats) return -1;
+
+    return static_cast<int32>(Stats->GetCurrentLife());
+}
+
+int32 AGameSessionState::GetLocalCurrentLife() const
+{
+    const int32 LocalSeat = GetLocalSeatIndex();
+    if (LocalSeat < 0) return -1;
+
+    return GetCurrentLifeBySeat(LocalSeat);
 }
