@@ -64,6 +64,7 @@ public:
 	void Multicast_SetVisible(bool IsVisible);
 
 private:
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 	// Overrieded //
 	void BeginPlay() override; // JSH TMP
@@ -101,16 +102,22 @@ private:
 
 	// State //
 
+public:
 	// Patrol
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bIsPatrolling;
 	FTimerHandle CheckArrivalToCurrentPointHandle;
 
 	// Chase
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bIsChasing;
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bIsRageEvent;
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bIsUnendingRageEvent;
 	FTimerHandle ChasingPlayerHandle;
 
+private:
 	// Hunt
 	float ManifestRadius;
 	float HuntRadius;
