@@ -446,12 +446,12 @@ void UVoiceChattingManager::Vivox_Update3DFromActors(AActor* SpeakerActor, AActo
     IChannelSession& ChannelSession = LoginSession.GetChannelSession(JoinedChannel);
 
     // 리스너 기준(보통 카메라/로컬 플레이어)
-    const FVector ListenerPos = ListenerActor->GetActorLocation();
+    const FVector ListenerPos = ListenerActor->GetActorLocation() * 0.01f;
     const FVector ListenerForward = ListenerActor->GetActorForwardVector();
     const FVector ListenerUp = ListenerActor->GetActorUpVector();
 
     // 스피커(내 목소리 위치)
-    const FVector SpeakerPos = SpeakerActor->GetActorLocation();
+    const FVector SpeakerPos = SpeakerActor->GetActorLocation() * 0.01f;
 
     VivoxCoreError Err = ChannelSession.Set3DPosition(SpeakerPos, ListenerPos, ListenerForward, ListenerUp);
 
