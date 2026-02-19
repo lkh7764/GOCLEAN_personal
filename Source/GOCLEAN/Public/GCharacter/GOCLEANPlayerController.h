@@ -67,8 +67,16 @@ public:
 	void ShowLobbyUI();
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
+	void CloseLobbyUI();
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ShowResultUI();
 
+	UFUNCTION(BlueprintCallable, Client, Reliable)
+	void Client_ShowLobbyUI();
+
+	UFUNCTION(BlueprintCallable, Client, Reliable)
+	void Client_CloseLobbyUI();
 
 	// Server -> owning client
 	UFUNCTION(Client, Reliable)
@@ -103,5 +111,18 @@ public:
 
 protected:
 	void EnsureVendingWidget();
+
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Vending")
+	void RequestTogglePurchasedVending(int32 ItemId);
+
+protected:
+	UFUNCTION(Server, Reliable)
+	void Server_TogglePurchasedVending(int32 ItemId);
+
+	void Server_TogglePurchasedVending_Implementation(int32 ItemId);
+
+	int32 GetMySeatIndex_ServerSafe() const;
 
 };

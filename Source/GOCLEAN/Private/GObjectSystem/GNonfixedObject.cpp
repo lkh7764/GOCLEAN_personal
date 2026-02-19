@@ -37,7 +37,7 @@ AGNonfixedObject::AGNonfixedObject()
 
 	InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	InteractionVolume->SetCollisionResponseToAllChannels(ECR_Overlap);
-	InteractionVolume->SetHiddenInGame(false);
+	InteractionVolume->SetHiddenInGame(true);
 
 	InteractionVolume->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Block);
 	InteractionVolume->SetSimulatePhysics(false);
@@ -332,6 +332,7 @@ void AGNonfixedObject::Multicast_OnPickedUp_Implementation(AGOCLEANCharacter* Ta
 
 	TargetCharacter->SetHeldObjectRelativeTransform(this);
 }
+
 
 
 

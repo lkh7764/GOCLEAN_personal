@@ -5,6 +5,9 @@
 #include "Net/RpcTypes.h"
 #include "ServerModule/GameSession/RPCRouterComponent.h"
 
+#include <ServerModule/GameSession/GameSessionState.h>
+#include <ServerModule/GameSession/PlayerSessionState.h>
+
 #include "ServerModule/Sound/AmbientAudioManager.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -18,13 +21,23 @@ void AGOCLEANPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+
+    if (IsLocalController() && GetWorld()->GetMapName() == TEXT("FirstPersonMap"))
+    {
+        if (GEngine && GEngine->GameViewport)
+        {
+            GEngine->GameViewport->RemoveAllViewportWidgets();
+            UE_LOG(LogTemp, Log, TEXT("[Server/Client] Force Clear All Widgets in New Level"));
+        }
+    }
+
+
 	// get the enhanced input subsystem
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
 		// add the mapping context so we get controls
 		Subsystem->AddMappingContext(InputMappingContext, 0);
 	}
-
 }
 
 void AGOCLEANPlayerController::ShowTitleUI()
@@ -70,6 +83,14 @@ void AGOCLEANPlayerController::ShowLobbyUI()
         SetInputMode(Mode);
     }
 }
+void AGOCLEANPlayerController::CloseLobbyUI()
+{
+    if (CurrentWidget)
+    {
+        CurrentWidget->RemoveFromParent();
+        CurrentWidget = nullptr;
+    }
+}
 
 void AGOCLEANPlayerController::ShowResultUI()
 {
@@ -90,6 +111,16 @@ void AGOCLEANPlayerController::ShowResultUI()
         FInputModeUIOnly Mode;
         SetInputMode(Mode);
     }
+}
+
+void AGOCLEANPlayerController::Client_ShowLobbyUI_Implementation()
+{
+    ShowLobbyUI();
+}
+
+void AGOCLEANPlayerController::Client_CloseLobbyUI_Implementation()
+{
+    CloseLobbyUI();
 }
 
 
@@ -172,4 +203,30 @@ void AGOCLEANPlayerController::ToggleVendingUI()
     {
         OpenVendingUI();
     }
+}
+
+
+
+void AGOCLEANPlayerController::RequestTogglePurchasedVending(int32 ItemId)
+{
+    Server_TogglePurchasedVending(ItemId);
+}
+
+int32 AGOCLEANPlayerController::GetMySeatIndex_ServerSafe() const
+{
+    const APlayerSessionState* PSS = Cast<APlayerSessionState>(PlayerState);
+    return PSS ? PSS->GetSeatIndex() : INDEX_NONE;
+}
+
+void AGOCLEANPlayerController::Server_TogglePurchasedVending_Implementation(int32 ItemId)
+{
+    AGameSessionState* GS = GetWorld() ? GetWorld()->GetGameState<AGameSessionState>() : nullptr;
+    if (!GS)
+        return;
+
+    const int32 PlayerId = GetMySeatIndex_ServerSafe();
+    if (PlayerId == INDEX_NONE)
+        return;
+
+    GS->TogglePurchasedVending(PlayerId, ItemId);
 }
