@@ -1,0 +1,252 @@
+#include "GEnemy/GhostAIController.h"
+#include "GEnemy/Base/GhostBase.h"
+#include "GCharacter/GOCLEANCharacter.h"
+
+
+// Getter //
+float AGhostAIController::GetPlayerSanityCorruptionRate() const { return PlayersSanityCorruptionRate; };
+
+// Server //
+void AGhostAIController::UpdatePlayerList()
+{
+	if (HasAuthority() == false) return;
+	
+	AlivePlayers.Empty();
+
+	AGameSessionState* SessionState = GetWorld()->GetGameState<AGameSessionState>();
+	if (SessionState == nullptr) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("AlivePlayers Num: %d"), AlivePlayers.Num());
+	for (APlayerState* PS : SessionState->PlayerArray)
+	{
+		int32 SeatIndex = SessionState->GetSeatIndexOfPlayerState(PS);
+
+		APawn* PlayerPawn = SessionState->GetPawnBySeat(SeatIndex);
+		if (PlayerPawn == nullptr) continue;
+
+		AGOCLEANCharacter* PlayerCharacter = Cast<AGOCLEANCharacter>(PlayerPawn);
+		if (PlayerCharacter == nullptr) continue;
+
+		AlivePlayers.Add(PlayerCharacter);
+	}
+}
+
+void AGhostAIController::FindTarget()
+{
+	if (AlivePlayers.Num() == 0) return;
+
+	// JSH Tmp: Random Search
+	int32 RandomIndex = FMath::RandRange(0, AlivePlayers.Num() - 1);
+	TargetPlayer = AlivePlayers[RandomIndex];
+}
+
+float AGhostAIController::CalculateAverageSanityCorruptionRate()
+{
+	if (AlivePlayers.Num() == 0) return 0.f;
+
+	float TotalSanityCorruption = 0.f;
+
+	for (AGOCLEANCharacter* PlayerCharacter : AlivePlayers)
+	{
+		if (PlayerCharacter == nullptr) continue;
+
+		float SanityCorruption = 100.0f - PlayerCharacter->GetPlayerCurrentSanity();
+		TotalSanityCorruption += SanityCorruption;
+	}
+
+	return (TotalSanityCorruption / AlivePlayers.Num());
+}
+
+// Overrided //
+void AGhostAIController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// JSH TMP
+	MoveToPatrolPoint();
+}
+
+void AGhostAIController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if(!bIsRageEvent) 
+		CheckRageEventCondition();
+}
+
+void AGhostAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	GetWorld()->GetTimerManager().SetTimer(CheckPlayerSanityCorruptionHandle, this, &AGhostAIController::CheckPlayerSanityCorruptionRate, 5.0f, true);
+
+	bIsRageEvent = false;
+	bIsChasing = false;
+	bIsPatrolling = true;
+
+	ManifestRadius = 500.0f;
+	HuntRadius = 100.0f;
+	
+	UpdatePlayerList();
+
+	//MoveToPatrolPoint();
+}
+
+
+// Check player sanity //
+void AGhostAIController::CheckPlayerSanityCorruptionRate()
+{
+	PlayersSanityCorruptionRate = CalculateAverageSanityCorruptionRate();
+	// JSH Flag: Sanity
+	UE_LOG(LogTemp, Warning, TEXT("Player's current sanity corruption rate: %f"), (PlayersSanityCorruptionRate));
+
+	//PlayerSanityCorruptionRate = (100.0f - Player->GetPlayerCurrentSanity());
+}
+
+
+// State //
+void AGhostAIController::MoveToPatrolPoint()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Move to next patrol point"));
+	AGhostBase* GhostCharacter = Cast<AGhostBase>(GetPawn());
+	if (GhostCharacter == nullptr || GhostCharacter->PatrolPoints.Num() == 0) return;
+
+	AActor* TargetPoint = GhostCharacter->PatrolPoints[GhostCharacter->CurrentPatrolIndex];
+	if (TargetPoint == nullptr) return;
+
+	if (bIsPatrolling == true && bIsChasing == false) {
+		MoveToActor(TargetPoint);
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(CheckArrivalToCurrentPointHandle, this, &AGhostAIController::CheckArrivalCurrentPatrolPoint, 1.0f, true);
+}
+
+void AGhostAIController::CheckArrivalCurrentPatrolPoint()
+{
+	AGhostBase* GhostCharacter = Cast<AGhostBase>(GetPawn());
+	if (GhostCharacter == nullptr || GhostCharacter->PatrolPoints.Num() == 0) return;
+
+	AActor* TargetPoint = GhostCharacter->PatrolPoints[GhostCharacter->CurrentPatrolIndex];
+	if (TargetPoint == nullptr) return;
+
+	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPoint->GetActorLocation());
+	if (Distance < 50.f)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(CheckArrivalToCurrentPointHandle);
+
+		GhostCharacter->CurrentPatrolIndex = (GhostCharacter->CurrentPatrolIndex + 1) % (GhostCharacter->PatrolPoints.Num());
+		MoveToPatrolPoint();
+	}
+}
+
+void AGhostAIController::CheckRageEventCondition()
+{
+	if (PlayersSanityCorruptionRate >= 30 && !bIsRageEvent) {
+		bIsRageEvent = true;
+		StartChase();
+	}
+	else return;
+}
+
+void AGhostAIController::StartUnendingRageEvent()
+{
+	bIsUnendingRageEvent = true;
+	StartChase();
+}
+
+void AGhostAIController::StartChase()
+{
+	UpdatePlayerList();
+	bIsChasing = true;
+	bIsPatrolling = false;
+
+	FindTarget();
+	if (TargetPlayer == nullptr) return;
+
+	ChasePlayer(TargetPlayer);
+}
+
+void AGhostAIController::ChasePlayer(AActor* TargetPlayerCharacter)
+{
+	if (TargetPlayerCharacter == nullptr) return;
+
+	MoveToActor(TargetPlayerCharacter);
+
+	if(bIsRageEvent) GetWorld()->GetTimerManager().SetTimer(ChasingPlayerHandle, this, &AGhostAIController::PlayerHunt, 0.2f, true);
+	else if(bIsUnendingRageEvent) GetWorld()->GetTimerManager().SetTimer(ChasingPlayerHandle, this, &AGhostAIController::EndlessPlayerHunt, 0.2f, true);
+}
+
+void AGhostAIController::PlayerHunt()
+{
+	if (!bIsRageEvent) return;
+
+	//UE_LOG(LogTemp, Warning, TEXT("Hunting Player"));
+	AGhostBase* GhostCharacter = Cast<AGhostBase>(GetPawn());
+	if (GhostCharacter == nullptr) return;
+
+	// JSH TODO: With Server
+	if (TargetPlayer == nullptr) return;
+
+	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPlayer->GetActorLocation());
+	if (Distance < ManifestRadius)
+	{
+		GhostCharacter->GetMesh()->SetHiddenInGame(false);
+	}
+
+	if (Distance < HuntRadius)
+	{
+		GhostCharacter->GetMesh()->SetHiddenInGame(true);
+		
+		Cast<AGOCLEANCharacter>(TargetPlayer)->Server_RequestOnHunted();
+
+		UE_LOG(LogTemp, Warning, TEXT("Player Hunted"));
+
+		GetWorld()->GetTimerManager().ClearTimer(ChasingPlayerHandle);
+		bIsRageEvent = false;
+		bIsChasing = false;
+		bIsPatrolling = true;
+		PlayersSanityCorruptionRate = 0;
+
+		// JSH Temp: Player sanity reset
+		TargetPlayer->SetPlayerCurrentSanity(100.0f);
+
+		MoveToPatrolPoint();
+	}
+}
+
+void AGhostAIController::EndlessPlayerHunt()
+{
+	if (!bIsUnendingRageEvent) return;
+
+	//UE_LOG(LogTemp, Warning, TEXT("Hunting Player"));
+	AGhostBase* GhostCharacter = Cast<AGhostBase>(GetPawn());
+	if (GhostCharacter == nullptr) return;
+
+	// JSH TODO: With Server
+	AActor* TargetPlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (TargetPlayerCharacter == nullptr) return;
+
+	float Distance = FVector::Dist(GhostCharacter->GetActorLocation(), TargetPlayerCharacter->GetActorLocation());
+	if (Distance < ManifestRadius)
+	{
+		GhostCharacter->GetMesh()->SetHiddenInGame(true);
+	}
+
+	if (Distance < HuntRadius)
+	{
+		GhostCharacter->GetMesh()->SetHiddenInGame(false);
+
+		Cast<AGOCLEANCharacter>(TargetPlayerCharacter)->Server_RequestOnHunted();
+
+		UE_LOG(LogTemp, Warning, TEXT("Player Hunted"));
+
+		GetWorld()->GetTimerManager().ClearTimer(ChasingPlayerHandle);
+		bIsChasing = false;
+		bIsPatrolling = true;
+
+		// JSH Temp: Player sanity reset
+		//AGOCLEANCharacter* Player = Cast<AGOCLEANCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+
+		if (bIsUnendingRageEvent) EndlessPlayerHunt();
+	}
+}

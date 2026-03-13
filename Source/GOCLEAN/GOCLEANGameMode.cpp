@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GOCLEANGameMode.h"
-#include "GOCLEANCharacter.h"
+#include "GCharacter/GOCLEANCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 AGOCLEANGameMode::AGOCLEANGameMode()
