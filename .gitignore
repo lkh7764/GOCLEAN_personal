@@ -75,3 +75,10 @@ Config/steamvr_ue_editor_app.json
 Config/SteamVRBindings
 Platforms/HoloLens/Config/HoloLensEngine.ini
 .vsconfig
+
+# Debug symbols
+*.pdb
+
+# Allow Vivox third-party libs (tracked via LFS by .gitattributes)
+!Plugins/VivoxCore/**/ThirdParty/**/*.lib
+!Plugins/VivoxCore/**/ThirdParty/**/*.dll
