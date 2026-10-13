@@ -727,31 +727,3 @@ void AGOCLEANCharacter::Server_SetAimPitch_Implementation(float NewPitch)
 {
 	AimPitch = FMath::Clamp(NewPitch, -60.f, 60.f);
 }
-
-
-// Cabinet //
-void AGOCLEANCharacter::EnterCabinet()
-{
-	bIsInCabinet = true;
-
-	// Change IMC
-	{
-		if (AGOCLEANPlayerController* PC = Cast<AGOCLEANPlayerController>(GetController()))
-		{
-			PC->SwitchToCabinetIMC();
-		}
-	}
-}
-
-void AGOCLEANCharacter::ExitCabinet()
-{
-	bIsInCabinet = false;
-
-	// Change IMC
-	{
-		if (AGOCLEANPlayerController* PC = Cast<AGOCLEANPlayerController>(GetController()))
-		{
-			PC->SwitchToDefaultIMC();
-		}
-	}
-}
