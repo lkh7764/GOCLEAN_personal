@@ -40,6 +40,12 @@ protected:
 protected:
 
 	virtual void BeginPlay() override;
+    virtual void OnRep_PlayerState() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+private:
+    FTimerHandle LobbyUIRetryTimer;
+    int32 LobbyUIRetryCount = 0;
 
 	// End Actor interface
 

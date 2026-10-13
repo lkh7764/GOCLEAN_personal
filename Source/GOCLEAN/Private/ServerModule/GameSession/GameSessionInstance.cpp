@@ -136,7 +136,11 @@ void UGameSessionInstance::TryShowLevelUI()
 
     AGOCLEANPlayerController* MyPC = Cast<AGOCLEANPlayerController>(PC);
     UE_LOG(LogTemp, Warning, TEXT("[GI] CastToGOCLEANPC=%s"), MyPC ? TEXT("OK") : TEXT("FAIL"));
-    if (!MyPC) return;
+    if (!MyPC || !MyPC->IsLocalController())
+    {
+        if (++UITryCount <= MaxUITryCount) ScheduleTryShowUI(World, 0.1f);
+        return;
+    }
 
     if (LevelName.Equals(TEXT("test_Title")))
     {
