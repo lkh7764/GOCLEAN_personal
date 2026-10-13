@@ -230,11 +230,8 @@ void AInGameGameMode::StartExtractionPhase()
     IGS->SetGamePhase(EGamePhase::Extraction);
 
 
-    /*
-     * TODO:
-     * 실제 철수 제한시간 설정
-     * IGS->SetExtractionTimeRemaining(60.f);
-     */
+     // 실제 철수 제한시간 설정 필요
+     IGS->SetExtractionTimeRemaining(60.f);
 }
 
 

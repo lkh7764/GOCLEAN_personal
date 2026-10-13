@@ -10,6 +10,11 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
+#include "OnlineSubsystem.h"
+#include "OnlineSubsystemUtils.h"
+#include "Interfaces/OnlineIdentityInterface.h"
+
+static int32 ActiveVivoxManagers = 0;
 
 #include <ServerModule/GameSession/GameSessionInstance.h>
 #include <ServerModule/GameSession/PlayerSessionState.h>
@@ -25,35 +30,11 @@
 // Initialize
 // ============================================================
 
-void UVoiceChattingManager::Initialize(
-    FSubsystemCollectionBase& Collection
-)
+void UVoiceChattingManager::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
-
     InitVivox();
-
-
-    if (bDebugHudEnabled)
-    {
-        UGameInstance* GI =
-            GetGameInstance();
-
-        UWorld* World =
-            GI ? GI->GetWorld() : nullptr;
-
-
-        if (World)
-        {
-            World->GetTimerManager().SetTimer(
-                DebugHudTimerHandle,
-                this,
-                &UVoiceChattingManager::Vivox_TickDebugHud,
-                0.2f,
-                true
-            );
-        }
-    }
+    HandleWorldChanged(GetWorld());
 }
 
 
@@ -63,49 +44,26 @@ void UVoiceChattingManager::Initialize(
 
 void UVoiceChattingManager::Deinitialize()
 {
-    Vivox_LeaveVoice();
-
-
-    UGameInstance* GI =
-        GetGameInstance();
-
-    UWorld* World =
-        GI ? GI->GetWorld() : nullptr;
-
-
-    if (World)
+    bShuttingDown = true;
+    ClearChannelCallbacks();
+    DisconnectCurrentChannel(true);
+    if (UWorld* World = VoiceTimerWorld.Get())
     {
-        World->GetTimerManager().ClearTimer(
-            DebugHudTimerHandle
-        );
-
-        World->GetTimerManager().ClearTimer(
-            VoiceCacheTimerHandle
-        );
-
-        World->GetTimerManager().ClearTimer(
-            Vivox3DTimer
-        );
-
-        World->GetTimerManager().ClearTimer(
-            PawnRetryTimerHandle
-        );
-
-        World->GetTimerManager().ClearTimer(
-            ChannelSwitchTimerHandle
-        );
+        World->GetTimerManager().ClearTimer(DebugHudTimerHandle);
+        World->GetTimerManager().ClearTimer(VoiceCacheTimerHandle);
+        World->GetTimerManager().ClearTimer(Vivox3DTimer);
+        World->GetTimerManager().ClearTimer(PawnRetryTimerHandle);
+        World->GetTimerManager().ClearTimer(ChannelSwitchTimerHandle);
     }
-
-
-    if (VivoxVoiceClient &&
-        bVivoxInitialized)
+    if (VivoxVoiceClient && bVivoxInitialized)
     {
-        VivoxVoiceClient->Uninitialize();
-
-        bVivoxInitialized = false;
+        if (bIsLoggedIn || bLoginInProgress)
+            VivoxVoiceClient->GetLoginSession(LoggedInUserId).Logout();
+        if (--ActiveVivoxManagers == 0)
+            VivoxVoiceClient->Uninitialize();
     }
-
-
+    bVivoxInitialized = false;
+    VivoxVoiceClient = nullptr;
     Super::Deinitialize();
 }
 
@@ -116,30 +74,22 @@ void UVoiceChattingManager::Deinitialize()
 
 void UVoiceChattingManager::InitVivox()
 {
-    if (bVivoxInitialized)
-        return;
-
-
-    auto* VivoxModule =
-        static_cast<FVivoxCoreModule*>(
-            &FModuleManager::Get()
-            .LoadModuleChecked(TEXT("VivoxCore"))
-            );
-
-
-    VivoxVoiceClient =
-        &VivoxModule->VoiceClient();
-
-
-    VivoxVoiceClient->Initialize();
-
+    if (bVivoxInitialized || bShuttingDown) return;
+    auto& Module = FModuleManager::LoadModuleChecked<FVivoxCoreModule>(TEXT("VivoxCore"));
+    VivoxVoiceClient = &Module.VoiceClient();
+    if (ActiveVivoxManagers == 0)
+    {
+        const VivoxCoreError Error = VivoxVoiceClient->Initialize();
+        if (Error != 0 && Error != VxErrorAlreadyInitialized)
+        {
+            Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] Initialize FAIL Error=%d"), int32(Error)), FColor::Red);
+            VivoxVoiceClient = nullptr;
+            return;
+        }
+    }
+    ++ActiveVivoxManagers;
     bVivoxInitialized = true;
-
-
-    Vivox_ScreenLog(
-        TEXT("[Vivox] Initialized"),
-        FColor::Green
-    );
+    Vivox_ScreenLog(TEXT("[Vivox] Initialized"));
 }
 
 
@@ -147,120 +97,39 @@ void UVoiceChattingManager::InitVivox()
 // Login Internal
 // ============================================================
 
-void UVoiceChattingManager::Vivox_BeginLoginInternal(
-    const FString& PlayerIdOverride
-)
+void UVoiceChattingManager::Vivox_BeginLoginInternal(const FString& PlayerIdOverride)
 {
-    FString PlayerId =
-        PlayerIdOverride;
-
-
-    if (PlayerId.IsEmpty())
+    if (!VivoxVoiceClient || bShuttingDown) return;
+    const FString PlayerId = GetLocalVoicePlayerId();
+    LoggedInUserId = AccountId(VIVOX_VOICE_ISSUER, PlayerId, VIVOX_VOICE_DOMAIN);
+    ILoginSession& Login = VivoxVoiceClient->GetLoginSession(LoggedInUserId);
+    bLoginInProgress = true;
+    ILoginSession::FOnBeginLoginCompletedDelegate Done;
+    const TWeakObjectPtr<UVoiceChattingManager> WeakThis(this);
+    Done.BindLambda([WeakThis](VivoxCoreError Error)
     {
-        PlayerId = FString::Printf(
-            TEXT("Player_%lld"),
-            FDateTime::UtcNow().GetTicks()
-        );
-    }
-
-
-    LoggedInUserId =
-        AccountId(
-            VIVOX_VOICE_ISSUER,
-            PlayerId,
-            VIVOX_VOICE_DOMAIN
-        );
-
-
-    ILoginSession& LoginSession =
-        VivoxVoiceClient->GetLoginSession(
-            LoggedInUserId
-        );
-
-
-    const FTimespan TokenExpiration =
-        FTimespan::FromHours(1);
-
-
-    const FString LoginToken =
-        LoginSession.GetLoginToken(
-            VIVOX_VOICE_KEY,
-            TokenExpiration
-        );
-
-
-    ILoginSession::FOnBeginLoginCompletedDelegate
-        OnLoginDone;
-
-
-    OnLoginDone.BindLambda(
-        [this](VivoxCoreError Error)
+        UVoiceChattingManager* Self = WeakThis.Get();
+        if (!Self || Self->bShuttingDown) return;
+        Self->bLoginInProgress = false;
+        Self->bIsLoggedIn = Error == 0;
+        Self->Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] Login %s Error=%d"),
+            Error == 0 ? TEXT("SUCCESS") : TEXT("FAIL"), int32(Error)),
+            Error == 0 ? FColor::Green : FColor::Red);
+        if (Error == 0)
         {
-            bLoginInProgress = false;
-
-
-            const bool bOk =
-                (Error == 0);
-
-
-            bIsLoggedIn = bOk;
-
-
-            Vivox_ScreenLog(
-                FString::Printf(
-                    TEXT(
-                        "[Vivox] Login %s (Error=%d)"
-                    ),
-                    bOk
-                    ? TEXT("SUCCESS")
-                    : TEXT("FAIL"),
-                    static_cast<int32>(Error)
-                ),
-                bOk
-                ? FColor::Green
-                : FColor::Red
-            );
-
-
-            if (!bOk)
-                return;
-
-
-            Vivox_EnableEnergyMeter();
-
-
-            // 로그인 완료 후 대기 중 Channel Join
-            if (!PendingChannelName.IsEmpty() &&
-                !bHasJoinedChannel)
-            {
-                Vivox_ScreenLog(
-                    TEXT(
-                        "[Vivox] Login OK -> Join pending channel"
-                    ),
-                    FColor::Cyan
-                );
-
-
-                JoinPendingChannel();
-            }
+            Self->Vivox_EnableEnergyMeter();
+            Self->JoinPendingChannel();
         }
-    );
-
-
-    Vivox_ScreenLog(
-        FString::Printf(
-            TEXT("[Vivox] BeginLogin as '%s'"),
-            *PlayerId
-        ),
-        FColor::Cyan
-    );
-
-
-    LoginSession.BeginLogin(
-        VIVOX_VOICE_SERVER,
-        LoginToken,
-        OnLoginDone
-    );
+    });
+    Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] BeginLogin as '%s'"), *PlayerId), FColor::Cyan);
+    const VivoxCoreError Error = Login.BeginLogin(VIVOX_VOICE_SERVER,
+        Login.GetLoginToken(VIVOX_VOICE_KEY, FTimespan::FromHours(1)), Done);
+    if (Error != 0)
+    {
+        bLoginInProgress = false;
+        bIsLoggedIn = false;
+        Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] BeginLogin rejected Error=%d"), int32(Error)), FColor::Red);
+    }
 }
 
 
@@ -374,137 +243,40 @@ void UVoiceChattingManager::Vivox_EnterInGameVoice(
 // Start Voice
 // ============================================================
 
-void UVoiceChattingManager::Vivox_StartVoice(
-    const FString& PlayerIdOverride,
-    const FString& ChannelName,
-    bool bPositional
-)
+void UVoiceChattingManager::Vivox_StartVoice(const FString& PlayerIdOverride,
+    const FString& ChannelName, bool bPositional)
 {
-    if (!VivoxVoiceClient)
+    UWorld* World = GetWorld();
+    if (bShuttingDown || !World || World->GetNetMode() == NM_DedicatedServer) return;
+    FString RequestedChannel = ChannelName;
+    bool bRequestedPositional = bPositional;
+    const FString Level = UGameplayStatics::GetCurrentLevelName(World, true);
+    // Legacy Blueprint calls must not override the room's canonical channel.
+    if (Level == TEXT("test_Title"))
     {
-        InitVivox();
-
-        if (!VivoxVoiceClient)
-            return;
+        Vivox_LeaveVoice();
+        return;
     }
-
-
-    // 요청할 Channel 정보 저장
-    PendingPlayerId =
-        PlayerIdOverride;
-
-    PendingChannelName =
-        ChannelName;
-
-    bPendingPositional =
-        bPositional;
-
-
-    // ========================================================
-    // 이미 Channel에 들어가 있음
-    // ========================================================
-
-    if (bHasJoinedChannel)
+    if (Level == TEXT("test_Lobby") || Level == TEXT("FirstPersonMap"))
     {
-        const bool bSameChannel =
-            CurrentVoiceChannelName ==
-            ChannelName;
-
-
-        const bool bSameType =
-            bCurrentChannelPositional ==
-            bPositional;
-
-
-        if (bSameChannel && bSameType)
+        UGameSessionInstance* GI = Cast<UGameSessionInstance>(GetGameInstance());
+        if (!GI || !GI->RefreshJoinCodeFromSession())
         {
-            Vivox_ScreenLog(
-                TEXT(
-                    "[Vivox] Already in requested Voice Channel"
-                ),
-                FColor::Yellow
-            );
-
-
-            // 같은 InGame 채널이어도
-            // Pawn만 새로 생성되었을 가능성 대응
-            if (bPositional &&
-                CurrentVoiceMode ==
-                EVoiceChannelMode::InGame3D)
-            {
-                Vivox_TryAutoStart3DUpdate();
-            }
-
-
+            Vivox_ScreenLog(TEXT("[Vivox] Voice skipped: no valid room join code"), FColor::Red);
             return;
         }
-
-
-        // 다른 Channel / 다른 Type
-        Vivox_ScreenLog(
-            TEXT(
-                "[Vivox] Switching Voice Channel..."
-            ),
-            FColor::Cyan
-        );
-
-
-        DisconnectCurrentChannel(false);
-
-
-        SchedulePendingChannelJoin();
-
-        return;
+        bRequestedPositional = Level == TEXT("FirstPersonMap");
+        RequestedChannel = GI->GetPendingJoinCode() +
+            (bRequestedPositional ? TEXT("_Game") : TEXT("_Lobby"));
     }
-
-
-    // ========================================================
-    // Login 진행 중
-    // ========================================================
-
-    if (bLoginInProgress)
-    {
-        Vivox_ScreenLog(
-            TEXT(
-                "[Vivox] Voice request queued: Login in progress"
-            ),
-            FColor::Yellow
-        );
-
-        return;
-    }
-
-
-    // ========================================================
-    // 이미 Login 완료
-    // ========================================================
-
-    if (bIsLoggedIn)
-    {
-        JoinPendingChannel();
-
-        return;
-    }
-
-
-    // ========================================================
-    // Login 시작
-    // ========================================================
-
-    bLoginInProgress = true;
-
-
-    Vivox_ScreenLog(
-        TEXT(
-            "[Vivox] StartVoice -> Begin Login"
-        ),
-        FColor::Cyan
-    );
-
-
-    Vivox_BeginLoginInternal(
-        PendingPlayerId
-    );
+    if (RequestedChannel.IsEmpty()) return;
+    if (!VivoxVoiceClient) InitVivox();
+    if (!VivoxVoiceClient) return;
+    PendingPlayerId = GetLocalVoicePlayerId();
+    PendingChannelName = RequestedChannel;
+    bPendingPositional = bRequestedPositional;
+    CurrentVoiceMode = bRequestedPositional ? EVoiceChannelMode::InGame3D : EVoiceChannelMode::Lobby2D;
+    JoinPendingChannel();
 }
 
 
@@ -544,29 +316,39 @@ void UVoiceChattingManager::SchedulePendingChannelJoin(
 
 void UVoiceChattingManager::JoinPendingChannel()
 {
-    if (PendingChannelName.IsEmpty())
-        return;
-
-
+    if (bShuttingDown || !VivoxVoiceClient) return;
+    if (bHasChannelSession)
+    {
+        ILoginSession& Login = VivoxVoiceClient->GetLoginSession(LoggedInUserId);
+        IChannelSession& Session = Login.GetChannelSession(JoinedChannel);
+        if (Session.ChannelState() == ConnectionState::Disconnecting || bChannelDisconnectInProgress) return;
+        if (Session.ChannelState() != ConnectionState::Disconnected)
+        {
+            if (CurrentVoiceChannelName != PendingChannelName ||
+                bCurrentChannelPositional != bPendingPositional || PendingChannelName.IsEmpty())
+            {
+                DisconnectCurrentChannel(false);
+            }
+            else if (Session.AudioState() == ConnectionState::Connected)
+            {
+                MarkChannelAudioConnected();
+            }
+            return;
+        }
+        ClearChannelCallbacks();
+        Login.DeleteChannelSession(JoinedChannel);
+        bHasChannelSession = false;
+        bHasJoinedChannel = false;
+        bChannelConnectInProgress = false;
+        CurrentVoiceChannelName.Empty();
+    }
+    if (PendingChannelName.IsEmpty()) return;
     if (!bIsLoggedIn)
     {
-        if (!bLoginInProgress)
-        {
-            bLoginInProgress = true;
-
-            Vivox_BeginLoginInternal(
-                PendingPlayerId
-            );
-        }
-
+        if (!bLoginInProgress) Vivox_BeginLoginInternal(PendingPlayerId);
         return;
     }
-
-
-    Vivox_JoinVoice(
-        PendingChannelName,
-        bPendingPositional
-    );
+    Vivox_JoinVoice(PendingChannelName, bPendingPositional);
 }
 
 
@@ -574,167 +356,57 @@ void UVoiceChattingManager::JoinPendingChannel()
 // Join Voice Channel
 // ============================================================
 
-void UVoiceChattingManager::Vivox_JoinVoice(
-    const FString& ChannelName,
-    bool bPositional
-)
+void UVoiceChattingManager::Vivox_JoinVoice(const FString& ChannelName, bool bPositional)
 {
-    if (!VivoxVoiceClient)
-        return;
-
-
-    if (!bIsLoggedIn)
+    if (bShuttingDown || !VivoxVoiceClient || !bIsLoggedIn || ChannelName.IsEmpty()) return;
+    // Public legacy calls are routed through the same serialized switch path.
+    if (bHasChannelSession)
     {
-        Vivox_ScreenLog(
-            TEXT(
-                "[Vivox] JoinVoice ignored: Not logged in"
-            ),
-            FColor::Red
-        );
-
+        Vivox_StartVoice(GetLocalVoicePlayerId(), ChannelName, bPositional);
         return;
     }
-
-
-    ILoginSession& LoginSession =
-        VivoxVoiceClient->GetLoginSession(
-            LoggedInUserId
-        );
-
-
-    const ChannelType Type =
-        bPositional
-        ? ChannelType::Positional
-        : ChannelType::NonPositional;
-
-
-    const ChannelId Channel(
-        VIVOX_VOICE_ISSUER,
-        ChannelName,
-        VIVOX_VOICE_DOMAIN,
-        Type
-    );
-
-
-    IChannelSession& ChannelSession =
-        LoginSession.GetChannelSession(
-            Channel
-        );
-
-
-    const FTimespan TokenExpiration =
-        FTimespan::FromHours(1);
-
-
-    const FString JoinToken =
-        ChannelSession.GetConnectToken(
-            VIVOX_VOICE_KEY,
-            TokenExpiration
-        );
-
-
-    IChannelSession::FOnBeginConnectCompletedDelegate
-        OnConnectDone;
-
-
-    OnConnectDone.BindLambda(
-        [
-            this,
-            ChannelName,
-            bPositional,
-            Channel
-        ]
-    (VivoxCoreError Error)
+    ILoginSession& Login = VivoxVoiceClient->GetLoginSession(LoggedInUserId);
+    JoinedChannel = ChannelId(VIVOX_VOICE_ISSUER, ChannelName, VIVOX_VOICE_DOMAIN,
+        bPositional ? ChannelType::Positional : ChannelType::NonPositional);
+    CurrentVoiceChannelName = ChannelName;
+    bCurrentChannelPositional = bPositional;
+    bHasChannelSession = true;
+    bHasJoinedChannel = false;
+    bChannelConnectInProgress = true;
+    IChannelSession& Session = Login.GetChannelSession(JoinedChannel);
+    ChannelStateChangedHandle = Session.EventChannelStateChanged.AddUObject(this,
+        &UVoiceChattingManager::HandleChannelStateChanged);
+    AudioStateChangedHandle = Session.EventAudioStateChanged.AddUObject(this,
+        &UVoiceChattingManager::HandleAudioStateChanged);
+    IChannelSession::FOnBeginConnectCompletedDelegate Done;
+    const TWeakObjectPtr<UVoiceChattingManager> WeakThis(this);
+    const ChannelId RequestedChannel = JoinedChannel;
+    Done.BindLambda([WeakThis, RequestedChannel, ChannelName](VivoxCoreError Error)
+    {
+        UVoiceChattingManager* Self = WeakThis.Get();
+        if (!Self || Self->bShuttingDown || !Self->bHasChannelSession ||
+            !(Self->JoinedChannel == RequestedChannel)) return;
+        Self->Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] Connect request '%s' Error=%d"),
+            *ChannelName, int32(Error)), Error == 0 ? FColor::Cyan : FColor::Red);
+        if (Error != 0)
         {
-            const bool bOk =
-                (Error == 0);
-
-
-            Vivox_ScreenLog(
-                FString::Printf(
-                    TEXT(
-                        "[Vivox] Join '%s' (%s) %s Error=%d"
-                    ),
-                    *ChannelName,
-                    bPositional
-                    ? TEXT("Positional")
-                    : TEXT("NonPositional"),
-                    bOk
-                    ? TEXT("SUCCESS")
-                    : TEXT("FAIL"),
-                    static_cast<int32>(Error)
-                ),
-                bOk
-                ? FColor::Green
-                : FColor::Red
-            );
-
-
-            if (!bOk)
-                return;
-
-
-            // 참가 성공 후에만 현재 Channel 확정
-            JoinedChannel =
-                Channel;
-
-
-            bHasJoinedChannel =
-                true;
-
-
-            CurrentVoiceChannelName =
-                ChannelName;
-
-
-            bCurrentChannelPositional =
-                bPositional;
-
-
-            StartVoiceCacheTimer();
-
-
-            // Lobby는 3D Update 금지
-            if (!bPositional)
-            {
-                Vivox_Stop3DUpdate();
-
-                return;
-            }
-
-
-            // InGame Positional
-            if (bAutoStart3DUpdate &&
-                CurrentVoiceMode ==
-                EVoiceChannelMode::InGame3D)
-            {
-                Vivox_TryAutoStart3DUpdate();
-            }
+            if (Self->PendingChannelName == ChannelName) Self->PendingChannelName.Empty();
+            Self->bChannelConnectInProgress = false;
+            Self->DisconnectCurrentChannel(false);
         }
-        );
-
-
-    Vivox_ScreenLog(
-        FString::Printf(
-            TEXT(
-                "[Vivox] BeginConnect '%s' (%s)"
-            ),
-            *ChannelName,
-            bPositional
-            ? TEXT("Positional")
-            : TEXT("NonPositional")
-        ),
-        FColor::Cyan
-    );
-
-
-    ChannelSession.BeginConnect(
-        true,
-        false,
-        true,
-        JoinToken,
-        OnConnectDone
-    );
+        // Only AudioState::Connected marks a channel as joined.
+    });
+    Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] BeginConnect '%s' (%s)"), *ChannelName,
+        bPositional ? TEXT("Positional") : TEXT("NonPositional")), FColor::Cyan);
+    const VivoxCoreError Error = Session.BeginConnect(true, false, true,
+        Session.GetConnectToken(VIVOX_VOICE_KEY, FTimespan::FromHours(1)), Done);
+    if (Error != 0)
+    {
+        Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] BeginConnect rejected Error=%d"), int32(Error)), FColor::Red);
+        if (PendingChannelName == ChannelName) PendingChannelName.Empty();
+        bChannelConnectInProgress = false;
+        DisconnectCurrentChannel(false);
+    }
 }
 
 
@@ -742,61 +414,36 @@ void UVoiceChattingManager::Vivox_JoinVoice(
 // Disconnect Internal
 // ============================================================
 
-void UVoiceChattingManager::DisconnectCurrentChannel(
-    bool bClearMode
-)
+void UVoiceChattingManager::DisconnectCurrentChannel(bool bClearMode)
 {
-    // 먼저 3D / Cache 정리
     StopVoiceCacheTimer();
-
     Vivox_Stop3DUpdate();
-
-
-    if (VivoxVoiceClient &&
-        bHasJoinedChannel)
-    {
-        ILoginSession& LoginSession =
-            VivoxVoiceClient->GetLoginSession(
-                LoggedInUserId
-            );
-
-
-        IChannelSession& ChannelSession =
-            LoginSession.GetChannelSession(
-                JoinedChannel
-            );
-
-
-        ChannelSession.Disconnect(true);
-
-
-        Vivox_ScreenLog(
-            FString::Printf(
-                TEXT(
-                    "[Vivox] Disconnect Channel: %s"
-                ),
-                *CurrentVoiceChannelName
-            ),
-            FColor::Yellow
-        );
-    }
-
-
-    bHasJoinedChannel = false;
-
-    CurrentVoiceChannelName.Empty();
-
-    bCurrentChannelPositional = false;
-
-
+    if (UWorld* World = VoiceTimerWorld.Get())
+        World->GetTimerManager().ClearTimer(ChannelSwitchTimerHandle);
     if (bClearMode)
     {
-        CurrentVoiceMode =
-            EVoiceChannelMode::None;
-
+        CurrentVoiceMode = EVoiceChannelMode::None;
         PendingChannelName.Empty();
-
         bPendingPositional = false;
+    }
+    bHasJoinedChannel = false;
+    LastSelfAudioEnergy = 0.0;
+    LastStimuliMap.Reset();
+    PushVoiceCacheToGameInstance();
+    if (VivoxVoiceClient && bHasChannelSession)
+    {
+        IChannelSession& Session = VivoxVoiceClient->GetLoginSession(LoggedInUserId).GetChannelSession(JoinedChannel);
+        if (Session.ChannelState() == ConnectionState::Disconnected)
+        {
+            bChannelDisconnectInProgress = false;
+            if (!bShuttingDown) SchedulePendingChannelJoin();
+        }
+        else if (!bChannelDisconnectInProgress)
+        {
+            bChannelDisconnectInProgress = true;
+            Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] Disconnecting '%s'"), *CurrentVoiceChannelName), FColor::Yellow);
+            Session.Disconnect(bShuttingDown);
+        }
     }
 }
 
@@ -1152,103 +799,11 @@ void UVoiceChattingManager::Vivox_Stop3DUpdate()
 // Login Simple
 // ============================================================
 
-void UVoiceChattingManager::Vivox_LoginSimple(
-    const FString& PlayerIdOverride
-)
+void UVoiceChattingManager::Vivox_LoginSimple(const FString& PlayerIdOverride)
 {
-    if (!VivoxVoiceClient)
-    {
-        InitVivox();
-    }
-
-
-    if (!VivoxVoiceClient)
-        return;
-
-
-    FString PlayerId =
-        PlayerIdOverride;
-
-
-    if (PlayerId.IsEmpty())
-    {
-        PlayerId =
-            FString::Printf(
-                TEXT("Player_%lld"),
-                FDateTime::UtcNow().GetTicks()
-            );
-    }
-
-
-    LoggedInUserId =
-        AccountId(
-            VIVOX_VOICE_ISSUER,
-            PlayerId,
-            VIVOX_VOICE_DOMAIN
-        );
-
-
-    ILoginSession& LoginSession =
-        VivoxVoiceClient->GetLoginSession(
-            LoggedInUserId
-        );
-
-
-    const FTimespan TokenExpiration =
-        FTimespan::FromHours(1);
-
-
-    const FString LoginToken =
-        LoginSession.GetLoginToken(
-            VIVOX_VOICE_KEY,
-            TokenExpiration
-        );
-
-
-    ILoginSession::FOnBeginLoginCompletedDelegate
-        OnLoginDone;
-
-
-    OnLoginDone.BindLambda(
-        [this](VivoxCoreError Error)
-        {
-            const bool bOk =
-                (Error == 0);
-
-
-            bIsLoggedIn =
-                bOk;
-
-
-            Vivox_ScreenLog(
-                FString::Printf(
-                    TEXT(
-                        "[Vivox] Login %s (Error=%d)"
-                    ),
-                    bOk
-                    ? TEXT("SUCCESS")
-                    : TEXT("FAIL"),
-                    static_cast<int32>(Error)
-                ),
-                bOk
-                ? FColor::Green
-                : FColor::Red
-            );
-
-
-            if (bOk)
-            {
-                Vivox_EnableEnergyMeter();
-            }
-        }
-    );
-
-
-    LoginSession.BeginLogin(
-        VIVOX_VOICE_SERVER,
-        LoginToken,
-        OnLoginDone
-    );
+    if (bShuttingDown || bIsLoggedIn || bLoginInProgress) return;
+    if (!VivoxVoiceClient) InitVivox();
+    if (VivoxVoiceClient) Vivox_BeginLoginInternal(GetLocalVoicePlayerId());
 }
 
 
@@ -1631,6 +1186,21 @@ void UVoiceChattingManager::StopVoiceCacheTimer()
 
 void UVoiceChattingManager::TickVoiceCache()
 {
+    if (VivoxVoiceClient && bHasJoinedChannel)
+    {
+        const auto& Participants = VivoxVoiceClient->GetLoginSession(LoggedInUserId)
+            .GetChannelSession(JoinedChannel).Participants();
+        LastSelfAudioEnergy = 0.0;
+        for (const auto& Item : Participants)
+        {
+            if (Item.Value && Item.Value->IsSelf())
+            {
+                LastSelfAudioEnergy = Item.Value->AudioEnergy();
+                break;
+            }
+        }
+    }
+
     const float Corrected01 =
         ApplyVoiceLevelCorrection(
             static_cast<float>(
@@ -1722,4 +1292,112 @@ void UVoiceChattingManager::PushVoiceCacheToGameInstance()
         bMicMuted,
         LastStimuliMap
     );
+}
+
+FString UVoiceChattingManager::GetLocalVoicePlayerId()
+{
+    if (!LocalVoicePlayerId.IsEmpty()) return LocalVoicePlayerId;
+    UWorld* World = GetWorld();
+    // PIE players may share one Steam account, so each instance gets its own ID.
+    if (World && World->WorldType != EWorldType::PIE)
+    {
+        if (IOnlineSubsystem* OSS = Online::GetSubsystem(World))
+        {
+            if (OSS->GetSubsystemName() == FName(TEXT("STEAM")))
+            {
+                const IOnlineIdentityPtr Identity = OSS->GetIdentityInterface();
+                const FUniqueNetIdPtr UserId = Identity.IsValid() ? Identity->GetUniquePlayerId(0) : nullptr;
+                if (UserId.IsValid()) LocalVoicePlayerId = TEXT("steam_") + UserId->ToString();
+            }
+        }
+    }
+    if (LocalVoicePlayerId.IsEmpty())
+        LocalVoicePlayerId = TEXT("guest_") + FGuid::NewGuid().ToString(EGuidFormats::Digits);
+    return LocalVoicePlayerId;
+}
+
+void UVoiceChattingManager::HandleWorldChanged(UWorld* World)
+{
+    if (!World || bShuttingDown) return;
+    if (UWorld* OldWorld = VoiceTimerWorld.Get())
+    {
+        OldWorld->GetTimerManager().ClearTimer(DebugHudTimerHandle);
+        OldWorld->GetTimerManager().ClearTimer(VoiceCacheTimerHandle);
+        OldWorld->GetTimerManager().ClearTimer(Vivox3DTimer);
+        OldWorld->GetTimerManager().ClearTimer(PawnRetryTimerHandle);
+        OldWorld->GetTimerManager().ClearTimer(ChannelSwitchTimerHandle);
+    }
+    CachedSpeaker.Reset();
+    CachedListener.Reset();
+    VoiceTimerWorld = World;
+    if (bDebugHudEnabled)
+        World->GetTimerManager().SetTimer(DebugHudTimerHandle, this,
+            &UVoiceChattingManager::Vivox_TickDebugHud, 0.2f, true);
+    if (bHasJoinedChannel) StartVoiceCacheTimer();
+    if (bHasChannelSession && !bChannelConnectInProgress && !bChannelDisconnectInProgress)
+        SchedulePendingChannelJoin();
+}
+
+void UVoiceChattingManager::ClearChannelCallbacks()
+{
+    if (!VivoxVoiceClient || !bHasChannelSession) return;
+    IChannelSession& Session = VivoxVoiceClient->GetLoginSession(LoggedInUserId).GetChannelSession(JoinedChannel);
+    Session.EventChannelStateChanged.Remove(ChannelStateChangedHandle);
+    Session.EventAudioStateChanged.Remove(AudioStateChangedHandle);
+    ChannelStateChangedHandle.Reset();
+    AudioStateChangedHandle.Reset();
+}
+
+void UVoiceChattingManager::HandleChannelStateChanged(const IChannelConnectionState& State)
+{
+    if (bShuttingDown || !bHasChannelSession || !(State.ChannelSession().Channel() == JoinedChannel)) return;
+    if (State.State() == ConnectionState::Disconnected)
+    {
+        bHasJoinedChannel = false;
+        bChannelConnectInProgress = false;
+        bChannelDisconnectInProgress = false;
+        StopVoiceCacheTimer();
+        Vivox_Stop3DUpdate();
+        Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] Disconnected '%s'"), *CurrentVoiceChannelName), FColor::Yellow);
+        // Defer deletion and the next join until after the SDK event finishes.
+        SchedulePendingChannelJoin();
+    }
+}
+
+void UVoiceChattingManager::HandleAudioStateChanged(const IChannelConnectionState& State)
+{
+    if (bShuttingDown || !bHasChannelSession || !(State.ChannelSession().Channel() == JoinedChannel)) return;
+    if (State.State() == ConnectionState::Connected)
+    {
+        if (bChannelDisconnectInProgress || PendingChannelName.IsEmpty() ||
+            PendingChannelName != CurrentVoiceChannelName || bPendingPositional != bCurrentChannelPositional)
+            DisconnectCurrentChannel(false);
+        else
+            MarkChannelAudioConnected();
+    }
+    else if (State.State() == ConnectionState::Disconnected)
+    {
+        bHasJoinedChannel = false;
+        StopVoiceCacheTimer();
+        Vivox_Stop3DUpdate();
+        LastSelfAudioEnergy = 0.0;
+        LastStimuliMap.Reset();
+        PushVoiceCacheToGameInstance();
+    }
+}
+
+void UVoiceChattingManager::MarkChannelAudioConnected()
+{
+    const bool bFirstConnection = !bHasJoinedChannel;
+    bHasJoinedChannel = true;
+    bChannelConnectInProgress = false;
+    StartVoiceCacheTimer();
+    PushVoiceCacheToGameInstance();
+    if (bFirstConnection)
+        Vivox_ScreenLog(FString::Printf(TEXT("[Vivox] Audio CONNECTED '%s' (%s)"), *CurrentVoiceChannelName,
+            bCurrentChannelPositional ? TEXT("3D") : TEXT("2D")), FColor::Green);
+    if (bCurrentChannelPositional && bAutoStart3DUpdate)
+        Vivox_TryAutoStart3DUpdate();
+    else
+        Vivox_Stop3DUpdate();
 }

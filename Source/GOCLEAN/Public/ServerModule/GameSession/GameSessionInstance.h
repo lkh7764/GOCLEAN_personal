@@ -63,6 +63,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Session")
     const FString& GetPendingJoinCode() const;
 
+    bool RefreshJoinCodeFromSession();
+
 private:
     // 세션 생성 전에 임시 저장되는 조인 코드
     UPROPERTY()
