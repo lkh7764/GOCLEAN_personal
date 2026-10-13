@@ -5,6 +5,9 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "GCharacter/GOCLEANPlayerController.h"
+#include "OnlineSubsystemUtils.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSessionSettings.h"
 
 static float Clamp01(float v) { return FMath::Clamp(v, 0.f, 1.f); }
 
@@ -41,7 +44,8 @@ void UGameSessionInstance::OnStart()
 
 void UGameSessionInstance::HandlePostLoadMap(UWorld* LoadedWorld)
 {
-    if (!LoadedWorld) return;
+    if (!LoadedWorld || LoadedWorld->GetGameInstance() != this ||
+        LoadedWorld->GetNetMode() == NM_DedicatedServer) return;
 
     const FString LevelName = UGameplayStatics::GetCurrentLevelName(LoadedWorld, true);
     UE_LOG(LogTemp, Warning, TEXT("[GI] Loaded Level: %s"), *LevelName);
@@ -71,10 +75,9 @@ void UGameSessionInstance::HandlePostLoadMap(UWorld* LoadedWorld)
     }
 
 
-    // TODO:
-    // 실제 Steam ID 등으로 교체
-    const FString PlayerVoiceId = TEXT("TODO_PlayerId");
-
+    VoiceManager->HandleWorldChanged(LoadedWorld);
+    RefreshJoinCodeFromSession();
+    const FString PlayerVoiceId = VoiceManager->GetLocalVoicePlayerId();
 
     // Lobby
     if (LevelName.Equals(TEXT("test_Lobby")))
@@ -86,7 +89,7 @@ void UGameSessionInstance::HandlePostLoadMap(UWorld* LoadedWorld)
     }
 
     // InGame
-    else if (LevelName.Equals(TEXT("YourInGameMapName")))
+    else if (LevelName.Equals(TEXT("FirstPersonMap")))
     {
         if (!PendingJoinCode.IsEmpty())
         {
@@ -160,7 +163,28 @@ void UGameSessionInstance::ScheduleTryShowUI(UWorld* InWorld, float DelaySeconds
 
 void UGameSessionInstance::SetPendingJoinCode(const FString& NewCode)
 {
-    PendingJoinCode = NewCode;
+    const FString Code = NewCode.TrimStartAndEnd();
+    if (!IsValidJoinCode(Code))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[Voice] Ignoring invalid join code: '%s'"), *Code);
+        return;
+    }
+    PendingJoinCode = Code;
+}
+
+bool UGameSessionInstance::RefreshJoinCodeFromSession()
+{
+    const IOnlineSessionPtr Sessions = Online::GetSessionInterface(GetWorld());
+    if (Sessions.IsValid())
+    {
+        const FNamedOnlineSession* Session = Sessions->GetNamedSession(NAME_GameSession);
+        FString SessionCode;
+        if (Session && Session->SessionSettings.Get(FName(TEXT("JoinCode")), SessionCode))
+        {
+            SetPendingJoinCode(SessionCode);
+        }
+    }
+    return IsValidJoinCode(PendingJoinCode);
 }
 
 const FString& UGameSessionInstance::GetPendingJoinCode() const

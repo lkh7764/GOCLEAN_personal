@@ -52,6 +52,9 @@ public:
 
     virtual void Deinitialize() override;
 
+    FString GetLocalVoicePlayerId();
+    void HandleWorldChanged(UWorld* World);
+
 
     // =======================
     // Vivox Login / Basic
@@ -227,6 +230,19 @@ private:
     ChannelId JoinedChannel;
 
     bool bHasJoinedChannel = false;
+    bool bHasChannelSession = false;
+    bool bChannelConnectInProgress = false;
+    bool bChannelDisconnectInProgress = false;
+    bool bShuttingDown = false;
+    FString LocalVoicePlayerId;
+    TWeakObjectPtr<UWorld> VoiceTimerWorld;
+    FDelegateHandle ChannelStateChangedHandle;
+    FDelegateHandle AudioStateChangedHandle;
+
+    void ClearChannelCallbacks();
+    void HandleChannelStateChanged(const IChannelConnectionState& State);
+    void HandleAudioStateChanged(const IChannelConnectionState& State);
+    void MarkChannelAudioConnected();
 
 
     EVoiceChannelMode CurrentVoiceMode = EVoiceChannelMode::None;
@@ -239,7 +255,7 @@ private:
 
     FTimerHandle ChannelSwitchTimerHandle;
 
-    void SchedulePendingChannelJoin(float DelaySeconds = 0.25f);
+    void SchedulePendingChannelJoin(float DelaySeconds = 0.01f);
 
 
     void JoinPendingChannel();
