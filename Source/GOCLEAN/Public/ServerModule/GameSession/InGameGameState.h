@@ -159,6 +159,16 @@ public:
         return RestGauge;
     }
 
+    // [lkh Add] 2026-10-14
+    UFUNCTION(BlueprintPure, Category = "InGame|Gauge")
+    float GetRemainingSpiritualGaugePercent() const
+    {
+        return SpiritualGauge/InitialSpiritualGauge;
+    }
+
+
+    // [lkh Add] 2026-10-14
+    void SetInitialSpiritualGauge(float NewValue);
 
     void SetSpiritualGauge(float NewValue);
 
@@ -376,6 +386,11 @@ private:
 
     UPROPERTY(ReplicatedUsing = OnRep_ExorcismState)
     EExorcismState ExorcismState = EExorcismState::None;
+
+
+    // [lkh Add] 2026-10-14
+    UPROPERTY(Replicated)
+    float InitialSpiritualGauge = 100.f;
 
 
     UPROPERTY(ReplicatedUsing = OnRep_SpiritualGauge)

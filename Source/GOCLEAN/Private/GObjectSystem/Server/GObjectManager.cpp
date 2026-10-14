@@ -19,7 +19,6 @@
 
 #include "ServerModule/GameSession/InGameGameState.h"
 #include "GTypes/DataTableRow/GObjectDataRow.h"
-#include "ServerModule/GameSession/InGameGameState.h"
 
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
@@ -248,7 +247,7 @@ void UGObjectManager::InitiateObjects()
     if (GameState)
     {
         // 청소 90% 진행하면 청소 완료한 것으로 간주
-        // GameState->ResetSpiritualAndRestGauge(InitialSpiritualGuage * 0.9f);
+        GameState->SetInitialSpiritualGauge(InitialSpiritualGuage * 0.9f);
     }
 }
 
@@ -1021,11 +1020,11 @@ void UGObjectManager::RestoreBigWasteObject(int32 IID)
     auto* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
     auto* Data = DataManager ? DataManager->GetObjectData(Obj->GetNonfixedObjCoreComp()->TID) : nullptr;
 
-    AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+    AInGameGameState* GameState = Cast<AInGameGameState>(GetWorld()->GetGameState());
 
     if (Data && GameState)
     {
-        // GameState->AddSpiritualGauge(Data->Pollution);
+        GameState->AddSpiritualGauge(Data->Pollution);
     }
 }
 

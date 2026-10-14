@@ -128,19 +128,34 @@ void AInGameGameState::SetExorcismState(EExorcismState NewState)
 // Gauge
 // ===========
 
+// [lkh Add] 2026-10-14
+void AInGameGameState::SetInitialSpiritualGauge(float NewValue)
+{
+    if (!HasAuthority())
+        return;
+
+    InitialSpiritualGauge = NewValue;
+
+    SetSpiritualGauge(InitialSpiritualGauge);
+}
+
 void AInGameGameState::SetSpiritualGauge(float NewValue)
 {
     if (!HasAuthority())
         return;
 
-    const float Clamped = FMath::Clamp(NewValue, 0.f, 100.f);
-
-    if (FMath::IsNearlyEqual(SpiritualGauge, Clamped))
+    // [lkh Edit] 2026-10-14 
     {
-        return;
+        if (NewValue < 0.0f)
+        {
+            AddRestGauge(NewValue * -1.0f);
+            SpiritualGauge = 0.0f;
+        }
+        else
+        {
+            SpiritualGauge = NewValue;
+        }
     }
-
-    SpiritualGauge = Clamped;
 
     OnRep_SpiritualGauge();
 }

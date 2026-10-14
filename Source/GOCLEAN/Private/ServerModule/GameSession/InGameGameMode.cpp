@@ -191,8 +191,8 @@ void AInGameGameMode::CheckExorcismCondition()
     }
 
 
-    // 나중에 게이지 수치 수정 필요
-    if (IGS->GetSpiritualGauge() <= 20.f)
+    // [lkh Edit] 2026-10-14
+    if (IGS->GetRemainingSpiritualGaugePercent() <= 20.f)
     {
         StartExorcismPhase();
     }
