@@ -15,6 +15,8 @@ class AGOCLEANCharacter;
 class AGNonfixedObject;
 class AGFixedObject;
 
+class UMaterialInstanceDynamic;
+
 
 UCLASS(Abstract, Blueprintable)
 class GOCLEAN_API UGAdditionalObjFuncComponent : public UActorComponent
@@ -320,5 +322,10 @@ private:
 		{2, "Obj_Blood2"},
 		{3, "Obj_Blood3"}
 	};
+
+
+	// decal
+	UPROPERTY(EditAnywhere, Category = "Decal")
+	TObjectPtr<UMaterialInstanceDynamic> WaterMID;
 
 };

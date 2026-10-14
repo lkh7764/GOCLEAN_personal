@@ -17,7 +17,7 @@
 
 #include "GMapSystem/Server/GMapManager.h"
 
-#include "ServerModule/GameSession/GameSessionState.h"
+#include "ServerModule/GameSession/InGameGameState.h"
 #include "GTypes/DataTableRow/GObjectDataRow.h"
 #include "ServerModule/GameSession/InGameGameState.h"
 
@@ -195,11 +195,11 @@ AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
         Target->AttachToActor(ActiveRoot, FAttachmentTransformRules::KeepWorldTransform);
 
 
-        AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+        AInGameGameState* GameState = Cast<AInGameGameState>(GetWorld()->GetGameState());
 
         if (Data && GameState)
         {
-            //GameState->AddSpiritualGauge(Data->Pollution);
+            GameState->AddSpiritualGauge(Data->Pollution);
         }
     }
 
@@ -244,11 +244,11 @@ void UGObjectManager::InitiateObjects()
 
 
     // finish obj load
-    AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+    AInGameGameState* GameState = Cast<AInGameGameState>(GetWorld()->GetGameState());
     if (GameState)
     {
         // 청소 90% 진행하면 청소 완료한 것으로 간주
-        //GameState->ResetSpiritualAndRestGauge(InitialSpiritualGuage * 0.9f);
+        // GameState->ResetSpiritualAndRestGauge(InitialSpiritualGuage * 0.9f);
     }
 }
 
