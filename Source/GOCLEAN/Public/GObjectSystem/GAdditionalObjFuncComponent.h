@@ -15,7 +15,8 @@ class AGOCLEANCharacter;
 class AGNonfixedObject;
 class AGFixedObject;
 
-class UMaterialInstanceDynamic;
+class UStaticMeshComponent;
+class UMaterialInterface;
 
 
 UCLASS(Abstract, Blueprintable)
@@ -270,24 +271,32 @@ class GOCLEAN_API UGBucketComponent : public UGAdditionalObjFuncComponent
 public:
 	UGBucketComponent();
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	virtual void OnInteractionTriggered(class AGOCLEANCharacter* Target) override;
 
+	virtual void OnStateChangeTriggered(ENonfixedObjState PrevState, ENonfixedObjState ChangedState) override {};
+
 
 public:
 	void FillBucket(bool bAbPenomena = false);
+
 	void EmptyBucket();
+
 
 private:
 	// water
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_bHasWater, Category = "Bucket")
 	bool bHasWater = false;
 
 
 	// spill
 	void CheckSpill();
+
 	void SpillFilth();
 
 	UPROPERTY(EditAnywhere, Category = "Bucket")
@@ -299,8 +308,9 @@ private:
 	// pollution
 	void AddPollution(bool bAbPenomena = false);
 
-	UPROPERTY(EditAnywhere, Category = "Bucket")
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Pollution, Category = "Bucket")
 	float Pollution;
+
 
 	UPROPERTY(EditAnywhere, Category = "Bucket")
 	float InteractionPollution = 5.0f;
@@ -325,7 +335,29 @@ private:
 
 
 	// decal
-	UPROPERTY(EditAnywhere, Category = "Decal")
-	TObjectPtr<UMaterialInstanceDynamic> WaterMID;
+	UPROPERTY(VisibleAnywhere, Category = "Water|Surface")
+	TObjectPtr<UStaticMeshComponent> WaterSurface;
+
+
+	// 오염도 단계별 머티리얼
+	UPROPERTY(EditAnywhere, Category = "Water|Materials")
+	TObjectPtr<UMaterialInterface> WaterMaterial_Clean;
+
+	UPROPERTY(EditAnywhere, Category = "Water|Materials")
+	TObjectPtr<UMaterialInterface> WaterMaterial_PollutionLV1;
+
+	UPROPERTY(EditAnywhere, Category = "Water|Materials")
+	TObjectPtr<UMaterialInterface> WaterMaterial_PollutionLV2;
+
+	UPROPERTY(EditAnywhere, Category = "Water|Materials")
+	TObjectPtr<UMaterialInterface> WaterMaterial_PollutionLV3;
+
+
+	// replication function
+	UFUNCTION()
+	void OnRep_bHasWater();
+
+	UFUNCTION()
+	void OnRep_Pollution();
 
 };
