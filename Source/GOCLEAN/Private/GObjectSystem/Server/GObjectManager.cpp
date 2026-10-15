@@ -645,7 +645,7 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
         }
 
         // type1-2. bucket
-        else if (HeldObj->GetNonfixedObjCoreComp()->TID == "Obj_Bucket")
+        else if (HeldObj->GetNonfixedObjCoreComp()->TID == "Obj_CBucket")
         {
             // watertank
             AGFixedObject* Target = Cast<AGFixedObject>(PlayerChar->GetInteractionComp()->GetCurrentTarget());
