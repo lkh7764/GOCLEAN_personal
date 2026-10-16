@@ -87,31 +87,30 @@ void UGExocismComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
             StartCondition.AddUObject(this, &UGExocismComponent::ExocismStep0_LittleGhost);
         }
     }
-
-
-    // 2. 컴포넌트 등록
-    {
-        if (IsValid(OwnerActor))
-        {
-            InteractionVolume = OwnerActor->GetComponentByClass<USphereComponent>();
-            if (IsValid(InteractionVolume))
-            {
-                InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-                InteractionVolume->SetCollisionResponseToAllChannels(ECR_Overlap);
-                InteractionVolume->SetHiddenInGame(true);
-                InteractionVolume->SetSimulatePhysics(false);
-            }
-        }
-    }
-
-
-    // 3. deactive 상태로 초기화
-    DeactivateExocismCircle();
 }
 
 void UGExocismComponent::BeginPlay()
 {
-    Decal = GetOwner()->GetComponentByClass<UDecalComponent>();
+    auto* _Owner = GetOwner();
+
+    Decal = _Owner->GetComponentByClass<UDecalComponent>();
+
+
+    if (_Owner->HasAuthority())
+    {
+        InteractionVolume = _Owner->GetComponentByClass<USphereComponent>();
+        if (IsValid(InteractionVolume))
+        {
+            InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+            InteractionVolume->SetCollisionResponseToAllChannels(ECR_Overlap);
+            InteractionVolume->SetHiddenInGame(true);
+            InteractionVolume->SetSimulatePhysics(false);
+        }
+    }
+
+
+    // 2. deactive 상태로 초기화
+    DeactivateExocismCircle();
 }
 
 

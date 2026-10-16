@@ -671,6 +671,16 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
             {
                 // 추후 watertank 물줄기 흐르는 로직 추가
 
+                if (GEngine)
+                {
+                    GEngine->AddOnScreenDebugMessage(
+                        -1,                 // 메시지 키
+                        5.0f,               // 표시 시간
+                        FColor::Blue,      // 글자 색상
+                        TEXT("[Water Tank] fill bucket")
+                    );
+                }
+
                 HeldObj->GetComponentByClass<UGBucketComponent>()->FillBucket();
             }
 
@@ -704,13 +714,18 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
     // type2. equip / item / hand
     else
     {
+        UObject* Target = PlayerChar->GetInteractionComp()->GetCurrentTarget();
+
         // type2-1. use mop: check mop's pollution and spawn filth
         if (EquipID == "Eq_Mop")
         {
             float MopPollution = EquipComp->GetMopPollution();
 
+            UGNonfixedObjCoreComponent* CoreComp = Cast< UGNonfixedObjCoreComponent>(Target);
+            FName TargetID = IsValid(CoreComp) ? CoreComp->TID : "";
+
             // try spawn filth when mop is dirty
-            if (MopPollution >= 100.0f)
+            if (MopPollution >= 20.0f && TargetID != "Obj_CBucket")
             {
                 UE_LOG(LogGObject, Log, TEXT("[Equipment] Using dirty mop! spawn a filth object..."));
 
@@ -753,7 +768,6 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
         }
 
         // type2-3. normal case: do interaction and check each condition of function components
-        UObject* Target = PlayerChar->GetInteractionComp()->GetCurrentTarget();
         if (Target)
         {
             IGInteractable* Interactable = Cast<IGInteractable>(Target);
