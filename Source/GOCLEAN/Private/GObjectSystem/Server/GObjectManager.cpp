@@ -17,9 +17,8 @@
 
 #include "GMapSystem/Server/GMapManager.h"
 
-#include "ServerModule/GameSession/GameSessionState.h"
-#include "GTypes/DataTableRow/GObjectDataRow.h"
 #include "ServerModule/GameSession/InGameGameState.h"
+#include "GTypes/DataTableRow/GObjectDataRow.h"
 
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
@@ -195,11 +194,11 @@ AGNonfixedObject* UGObjectManager::SpawnNonfixedObject(
         Target->AttachToActor(ActiveRoot, FAttachmentTransformRules::KeepWorldTransform);
 
 
-        AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+        AInGameGameState* GameState = Cast<AInGameGameState>(GetWorld()->GetGameState());
 
         if (Data && GameState)
         {
-            //GameState->AddSpiritualGauge(Data->Pollution);
+            GameState->AddSpiritualGauge(Data->Pollution);
         }
     }
 
@@ -244,11 +243,11 @@ void UGObjectManager::InitiateObjects()
 
 
     // finish obj load
-    AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+    AInGameGameState* GameState = Cast<AInGameGameState>(GetWorld()->GetGameState());
     if (GameState)
     {
         // 청소 90% 진행하면 청소 완료한 것으로 간주
-        //GameState->ResetSpiritualAndRestGauge(InitialSpiritualGuage * 0.9f);
+        GameState->SetInitialSpiritualGauge(InitialSpiritualGuage * 0.9f);
     }
 }
 
@@ -551,13 +550,29 @@ void UGObjectManager::UpdateExocismCircleStates(AGFixedObject* ActiveCircle)
 {
     if (!ActiveCircle) return;
 
+    UGExocismComponent* ExocismComp = nullptr;
+
     for (auto Circle : ExocismCircle)
     {
         if (Circle == ActiveCircle) continue;
+
+        // change state and value
         Circle->ChangeState(EGFixedObjState::E_Invisible);
+        
+        ExocismComp = Cast<UGExocismComponent>(Circle->GetComponentByClass<UGExocismComponent>());
+        if (IsValid(ExocismComp))
+        {
+            ExocismComp->DeactivateExocismCircle();
+        }
     }
 
     ActiveCircle->ChangeState(EGFixedObjState::E_Static);
+
+    ExocismComp = Cast<UGExocismComponent>(ActiveCircle->GetComponentByClass<UGExocismComponent>());
+    if (IsValid(ExocismComp))
+    {
+        ExocismComp->ActivateExocismCircle();
+    }
 }
 
 
@@ -646,7 +661,7 @@ void UGObjectManager::HandleTryInteract(APlayerController* PC, int32 TargetInsta
         }
 
         // type1-2. bucket
-        else if (HeldObj->GetNonfixedObjCoreComp()->TID == "Obj_Bucket")
+        else if (HeldObj->GetNonfixedObjCoreComp()->TID == "Obj_CBucket")
         {
             // watertank
             AGFixedObject* Target = Cast<AGFixedObject>(PlayerChar->GetInteractionComp()->GetCurrentTarget());
@@ -1021,11 +1036,11 @@ void UGObjectManager::RestoreBigWasteObject(int32 IID)
     auto* DataManager = GetWorld()->GetGameInstance()->GetSubsystem<UGDataManagerSubsystem>();
     auto* Data = DataManager ? DataManager->GetObjectData(Obj->GetNonfixedObjCoreComp()->TID) : nullptr;
 
-    AGameSessionState* GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+    AInGameGameState* GameState = Cast<AInGameGameState>(GetWorld()->GetGameState());
 
     if (Data && GameState)
     {
-        // GameState->AddSpiritualGauge(Data->Pollution);
+        GameState->AddSpiritualGauge(Data->Pollution);
     }
 }
 

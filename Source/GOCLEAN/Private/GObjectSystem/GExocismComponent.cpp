@@ -12,9 +12,14 @@
 #include "GObjectSystem/Server/GObjectManager.h"
 
 #include "Components/SphereComponent.h"
+#include "Components/DecalComponent.h"
 
 #include "GCharacter/GOCLEANCharacter.h"
 #include "GPlayerSystem/GEquipment/GEquipmentComponent.h"
+
+#include "ServerModule/GameSession/InGameGameState.h"
+
+#include "Net/UnrealNetwork.h"
 
 
 UGExocismComponent::UGExocismComponent()
@@ -22,16 +27,28 @@ UGExocismComponent::UGExocismComponent()
 
 }
 
+void UGExocismComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(UGExocismComponent, bIsFailed);
+    DOREPLIFETIME(UGExocismComponent, bIsActiveExcosim);
+}
+
 void UGExocismComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
 {
     // 0. Owner Actor 지정
-    {
-        OwnerActor = Cast<AGFixedObject>(GetOwner());
+    OwnerActor = Cast<AGFixedObject>(GetOwner());
 
-        if (!IsValid(OwnerActor))
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Cannot found Owner exocism circle!"));
-        }
+    if (!IsValid(OwnerActor))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Cannot found Owner exocism circle!"));
+        return;
+    }
+
+    if (OwnerActor->HasAuthority())
+    {
+        return;
     }
 
 
@@ -46,31 +63,28 @@ void UGExocismComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
             return;
         }
 
-        OnExocismCircleInteracted.Clear();
+        StartCondition.Clear();
 
         // Case 1. 수살귀
         if (ADrownedGhost* Drowned = Cast<ADrownedGhost>(FoundGhost))
         {
             UE_LOG(LogTemp, Log, TEXT("Ghost type - DrownedGhost"));
 
-            OnExocismCircleInteracted.AddUObject(this, &UGExocismComponent::ExocismStep1_DrownGhost);
-            NextTargetTID = "Cursed_MoonJar";
+            StartCondition.AddUObject(this, &UGExocismComponent::ExocismStep0_DrownGhost);
         }
         // Case 2. 손각시
         else if (AMaidenGhost* Maiden = Cast<AMaidenGhost>(FoundGhost))
         {
             UE_LOG(LogTemp, Log, TEXT("Ghost type - MaidenGhost"));
 
-            OnExocismCircleInteracted.AddUObject(this, &UGExocismComponent::ExocismStep1_MaidenGhost);
-            NextTargetTID = "Cursed_WhiteDress";
+            StartCondition.AddUObject(this, &UGExocismComponent::ExocismStep0_MaidenGhost);
         }
         // Case 3. 태자귀
         else if (ALittleGhost* Little = Cast<ALittleGhost>(FoundGhost))
         {
             UE_LOG(LogTemp, Log, TEXT("Ghost type - LittleGhost"));
 
-            OnExocismCircleInteracted.AddUObject(this, &UGExocismComponent::ExocismStep1_LittleGhost);
-            NextTargetTID = "Cursed_BambooTube";
+            StartCondition.AddUObject(this, &UGExocismComponent::ExocismStep0_LittleGhost);
         }
     }
 
@@ -80,11 +94,13 @@ void UGExocismComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
         if (IsValid(OwnerActor))
         {
             InteractionVolume = OwnerActor->GetComponentByClass<USphereComponent>();
-
-            InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-            InteractionVolume->SetCollisionResponseToAllChannels(ECR_Overlap);
-            InteractionVolume->SetHiddenInGame(true);
-            InteractionVolume->SetSimulatePhysics(false);
+            if (IsValid(InteractionVolume))
+            {
+                InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+                InteractionVolume->SetCollisionResponseToAllChannels(ECR_Overlap);
+                InteractionVolume->SetHiddenInGame(true);
+                InteractionVolume->SetSimulatePhysics(false);
+            }
         }
     }
 
@@ -93,34 +109,48 @@ void UGExocismComponent::InitializeAdditionalData(const FGNonfixedObjData& Data)
     DeactivateExocismCircle();
 }
 
+void UGExocismComponent::BeginPlay()
+{
+    Decal = GetOwner()->GetComponentByClass<UDecalComponent>();
+}
+
 
 
 // Exocism circle default logic
 void UGExocismComponent::ActivateExocismCircle()
 {
+    bIsFailed = false;
+
+    bIsActiveExcosim = true;
+    OnRep_bIsActiveExcosim();
+
     // 바운딩박스 활성화
     if (IsValid(InteractionVolume))
     {
         InteractionVolume->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Block);
     }
-
-    // 데칼 변경
 }
 
 void UGExocismComponent::DeactivateExocismCircle()
 {
+    bIsActiveExcosim = false;
+    OnRep_bIsActiveExcosim();
+
     // 바운딩박스 비활성화
     if (IsValid(InteractionVolume))
     {
         InteractionVolume->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Ignore);
     }
-
-    // 데칼 변경
 }
 
 void UGExocismComponent::OnSuccessedInExocism()
 {
     // GameState에서 퇴마 프로세스 종료 처리
+    AInGameGameState* GameState = Cast<AInGameGameState>(GetWorld()->GetGameState());
+    if (IsValid(GameState))
+    {
+        GameState->AddExorcismProgress(34.0f);
+    }
 }
 
 void UGExocismComponent::OnFailedInExocism()
@@ -129,12 +159,35 @@ void UGExocismComponent::OnFailedInExocism()
     if (!IsValid(ObjectManager)) return;
 
     ObjectManager->ActivateExocismCircle(OwnerActor);
+
+    bIsFailed = true;
+    OnRep_bIsFailed();
+
     DeactivateExocismCircle();
+}
+
+void UGExocismComponent::OnFinishExocism()
+{
+    // 바운딩박스 비활성화
+    if (IsValid(InteractionVolume))
+    {
+        InteractionVolume->SetCollisionResponseToChannel(ECC_GInteractable, ECR_Ignore);
+    }
 }
 
 
 
 // 수살귀
+void UGExocismComponent::ExocismStep0_DrownGhost(AGOCLEANCharacter* Target)
+{
+    OnExocismCircleInteracted.Clear();
+    OnExocismCircleInteracted.AddUObject(this, &UGExocismComponent::ExocismStep1_DrownGhost);
+
+    NextTargetTID = "Cursed_MoonJar";
+
+    SuccessProgress = 50.0f;
+}
+
 // step1. 백자 달항아리 배치
 void UGExocismComponent::ExocismStep1_DrownGhost(AGOCLEANCharacter* Target)
 {
@@ -151,6 +204,9 @@ void UGExocismComponent::ExocismStep1_DrownGhost(AGOCLEANCharacter* Target)
     }
     else
     {
+        OnSuccessedInExocism();
+
+
         // 연출 - 달 항아리 위치 옮기기
 
 
@@ -178,17 +234,29 @@ void UGExocismComponent::ExocismStep2_DrownGhost(AGOCLEANCharacter* Target)
     }
     else
     {
+        OnSuccessedInExocism();
+
+
         // 연출 - 달 항아리 부적 붙음 메시로 변경
 
 
-        // 로직
-        OnSuccessedInExocism();
+        OnExocismCircleInteracted.Clear();
     }
 }
 
 
 
 // 손각시
+void UGExocismComponent::ExocismStep0_MaidenGhost(AGOCLEANCharacter* Target)
+{
+    OnExocismCircleInteracted.Clear();
+    OnExocismCircleInteracted.AddUObject(this, &UGExocismComponent::ExocismStep1_MaidenGhost);
+
+    NextTargetTID = "Cursed_WhiteDress";
+
+    SuccessProgress = 50.0f;
+}
+
 // step1. 흰 소복 배치
 void UGExocismComponent::ExocismStep1_MaidenGhost(AGOCLEANCharacter* Target)
 {
@@ -205,6 +273,9 @@ void UGExocismComponent::ExocismStep1_MaidenGhost(AGOCLEANCharacter* Target)
     }
     else
     {
+        OnSuccessedInExocism();
+
+
         // 연출 - 흰 소복 위치 옮기기
 
 
@@ -232,17 +303,30 @@ void UGExocismComponent::ExocismStep2_MaidenGhost(AGOCLEANCharacter* Target)
     }
     else
     {
+        OnSuccessedInExocism();
+
+
         // 연출 - 지정된 위치에 쇠말뚝 생성
 
 
         // 로직
-        OnSuccessedInExocism();
+        OnExocismCircleInteracted.Clear();
     }
 }
 
 
 
 // 태자귀
+void UGExocismComponent::ExocismStep0_LittleGhost(AGOCLEANCharacter* Target)
+{
+    OnExocismCircleInteracted.Clear();
+    OnExocismCircleInteracted.AddUObject(this, &UGExocismComponent::ExocismStep1_LittleGhost);
+
+    NextTargetTID = "Cursed_BambooTube";
+
+    SuccessProgress = 50.0f;
+}
+
 // step1.
 void UGExocismComponent::ExocismStep1_LittleGhost(AGOCLEANCharacter* Target)
 {
@@ -259,6 +343,9 @@ void UGExocismComponent::ExocismStep1_LittleGhost(AGOCLEANCharacter* Target)
     }
     else
     {
+        OnSuccessedInExocism();
+
+
         // 연출 - 대나무 통 위치 옮기기
 
 
@@ -286,10 +373,46 @@ void UGExocismComponent::ExocismStep2_LittleGhost(AGOCLEANCharacter* Target)
     }
     else
     {
+        OnSuccessedInExocism();
+
+
         // 연출 - 
 
 
         // 로직
-        OnSuccessedInExocism();
+        OnExocismCircleInteracted.Clear();
+    }
+}
+
+
+
+// replication func
+void UGExocismComponent::OnRep_bIsFailed()
+{
+    if (IsValid(Decal) && bIsFailed)
+    {
+        Decal->SetMaterial(0, FailDecal);
+        Decal->SetVisibility(true);
+    }
+}
+
+void UGExocismComponent::OnRep_bIsActiveExcosim()
+{
+    if (IsValid(Decal))
+    {
+        if (bIsActiveExcosim)
+        {
+            Decal->SetMaterial(0, SuccessDecal);
+            Decal->SetVisibility(true);
+        }
+        else if (bIsFailed)
+        {
+            Decal->SetMaterial(0, FailDecal);
+            Decal->SetVisibility(true);
+        }
+        else
+        {
+            Decal->SetVisibility(false);
+        }
     }
 }

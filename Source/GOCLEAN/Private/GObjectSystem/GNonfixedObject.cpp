@@ -14,7 +14,7 @@
 
 #include "../../GOCLEAN.h"
 
-#include "ServerModule/GameSession/GameSessionState.h"
+#include "ServerModule/GameSession/InGameGameState.h"
 
 
 
@@ -146,7 +146,7 @@ void AGNonfixedObject::UpdatePhysicsByState()
 
 	UGDataManagerSubsystem* DataManager;
 	const FGObjectDataRow* Data;
-	AGameSessionState* GameState;
+	AInGameGameState* GameState;
 	UGObjectManager* ObjectManager;
 
 	switch (CoreComp->GetNonfixedObjState())
@@ -258,10 +258,10 @@ void AGNonfixedObject::UpdatePhysicsByState()
 		Data = DataManager ? DataManager->GetObjectData(CoreComp->TID) : nullptr;
 		if (!Data) break;
 
-		GameState = Cast<AGameSessionState>(GetWorld()->GetGameState());
+		GameState = Cast<AInGameGameState>(GetWorld()->GetGameState());
 		if (!GameState) break;
 
-		//GameState->ApplySpiritualOrRestGauge(Data->Pollution);
+		GameState->AddSpiritualGauge(Data->Pollution * -1.0f);
 
 
 		// 대형 폐기물의 경우, Destroyed Queue에 삽입하여 귀신 단서 행동에서 사용할 수 있도록 함.
