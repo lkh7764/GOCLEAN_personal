@@ -550,13 +550,29 @@ void UGObjectManager::UpdateExocismCircleStates(AGFixedObject* ActiveCircle)
 {
     if (!ActiveCircle) return;
 
+    UGExocismComponent* ExocismComp = nullptr;
+
     for (auto Circle : ExocismCircle)
     {
         if (Circle == ActiveCircle) continue;
+
+        // change state and value
         Circle->ChangeState(EGFixedObjState::E_Invisible);
+        
+        ExocismComp = Cast<UGExocismComponent>(Circle->GetComponentByClass<UGExocismComponent>());
+        if (IsValid(ExocismComp))
+        {
+            ExocismComp->DeactivateExocismCircle();
+        }
     }
 
     ActiveCircle->ChangeState(EGFixedObjState::E_Static);
+
+    ExocismComp = Cast<UGExocismComponent>(ActiveCircle->GetComponentByClass<UGExocismComponent>());
+    if (IsValid(ExocismComp))
+    {
+        ExocismComp->ActivateExocismCircle();
+    }
 }
 
 

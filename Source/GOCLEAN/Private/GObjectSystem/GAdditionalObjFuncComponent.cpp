@@ -535,17 +535,10 @@ void UGBucketComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// register bucket 
-	auto ObjManager = GetWorld()->GetSubsystem<UGObjectManager>();
-	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
-
-	if (Owner && Owner->GetNonfixedObjCoreComp() && ObjManager)
-	{
-		ObjManager->RegisterBucketIndex(Owner->GetNonfixedObjCoreComp()->IID);
-	}
-
 
 	// find water surface mesh
+	AGNonfixedObject* Owner = Cast<AGNonfixedObject>(GetOwner());
+
 	if (IsValid(Owner))
 	{
 		WaterSurface = Cast<UStaticMeshComponent>(
@@ -553,13 +546,26 @@ void UGBucketComponent::BeginPlay()
 	}
 
 
+	// block logic -> only host
+	if (!Owner->HasAuthority())
+	{
+		return;
+	}
+
+
+	// register bucket 
+	auto ObjManager = GetWorld()->GetSubsystem<UGObjectManager>();
+
+	if (Owner && Owner->GetNonfixedObjCoreComp() && ObjManager)
+	{
+		ObjManager->RegisterBucketIndex(Owner->GetNonfixedObjCoreComp()->IID);
+	}
+
+
 	// set bucket params
-	bHasWater = false;
-	OnRep_bHasWater();
+	EmptyBucket();
 
 	bIsSpilled = false;
-
-	Pollution = 0.0f;
 }
 
 void UGBucketComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
