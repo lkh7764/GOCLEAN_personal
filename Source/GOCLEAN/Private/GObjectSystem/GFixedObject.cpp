@@ -68,6 +68,22 @@ void AGFixedObject::OnRep_State()
 	OnStateChanged_Visual();
 }
 
+void AGFixedObject::ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target)
+{
+	ExecuteInteraction_Internal();
+
+	UGFixedObjInteractionComponent* SpawnerComp = 
+		Cast<UGFixedObjInteractionComponent>(GetComponentByClass<UGFixedObjInteractionComponent>());
+
+	if (IsValid(SpawnerComp))
+	{
+		if (SpawnerComp->CanInteract(EquipID, Target))
+		{
+			SpawnerComp->ExecuteInteraction(EquipID, Target);
+		}
+	}
+}
+
 
 
 // Sets default values for this component's properties
