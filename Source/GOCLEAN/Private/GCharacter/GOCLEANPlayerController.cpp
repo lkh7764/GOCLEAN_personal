@@ -1,6 +1,6 @@
 #include "GCharacter/GOCLEANPlayerController.h"
-#include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "Engine/LocalPlayer.h"
 
 #include "Net/RpcTypes.h"
@@ -16,7 +16,7 @@
 
 AGOCLEANPlayerController::AGOCLEANPlayerController()
 {
-	RPCRouter = CreateDefaultSubobject<URPCRouterComponent>(TEXT("RPCRouter"));
+    RPCRouter = CreateDefaultSubobject<URPCRouterComponent>(TEXT("RPCRouter"));
     static ConstructorHelpers::FClassFinder<UUserWidget> LobbyUI(
         TEXT("/Game/Hyeona/Widgets/WBP_LobbyMainWidget"));
     if (LobbyUI.Succeeded()) LobbyWidgetClass = LobbyUI.Class;
@@ -170,7 +170,7 @@ void AGOCLEANPlayerController::RequestTakeVendingItem(int32 ItemId)
 
 void AGOCLEANPlayerController::EnsureVendingWidget()
 {
-    if (!IsLocalController()) return; 
+    if (!IsLocalController()) return;
     if (VendingWidget) return;
     if (!VendingWidgetClass) return;
 
@@ -225,7 +225,6 @@ void AGOCLEANPlayerController::ToggleVendingUI()
     }
 }
 
-<<<<<<< HEAD
 void AGOCLEANPlayerController::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
@@ -237,7 +236,7 @@ void AGOCLEANPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (GetWorld()) GetWorldTimerManager().ClearTimer(LobbyUIRetryTimer);
     Super::EndPlay(EndPlayReason);
-=======
+}
 
 
 // Additional Input //
@@ -327,5 +326,4 @@ void AGOCLEANPlayerController::ShowSpectatorUI()
         FInputModeGameOnly Mode;
         SetInputMode(Mode);
     }
->>>>>>> parent of bb85fe86 (Revert merge of Develop into master (PR #4))
 }
