@@ -20,6 +20,8 @@
 // Sets default values
 AGFixedObject::AGFixedObject()
 {
+	bReplicates = true;
+
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 }
@@ -36,7 +38,9 @@ void AGFixedObject::BeginPlay()
 {
 	Super::BeginPlay();
 	
-    if (auto* ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>())
+	auto* ObjectManager = GetWorld()->GetSubsystem<UGObjectManager>();
+
+    if (IsValid(ObjectManager))
     {
         ObjectManager->RegisterFixedObject(TID, this);
     }
@@ -70,7 +74,7 @@ void AGFixedObject::OnRep_State()
 
 void AGFixedObject::ExecuteInteraction(FName EquipID, AGOCLEANCharacter* Target)
 {
-	ExecuteInteraction_Internal();
+	ExecuteInteraction_Internal(Target);
 
 	UGFixedObjInteractionComponent* SpawnerComp = 
 		Cast<UGFixedObjInteractionComponent>(GetComponentByClass<UGFixedObjInteractionComponent>());

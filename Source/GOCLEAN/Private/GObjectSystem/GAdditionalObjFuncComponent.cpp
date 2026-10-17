@@ -16,6 +16,8 @@
 #include "GObjectSystem/Server/GObjectManager.h"
 #include "../../GOCLEAN.h"
 
+#include "GPlayerSystem\InteractionComponent.h"
+
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -159,6 +161,40 @@ void UGPickComponent::DropObject()
 
 	bIsPickedUp = false;
 	OwnerPlayer = nullptr;
+}
+
+void UGEXToolComponent::DropObject()
+{
+	if (!OwnerPlayer) return;
+
+	AGNonfixedObject* OwnerActor = Cast<AGNonfixedObject>(GetOwner());
+	if (!OwnerActor) return;
+
+
+	UInteractionComponent* InteractionComp = OwnerPlayer->GetInteractionComp();
+	AGFixedObject* Target = InteractionComp ?
+		Cast<AGFixedObject>(InteractionComp->GetCurrentTarget()) : nullptr;
+
+	if (IsValid(Target) && Target->GetTypeID() == "Obj_MagicFloor")
+	{
+		if (bIsRemovable)
+		{
+			OwnerActor->GetNonfixedObjCoreComp()->ChangeState(ENonfixedObjState::E_Destroyed);
+		}
+		else
+		{
+			OwnerActor->SetActorLocation(Target->GetActorLocation());
+			OwnerActor->SetActorRotation(Target->GetActorRotation());
+
+			bIsPickedUp = false;
+			OwnerPlayer = nullptr;
+		}
+
+		return;
+	}
+
+
+	Super::DropObject();
 }
 
 

@@ -120,6 +120,17 @@ void AInGameGameState::SetExorcismState(EExorcismState NewState)
 
     ExorcismState = NewState;
 
+
+    if (ExorcismState == EExorcismState::InProgress)
+    {
+        auto* ObjManager = GetWorld()->GetSubsystem<UGObjectManager>();
+        if (IsValid(ObjectManager))
+        {
+            ObjManager->ActivateExocismCircle(nullptr);
+        }
+    }
+
+
     OnRep_ExorcismState();
 }
 

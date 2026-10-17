@@ -53,7 +53,7 @@ public:
 
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void ExecuteInteraction_Internal();
+	void ExecuteInteraction_Internal(AGOCLEANCharacter* Target);
 
 
 
