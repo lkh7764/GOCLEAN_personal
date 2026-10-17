@@ -282,6 +282,18 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "InGame|Vending")
     FOnInGameVendingStockChanged OnInGameVendingStockChanged;
 
+    // =================
+    // Result
+    // =================
+
+    UFUNCTION(BlueprintPure, Category = "InGame|Result")
+    bool WasGameSuccessful() const
+    {
+        return bGameSuccessful;
+    }
+
+    void SetGameSuccessful(bool bSuccess);
+
 protected:
 
     virtual void GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
@@ -423,4 +435,12 @@ private:
 
     UPROPERTY(ReplicatedUsing = OnRep_VendingStocks, BlueprintReadOnly, Category = "InGame|Vending", meta = (AllowPrivateAccess = "true"))
     TArray<FInGameVendingStock> VendingStocks;
+
+
+    // =================
+    // Result
+    // =================
+
+    UPROPERTY(Replicated)
+    bool bGameSuccessful = false;
 };

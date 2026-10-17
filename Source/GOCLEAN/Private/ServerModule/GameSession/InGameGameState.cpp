@@ -57,6 +57,8 @@ void AInGameGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
     DOREPLIFETIME(AInGameGameState, FinalRewardMoney);
 
     DOREPLIFETIME(AInGameGameState, VendingStocks);
+
+    DOREPLIFETIME(AInGameGameState, bGameSuccessful);
 }
 
 
@@ -503,6 +505,21 @@ void AInGameGameState::SetFinalRewardMoney(int32 NewMoney)
 
     OnRep_FinalRewardMoney();
 }
+
+
+
+// ============
+// Result
+// ===========
+
+void AInGameGameState::SetGameSuccessful(bool bSuccess)
+{
+    if (!HasAuthority())
+        return;
+
+    bGameSuccessful = bSuccess;
+}
+
 
 
 // ============
