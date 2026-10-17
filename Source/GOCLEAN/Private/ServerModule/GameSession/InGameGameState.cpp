@@ -147,6 +147,16 @@ void AInGameGameState::SetInitialSpiritualGauge(float NewValue)
 
     InitialSpiritualGauge = NewValue;
 
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(
+            -1,                 // 메시지 키
+            5.0f,               // 표시 시간
+            FColor::Purple,      // 글자 색상
+            FString::Printf(TEXT("[Spiritual Gauge] Initial Spiritual Gauge %f"), InitialSpiritualGauge)
+        );
+    }
+
     SetSpiritualGauge(InitialSpiritualGauge);
 }
 
